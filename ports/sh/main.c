@@ -24,7 +24,7 @@ int parse_compile_execute(const void *source, mp_parse_input_kind_t input_kind, 
 ssize_t stdouterr_write(void *data, void const *buf, size_t size)
 {
     console_t *cons = data;
-    console_append_buf(cons, buf, size);
+    console_write_at_cursor(cons, buf, size);
     return size;
 }
 
@@ -42,9 +42,12 @@ static console_t *cons = NULL;
 void pe_draw(void)
 {
     dclear(C_WHITE);
-    dtext(1,  1, C_BLACK, "PythonExtra, very much WIP :)");
-    dline(1, 16, DWIDTH-1, 16, C_BLACK);
-    console_render(1, 18, cons, DWIDTH-2, -1);
+    dprint(3, 3, C_BLACK, "PythonExtra, very much WIP :)");
+    dline(2, 16, DWIDTH-3, 16, C_BLACK);
+    int rows = 12;
+    console_render(3, 20, cons, DWIDTH-6, rows);
+    int y = 20 + PE_CONSOLE_LINE_SPACING * rows;
+    dline(2, y, DWIDTH-3, y, C_BLACK);
     dupdate();
 }
 
@@ -59,7 +62,7 @@ void pe_exithandler(void)
 int main(int argc, char **argv)
 {
     /* Set up standard streams */
-    cons = console_create(10);
+    cons = console_create(8192);
     close(STDOUT_FILENO);
     close(STDERR_FILENO);
     open_generic(&stdouterr_type, cons, STDOUT_FILENO);
