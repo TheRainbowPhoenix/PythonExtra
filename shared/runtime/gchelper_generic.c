@@ -150,6 +150,27 @@ STATIC void gc_helper_get_regs(gc_helper_regs_t arr) {
     arr[10] = x29;
 }
 
+#elif defined(__sh3__)
+
+STATIC void gc_helper_get_regs(gc_helper_regs_t arr) {
+    register const long r8 asm ("r8");
+    register const long r9 asm ("r9");
+    register const long r10 asm ("r10");
+    register const long r11 asm ("r11");
+    register const long r12 asm ("r12");
+    register const long r13 asm ("r13");
+    register const long r14 asm ("r14");
+    register const long r15 asm ("r15");
+    arr[0] = r8;
+    arr[1] = r9;
+    arr[2] = r10;
+    arr[3] = r11;
+    arr[4] = r12;
+    arr[5] = r13;
+    arr[6] = r14;
+    arr[7] = r15;
+}
+
 #else
 
 #error "Architecture not supported for gc_helper_get_regs. Set MICROPY_GCREGS_SETJMP to use the fallback implementation."
