@@ -23,7 +23,7 @@ SRC_C = \
 SRC_QSTR += \
     shared/readline/readline.c \
 
-OBJ = $(PY_CORE_O) $(addprefix $(BUILD)/, $(SRC_C:.c=.o))
+OBJ = $(PY_O) $(addprefix $(BUILD)/, $(SRC_C:.c=.o))
 
 all: $(BUILD)/firmware.elf PythonExtra.g3a
 
