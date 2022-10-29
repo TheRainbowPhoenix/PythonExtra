@@ -14,6 +14,7 @@ SRC_C = \
     main.c \
     console.c \
     keymap.c \
+    modgint.c \
     mphalport.c \
     shared/readline/readline.c \
     shared/runtime/gchelper_generic.c \
@@ -22,6 +23,7 @@ SRC_C = \
 
 SRC_QSTR += \
     shared/readline/readline.c \
+    modgint.c \
 
 OBJ = $(PY_O) $(addprefix $(BUILD)/, $(SRC_C:.c=.o))
 
