@@ -9,6 +9,7 @@
 #include <gint/display.h>
 #include <gint/keyboard.h>
 #include <gint/fs.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -104,11 +105,32 @@ void gc_collect(void) {
 }
 
 // There is no filesystem so stat'ing returns nothing.
-mp_import_stat_t mp_import_stat(const char *path) {
-    return MP_IMPORT_STAT_NO_EXIST;
+mp_import_stat_t mp_import_stat(const char *path)
+{
+    struct stat st;
+    int rc = stat(path, &st);
+    if(rc < 0)
+        return MP_IMPORT_STAT_NO_EXIST;
+
+    if(S_ISDIR(st.st_mode))
+        return MP_IMPORT_STAT_DIR;
+    else
+        return MP_IMPORT_STAT_FILE;
 }
 
-mp_obj_t mp_builtin_open(size_t n_args, const mp_obj_t *args, mp_map_t *kwargs) {
+mp_obj_t mp_builtin_open(size_t n_args, const mp_obj_t *args, mp_map_t *kwargs)
+{
+    mp_obj_t *args_items;
+    size_t len;
+    mp_obj_get_array(*args, &len, &args_items);
+    printf("%d %p\n", (int)len, args_items);
+    if(len != 2)
+        return mp_const_none;
+
+    char const *path = mp_obj_str_get_str(args_items[0]);
+    char const *mode = mp_obj_str_get_str(args_items[1]);
+    printf("'%s' '%s'\n", path, mode);
+
     return mp_const_none;
 }
 MP_DEFINE_CONST_FUN_OBJ_KW(mp_builtin_open_obj, 1, mp_builtin_open);
