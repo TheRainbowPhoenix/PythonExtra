@@ -8,7 +8,11 @@
 #define PE_CONSOLE_LINE_MAX_LENGTH 1024
 
 /* Line spacing in the console */
-#define PE_CONSOLE_LINE_SPACING 13
+#ifdef FX9860G
+# define PE_CONSOLE_LINE_SPACING 8
+#else
+# define PE_CONSOLE_LINE_SPACING 13
+#endif
 
 //=== Dynamic console lines ===//
 

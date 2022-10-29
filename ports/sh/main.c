@@ -15,11 +15,6 @@
 #include <stdlib.h>
 #include "console.h"
 
-// Allocate memory for the MicroPython GC heap.
-static char heap[32768];
-
-int parse_compile_execute(const void *source, mp_parse_input_kind_t input_kind, mp_uint_t exec_flags);
-
 //=== Console-based standard streams ===//
 
 ssize_t stdouterr_write(void *data, void const *buf, size_t size)
@@ -43,19 +38,28 @@ static console_t *cons = NULL;
 void pe_draw(void)
 {
     dclear(C_WHITE);
+#ifdef FX9860G
+    int rows = 8;
+    console_render(1, 1, cons, DWIDTH-2, rows);
+#else
     dprint(3, 3, C_BLACK, "PythonExtra, very much WIP :)");
     dline(2, 16, DWIDTH-3, 16, C_BLACK);
     int rows = 12;
     console_render(3, 20, cons, DWIDTH-6, rows);
     int y = 20 + PE_CONSOLE_LINE_SPACING * rows;
     dline(2, y, DWIDTH-3, y, C_BLACK);
+#endif
     dupdate();
 }
 
 void pe_exithandler(void)
 {
     pe_draw();
+#ifdef FX9860G
+    drect(DWIDTH-4, 0, DWIDTH-1, 3, C_BLACK);
+#else
     drect(DWIDTH-8, 0, DWIDTH-1, 7, C_RED);
+#endif
     dupdate();
     getkey();
 }
@@ -72,8 +76,17 @@ int main(int argc, char **argv)
     atexit(pe_exithandler);
 
     /* Initialize MicroPython */
+    #define HEAP_SIZE 32768
+    void *heap = malloc(32768);
+    if(!heap) {
+        dclear(C_WHITE);
+        dtext(1, 1, C_BLACK, "No heap!");
+        getkey();
+        return 1;
+    }
+
     mp_stack_ctrl_init();
-    gc_init(heap, heap + sizeof(heap));
+    gc_init(heap, heap + HEAP_SIZE);
     // TODO: gc_add(start, end) for each area we want to allocate to
     // fx-9860G III:
     // * (nothing? x_x)
