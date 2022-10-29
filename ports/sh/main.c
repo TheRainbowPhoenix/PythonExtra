@@ -74,6 +74,14 @@ int main(int argc, char **argv)
     /* Initialize MicroPython */
     mp_stack_ctrl_init();
     gc_init(heap, heap + sizeof(heap));
+    // TODO: gc_add(start, end) for each area we want to allocate to
+    // fx-9860G III:
+    // * (nothing? x_x)
+    // fx-CG 50:
+    // * The entirety of _uram
+    // * The entirety of the extra VRAM
+    // * Possibly memory past 2M
+    // * (keep the OS heap for normal malloc())
     mp_init();
 
     // Start a normal REPL; will exit when ctrl-D is entered on a blank line.

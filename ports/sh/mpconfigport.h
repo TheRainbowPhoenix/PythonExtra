@@ -8,6 +8,7 @@
 /* Main features */
 #define MICROPY_ENABLE_COMPILER           (1)
 #define MICROPY_ENABLE_GC                 (1)
+#define MICROPY_GC_SPLIT_HEAP             (1)
 #define MP_ENDIANNESS_BIG                 (1)
 #define MICROPY_READER_POSIX              (1)
 #define MICROPY_ERROR_REPORTING           (MICROPY_ERROR_REPORTING_DETAILED)
