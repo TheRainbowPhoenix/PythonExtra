@@ -16,6 +16,7 @@ Python features:
 - Compare features with existing implementations and other brands
 - Get filesystem access (open etc) with the POSIX interface
 - Get a decent amount of RAM not just the fixed 32 kiB that's hardcoded so far
+- Interrupt with AC/ON
 
 UI:
 - Use [JustUI](/Lephenixnoir/JustUI) to get a file browser (already available)
@@ -25,7 +26,7 @@ UI:
   * Extend it with a fixed-width uf8x9 which maybe changes some glyphs (like
     `i` and `l`; the usual fixed-width unambiguous styles)
   * Try and provide a font smaller than 5x7 for more compact shell on mono
-
+- A decent keymap that can input all relevant characters into the shell
 
 Future wishes:
 - Build for fx-9860G II (requires manual filesystem support)

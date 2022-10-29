@@ -52,18 +52,6 @@ void pe_draw(void)
     dupdate();
 }
 
-void pe_exithandler(void)
-{
-    pe_draw();
-#ifdef FX9860G
-    drect(DWIDTH-4, 0, DWIDTH-1, 3, C_BLACK);
-#else
-    drect(DWIDTH-8, 0, DWIDTH-1, 7, C_RED);
-#endif
-    dupdate();
-    getkey();
-}
-
 int main(int argc, char **argv)
 {
     /* Set up standard streams */
@@ -72,8 +60,6 @@ int main(int argc, char **argv)
     close(STDERR_FILENO);
     open_generic(&stdouterr_type, cons, STDOUT_FILENO);
     open_generic(&stdouterr_type, cons, STDERR_FILENO);
-
-    atexit(pe_exithandler);
 
     /* Initialize MicroPython */
     #define HEAP_SIZE 32768
@@ -125,7 +111,6 @@ void gc_collect(void) {
     gc_collect_end();
 }
 
-// There is no filesystem so stat'ing returns nothing.
 mp_import_stat_t mp_import_stat(const char *path)
 {
     struct stat st;
@@ -139,6 +124,7 @@ mp_import_stat_t mp_import_stat(const char *path)
         return MP_IMPORT_STAT_FILE;
 }
 
+// TODO: See branch 'posix-open' for a relevant attempt at using the POSIX API
 mp_obj_t mp_builtin_open(size_t n_args, const mp_obj_t *args, mp_map_t *kwargs)
 {
     mp_obj_t *args_items;
