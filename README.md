@@ -16,6 +16,8 @@ Most of the code is in `ports/sh` and is shared between the platforms.
 
 Bugs to fix:
 - Fix not world switching during filesystem accesses (very unstable)
+- Fix console line spacing being hardcoded instead of using font data
+- Fix the console not garbage collecting its lines (enable and test the feature)
 
 Python features:
 - Compare features with existing implementations and other brands

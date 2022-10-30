@@ -23,7 +23,7 @@ static uint8_t map_alpha[36] = {
 	'm',  'n',  'o',   0,    0,    0,
 	'p',  'q',  'r',  's',  't',   0,
 	'u',  'v',  'w',  'x',  'y',   0,
-	'z',  ' ',  '"',   0,    0,    0,
+	'z',  ' ',  '"',  ':',   0,    0,
 };
 
 uint32_t keymap_translate(int key, bool shift, bool alpha)

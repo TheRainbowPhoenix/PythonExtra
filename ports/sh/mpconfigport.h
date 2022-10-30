@@ -21,7 +21,8 @@
 #define MICROPY_ENABLE_SOURCE_LINE        (1) /* in EXTRA_FEATURES */
 #define MICROPY_PY_BUILTINS_STR_UNICODE   (1) /* in EXTRA_FEATURES */
 #define MICROPY_PY_BUILTINS_HELP_MODULES  (1) /* in EXTRA_FEATURES */
-// #define MICROPY_PY_SYS_STDFILES          (1) /* in EXTRA_FEATURES */
+#define MICROPY_KBD_EXCEPTION             (1) /* in EXTRA_FEATURES */
+// #define MICROPY_PY_SYS_STDFILES           (1) /* in EXTRA_FEATURES */
 
 #define MICROPY_ALLOC_PATH_MAX            (256)
 #define MICROPY_ALLOC_PARSE_CHUNK_INIT    (32)
@@ -54,6 +55,12 @@
 #define MICROPY_PY_SYS                    (1)
 #define MICROPY_PY_URANDOM                (1)
 #define MICROPY_PY_URANDOM_EXTRA_FUNCS    (1)
+#define MICROPY_PY_UTIME                  (1)
+#define MICROPY_PY_UTIME_MP_HAL           (1)
+// TODO: Enable the os module:
+// #define MICROPY_PY_UOS                    (1)
+// TODO: Enable other modules
+// #define MICROPY_PY_URE                    (1) // + other flags?
 
 /* Enable alias of u-modules, eg. urandom -> random */
 #define MICROPY_MODULE_WEAK_LINKS         (1)
