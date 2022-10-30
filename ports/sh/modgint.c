@@ -2,6 +2,7 @@
 #include "py/objtuple.h"
 #include <gint/display.h>
 #include <gint/keyboard.h>
+#include "shell.h"
 
 #define FUN_0(NAME) \
     MP_DEFINE_CONST_FUN_OBJ_0(modgint_ ## NAME ## _obj, modgint_ ## NAME)
@@ -121,6 +122,7 @@ STATIC mp_obj_t modgint_dclear(mp_obj_t arg1)
 
 STATIC mp_obj_t modgint_dupdate(void)
 {
+    pe_shell_graphics_mode();
     dupdate();
     return mp_const_none;
 }

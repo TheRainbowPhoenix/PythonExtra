@@ -15,7 +15,6 @@ Most of the code is in `ports/sh` and is shared between the platforms.
 **TODO list**
 
 Bugs to fix:
-- Don't refresh screen at every low-level console print
 - Fix not world switching during filesystem accesses (very unstable)
 
 Python features:
@@ -25,6 +24,8 @@ Python features:
 - Interrupt with AC/ON
 
 UI:
+- Shell escapes: move cursor, history
+- Better input system in the shell
 - Use [JustUI](/Lephenixnoir/JustUI) to get a file browser (already available)
 - Add an option for fixed-width font which also sets $COLUMNS properly so that
   MicroPython paginates (requires better getenv/setenv support in fxlib)

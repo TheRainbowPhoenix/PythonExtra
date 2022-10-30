@@ -13,7 +13,9 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+
 #include "console.h"
+#include "shell.h"
 
 //=== Console-based standard streams ===//
 
@@ -33,33 +35,15 @@ fs_descriptor_type_t stdouterr_type = {
 
 //=== Main function ===//
 
-static console_t *cons = NULL;
-
-void pe_draw(void)
-{
-    dclear(C_WHITE);
-#ifdef FX9860G
-    int rows = 8;
-    console_render(1, 1, cons, DWIDTH-2, rows);
-#else
-    dprint(3, 3, C_BLACK, "PythonExtra, very much WIP :)");
-    dline(2, 16, DWIDTH-3, 16, C_BLACK);
-    int rows = 12;
-    console_render(3, 20, cons, DWIDTH-6, rows);
-    int y = 20 + PE_CONSOLE_LINE_SPACING * rows;
-    dline(2, y, DWIDTH-3, y, C_BLACK);
-#endif
-    dupdate();
-}
-
 int main(int argc, char **argv)
 {
+    pe_shell_init();
+
     /* Set up standard streams */
-    cons = console_create(8192);
     close(STDOUT_FILENO);
     close(STDERR_FILENO);
-    open_generic(&stdouterr_type, cons, STDOUT_FILENO);
-    open_generic(&stdouterr_type, cons, STDERR_FILENO);
+    open_generic(&stdouterr_type, pe_shell_console, STDOUT_FILENO);
+    open_generic(&stdouterr_type, pe_shell_console, STDERR_FILENO);
 
     /* Initialize MicroPython */
     #define HEAP_SIZE 32768
@@ -86,11 +70,10 @@ int main(int argc, char **argv)
     // Start a normal REPL; will exit when ctrl-D is entered on a blank line.
     pyexec_friendly_repl();
 
-    console_destroy(cons);
-
     // Deinitialise the runtime.
     gc_sweep_all();
     mp_deinit();
+    pe_shell_deinit();
     return 0;
 }
 

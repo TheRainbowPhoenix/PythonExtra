@@ -4,11 +4,13 @@
 #include "../../shared/readline/readline.h"
 
 #include "keymap.h"
+#include "shell.h"
 #include <gint/display.h>
 #include <gint/keyboard.h>
 
 // Receive single character, blocking until one is available.
-int mp_hal_stdin_rx_chr(void) {
+int mp_hal_stdin_rx_chr(void)
+{
     while(1) {
         key_event_t ev = getkey();
         int key = ev.key;
@@ -44,10 +46,10 @@ int mp_hal_stdin_rx_chr(void) {
 }
 
 // Send the string of given length.
-void mp_hal_stdout_tx_strn(const char *str, mp_uint_t len) {
+void mp_hal_stdout_tx_strn(const char *str, mp_uint_t len)
+{
     int r = write(STDOUT_FILENO, str, len);
     (void)r;
 
-    extern void pe_draw(void);
-    pe_draw();
+    pe_shell_schedule_update();
 }

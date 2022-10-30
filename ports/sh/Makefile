@@ -15,6 +15,7 @@ SRC_C = \
     ports/sh/keymap.c \
     ports/sh/modgint.c \
     ports/sh/mphalport.c \
+    ports/sh/shell.c \
     shared/readline/readline.c \
     shared/runtime/gchelper_generic.c \
     shared/runtime/pyexec.c \
