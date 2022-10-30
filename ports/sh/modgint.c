@@ -1,3 +1,14 @@
+//---------------------------------------------------------------------------//
+//    ____        PythonExtra                                                //
+//.-'`_ o `;__,   A community port of MicroPython for CASIO calculators.     //
+//.-'` `---`  '   License: MIT (except some files; see LICENSE)              //
+//---------------------------------------------------------------------------//
+// pe.modgint: `gint` module
+//
+// This module aims to wrap commonly-used gint functions (not all APIs are
+// considered relevant for high-level Python development).
+//---
+
 #include "py/runtime.h"
 #include "py/objtuple.h"
 #include <gint/display.h>

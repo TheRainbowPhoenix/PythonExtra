@@ -1,3 +1,8 @@
+//---------------------------------------------------------------------------//
+//    ____        PythonExtra                                                //
+//.-'`_ o `;__,   A community port of MicroPython for CASIO calculators.     //
+//.-'` `---`  '   License: MIT (except some files; see LICENSE)              //
+//---------------------------------------------------------------------------//
 // pe.shell: Shell integration
 //
 // This header covers application-integration aspects of the shell. For the

@@ -1,3 +1,19 @@
+//---------------------------------------------------------------------------//
+//    ____        PythonExtra                                                //
+//.-'`_ o `;__,   A community port of MicroPython for CASIO calculators.     //
+//.-'` `---`  '   License: MIT (except some files; see LICENSE)              //
+//---------------------------------------------------------------------------//
+// pe.console: Terminal emulator
+//
+// This header implements a basic terminal emulator compatible with
+// MicroPython's readline() implementation.
+//
+// The main features are:
+// * Dynamically-sized lines with reflow
+// * Cap memory usage based on the total amount of text, not just line count
+// * Basic ANSI-escape-based edition features (but only on the last line)
+//---
+
 #ifndef __PYTHONEXTRA_CONSOLE_H
 #define __PYTHONEXTRA_CONSOLE_H
 
@@ -52,7 +68,7 @@ void console_line_delete(console_line_t *line, int p, int n);
 /* Update the number of render lines for the chosen width. */
 void console_line_update_render_lines(console_line_t *line, int width);
 
-//=== Console data storage ===//
+//=== Terminal emulator ===//
 
 typedef struct
 {

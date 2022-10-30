@@ -1,3 +1,9 @@
+//---------------------------------------------------------------------------//
+//    ____        PythonExtra                                                //
+//.-'`_ o `;__,   A community port of MicroPython for CASIO calculators.     //
+//.-'` `---`  '   License: MIT (except some files; see LICENSE)              //
+//---------------------------------------------------------------------------//
+
 #include <gint/keyboard.h>
 #include <gint/display.h>
 #include <gint/defs/util.h>
@@ -122,7 +128,7 @@ int console_line_render(int x, int y, console_line_t *line, int w, int dy,
     return y;
 }
 
-//=== Console data storage ===//
+//=== Terminal emulator ===//
 
 console_t *console_create(int backlog_size)
 {

@@ -1,34 +1,47 @@
+//---------------------------------------------------------------------------//
+//    ____        PythonExtra                                                //
+//.-'`_ o `;__,   A community port of MicroPython for CASIO calculators.     //
+//.-'` `---`  '   License: MIT (except some files; see LICENSE)              //
+//---------------------------------------------------------------------------//
+// pe.mphalport: MicroPython's Hardware Abstraction Layer
 
 #include <gint/clock.h>
 #include <time.h>
 
+/* Set the interrupt character in the terminal. */
 void mp_hal_set_interrupt_char(char c);
 
+/* Receive a single character from shell (blocking). */
+int mp_hal_stdin_rx_chr(void);
+
+/* Send a string to shell. */
+void mp_hal_stdout_tx_strn(const char *str, mp_uint_t len);
+
+/* Passive sleep. */
 static inline void mp_hal_delay_ms(mp_uint_t ms)
 {
     sleep_ms(ms);
 }
-
 static inline void mp_hal_delay_us(mp_uint_t us)
 {
     sleep_us(us);
 }
 
+/* Time spent executing. */
 static inline mp_uint_t mp_hal_ticks_ms(void)
 {
     return ((uint64_t)clock() * 1000) / CLOCKS_PER_SEC;
 }
-
 static inline mp_uint_t mp_hal_ticks_us(void)
 {
     return ((uint64_t)clock() * 1000000) / CLOCKS_PER_SEC;
 }
-
 static inline mp_uint_t mp_hal_ticks_cpu(void)
 {
     return clock();
 }
 
+/* Time since Epoch in nanoseconds. */
 static inline uint64_t mp_hal_time_ns(void)
 {
     return (uint64_t)time(NULL) * 1000000000;

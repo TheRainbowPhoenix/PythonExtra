@@ -1,14 +1,17 @@
-#include <unistd.h>
-#include "py/mpconfig.h"
+//---------------------------------------------------------------------------//
+//    ____        PythonExtra                                                //
+//.-'`_ o `;__,   A community port of MicroPython for CASIO calculators.     //
+//.-'` `---`  '   License: MIT (except some files; see LICENSE)              //
+//---------------------------------------------------------------------------//
+
 #include "py/mphal.h"
 #include "../../shared/readline/readline.h"
-
 #include "keymap.h"
 #include "shell.h"
 #include <gint/display.h>
 #include <gint/keyboard.h>
+#include <unistd.h>
 
-// Receive single character, blocking until one is available.
 int mp_hal_stdin_rx_chr(void)
 {
     while(1) {
@@ -45,7 +48,6 @@ int mp_hal_stdin_rx_chr(void)
     }
 }
 
-// Send the string of given length.
 void mp_hal_stdout_tx_strn(const char *str, mp_uint_t len)
 {
     int r = write(STDOUT_FILENO, str, len);

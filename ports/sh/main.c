@@ -1,6 +1,11 @@
+//---------------------------------------------------------------------------//
+//    ____        PythonExtra                                                //
+//.-'`_ o `;__,   A community port of MicroPython for CASIO calculators.     //
+//.-'` `---`  '   License: MIT (except some files; see LICENSE)              //
+//---------------------------------------------------------------------------//
+
 #include "py/compile.h"
 #include "py/gc.h"
-#include "py/mperrno.h"
 #include "py/stackctrl.h"
 #include "py/builtin.h"
 #include "shared/runtime/gchelper.h"
@@ -17,9 +22,7 @@
 #include "console.h"
 #include "shell.h"
 
-//=== Console-based standard streams ===//
-
-ssize_t stdouterr_write(void *data, void const *buf, size_t size)
+static ssize_t stdouterr_write(void *data, void const *buf, size_t size)
 {
     console_t *cons = data;
     console_write_at_cursor(cons, buf, size);
@@ -32,8 +35,6 @@ fs_descriptor_type_t stdouterr_type = {
     .lseek = NULL,
     .close = NULL,
 };
-
-//=== Main function ===//
 
 int main(int argc, char **argv)
 {
@@ -77,8 +78,9 @@ int main(int argc, char **argv)
     return 0;
 }
 
-// Handle uncaught exceptions (should never be reached in a correct C implementation).
-void nlr_jump_fail(void *val) {
+/* Handle uncaught exceptions (normally unreachable). */
+void nlr_jump_fail(void *val)
+{
     dclear(C_BLACK);
     dtext(2, 2, C_WHITE, "nlr_jump_fail!");
     dprint(2, 2, C_WHITE, "val = %p", val);
@@ -87,8 +89,9 @@ void nlr_jump_fail(void *val) {
         getkey();
 }
 
-// Do a garbage collection cycle.
-void gc_collect(void) {
+/* Do a garbage collection cycle. */
+void gc_collect(void)
+{
     gc_collect_start();
     gc_helper_collect_regs_and_stack();
     gc_collect_end();

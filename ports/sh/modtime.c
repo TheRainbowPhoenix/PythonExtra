@@ -1,3 +1,10 @@
+//---------------------------------------------------------------------------//
+//    ____        PythonExtra                                                //
+//.-'`_ o `;__,   A community port of MicroPython for CASIO calculators.     //
+//.-'` `---`  '   License: MIT (except some files; see LICENSE)              //
+//---------------------------------------------------------------------------//
+// pe.modtime: `time` module (based on the UNIX port under MIT)
+
 /*
  * This file is part of the MicroPython project, http://micropython.org/
  *
