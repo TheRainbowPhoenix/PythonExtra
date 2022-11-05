@@ -21,6 +21,7 @@
 #define MICROPY_ERROR_REPORTING           (MICROPY_ERROR_REPORTING_DETAILED)
 #define MICROPY_LONGINT_IMPL              (MICROPY_LONGINT_IMPL_MPZ)
 #define MICROPY_FLOAT_IMPL                (MICROPY_FLOAT_IMPL_DOUBLE)
+#define MICROPY_REPL_EVENT_DRIVEN         (1)
 
 /* Other features that we select against MICROPY_CONFIG_ROM_LEVEL */
 #define MICROPY_PY_FSTRINGS               (1) /* in EXTRA_FEATURES */

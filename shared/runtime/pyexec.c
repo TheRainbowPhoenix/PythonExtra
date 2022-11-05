@@ -400,7 +400,6 @@ STATIC int pyexec_friendly_repl_process_char(int c) {
             return 0;
         } else if (ret == CHAR_CTRL_B) {
             // reset friendly REPL
-            mp_hal_stdout_tx_str("\r\n");
             mp_hal_stdout_tx_str(MICROPY_BANNER_NAME_AND_VERSION);
             mp_hal_stdout_tx_str("; " MICROPY_BANNER_MACHINE);
             mp_hal_stdout_tx_str("\r\n");

@@ -14,13 +14,33 @@
 #include <gint/display.h>
 #include <gint/keyboard.h>
 #include <gint/fs.h>
+
+#include <justui/jscene.h>
+#include <justui/jlabel.h>
+#include <justui/jfkeys.h>
+#include <justui/jfileselect.h>
+#include <justui/jpainted.h>
+
 #include <sys/stat.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "console.h"
-#include "shell.h"
+#include "widget_shell.h"
+
+//---
+
+#include "py/mphal.h"
+#include "py/repl.h"
+#include "genhdr/mpversion.h"
+
+#ifdef FX9860G
+#define _(fx, cg) (fx)
+#else
+#define _(fx, cg) (cg)
+#endif
 
 static ssize_t stdouterr_write(void *data, void const *buf, size_t size)
 {
@@ -36,9 +56,33 @@ fs_descriptor_type_t stdouterr_type = {
     .close = NULL,
 };
 
+/* The global terminal. */
+console_t *pe_shell_console;
+
+static bool strendswith(char const *str, char const *suffix)
+{
+    size_t l1 = strlen(str);
+    size_t l2 = strlen(suffix);
+
+    return l1 >= l2 && strcmp(str + l1 - l2, suffix) == 0;
+}
+
+static bool py_file_filter(struct dirent const *ent)
+{
+    if(!jfileselect_default_filter(ent))
+        return false;
+
+    if(ent->d_type == DT_REG && !strendswith(ent->d_name, ".py"))
+        return false;
+
+    return true;
+}
+
 int main(int argc, char **argv)
 {
-    pe_shell_init();
+    //=== Init sequence ===//
+
+    pe_shell_console = console_create(8192);
 
     /* Set up standard streams */
     close(STDOUT_FILENO);
@@ -68,13 +112,70 @@ int main(int argc, char **argv)
     // * (keep the OS heap for normal malloc())
     mp_init();
 
-    // Start a normal REPL; will exit when ctrl-D is entered on a blank line.
-    pyexec_friendly_repl();
+    /* Run REPL manually */
+    pyexec_mode_kind = PYEXEC_MODE_FRIENDLY_REPL;
+    pyexec_event_repl_init();
+
+    //=== GUI setup ===//
+
+    jscene *scene = jscene_create_fullscreen(NULL);
+    jlabel *title = jlabel_create("PythonExtra", scene);
+    jwidget *stack = jwidget_create(scene);
+    jfkeys *fkeys = jfkeys_create("/FILES;/SHELL;;;;", scene);
+    (void)fkeys;
+
+    jwidget_set_background(title, C_BLACK);
+    jlabel_set_text_color(title, C_WHITE);
+    jwidget_set_stretch(title, 1, 0, false);
+    jwidget_set_padding(title, _(1, 3), _(2, 6), _(1, 3), _(2, 6));
+
+    jlayout_set_vbox(scene)->spacing = _(1, 3);
+    jlayout_set_stack(stack);
+    jwidget_set_padding(stack, 0, 6, 0, 6);
+    jwidget_set_stretch(stack, 1, 1, false);
+
+    /* Filesystem tab */
+    jfileselect *fileselect = jfileselect_create(stack);
+    jfileselect_set_filter(fileselect, py_file_filter);
+    jfileselect_set_show_file_size(fileselect, true);
+    jwidget_set_stretch(fileselect, 1, 1, false);
+
+    /* Shell tab */
+    widget_shell *shell = widget_shell_create(pe_shell_console, stack);
+    widget_shell_set_line_spacing(shell, _(1, 3));
+    jwidget_set_stretch(shell, 1, 1, false);
+
+    /* Initial state */
+    jfileselect_browse(fileselect, "/");
+    jscene_show_and_focus(scene, fileselect);
+
+    //=== Event handling ===//
+
+    while(1) {
+        jevent e = jscene_run(scene);
+
+        if(e.type == JSCENE_PAINT) {
+            dclear(C_WHITE);
+            jscene_render(scene);
+            dupdate();
+        }
+
+        if(e.type != JWIDGET_KEY || e.key.type == KEYEV_UP)
+            continue;
+        int key = e.key.key;
+
+        if(key == KEY_F1)
+            jscene_show_and_focus(scene, fileselect);
+        if(key == KEY_F2)
+            jscene_show_and_focus(scene, shell);
+    }
+
+    //=== Deinitialization ===//
 
     // Deinitialise the runtime.
     gc_sweep_all();
     mp_deinit();
-    pe_shell_deinit();
+    console_destroy(pe_shell_console);
     return 0;
 }
 

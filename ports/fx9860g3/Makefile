@@ -1,7 +1,7 @@
 include ../../py/mkenv.mk
 
 SH_CFLAGS := -DFX9860G
-SH_LDFLAGS := -T fx9860g.ld -lm -lgint-fx -lc -lgint-fx -lgcc
+SH_LDFLAGS := -T fx9860g.ld -ljustui-fx -lm -lgint-fx -lc -lgint-fx -lgcc
 
 all: PythonExtra.g1a
 

@@ -13,7 +13,6 @@
 #include "py/objtuple.h"
 #include <gint/display.h>
 #include <gint/keyboard.h>
-#include "shell.h"
 
 #define FUN_0(NAME) \
     MP_DEFINE_CONST_FUN_OBJ_0(modgint_ ## NAME ## _obj, modgint_ ## NAME)

@@ -17,18 +17,12 @@
 #ifndef __PYTHONEXTRA_CONSOLE_H
 #define __PYTHONEXTRA_CONSOLE_H
 
+#include <gint/keyboard.h>
 #include <stdbool.h>
 
 /* Maximum line length, to ensure the console can threshold its memory usage
    while cleaning only entire lines. Lines longer than this get split. */
 #define PE_CONSOLE_LINE_MAX_LENGTH 1024
-
-/* Line spacing in the console */
-#ifdef FX9860G
-# define PE_CONSOLE_LINE_SPACING 8
-#else
-# define PE_CONSOLE_LINE_SPACING 13
-#endif
 
 //=== Dynamic console lines ===//
 
@@ -84,6 +78,9 @@ typedef struct
     /* Cursor position within the last line. */
     int cursor;
 
+    /* Whether new data has been added and a frame should be rendered. */
+    bool render_needed;
+
 } console_t;
 
 /* Create a new console with the specified backlog size. */
@@ -105,8 +102,18 @@ bool console_write_block_at_cursor(console_t *cons, char const *str, int n);
 bool console_write_at_cursor(console_t *cons, char const *str, int n);
 
 /* TODO: Expand this function */
-void console_render(int x, int y, console_t *cons, int w, int lines);
+void console_render(int x, int y, console_t const *cons, int w, int dy,
+   int lines);
+
+void console_clear_render_flag(console_t *cons);
 
 void console_destroy(console_t *cons);
+
+//=== Input method ===//
+
+/* Interpret a key event into a terminal input. This is a pretty raw input
+   method with no shift/alpha lock, kept for legacy as a VT-100-style terminal
+   emulator. */
+int console_key_event_to_char(key_event_t ev);
 
 #endif /* __PYTHONEXTRA_CONSOLE_H */

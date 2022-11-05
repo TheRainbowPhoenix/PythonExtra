@@ -16,7 +16,7 @@ SRC_C = \
     ports/sh/modgint.c \
     ports/sh/modtime.c \
     ports/sh/mphalport.c \
-    ports/sh/shell.c \
+    ports/sh/widget_shell.c \
     shared/readline/readline.c \
     shared/runtime/gchelper_generic.c \
     shared/runtime/pyexec.c \
@@ -25,6 +25,7 @@ SRC_C = \
 
 SRC_QSTR += \
     shared/readline/readline.c \
+    shared/runtime/pyexec.c \
     ports/sh/modgint.c \
     ports/sh/modtime.c \
 

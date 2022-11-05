@@ -1,7 +1,7 @@
 include ../../py/mkenv.mk
 
 SH_CFLAGS := -DFXCG50
-SH_LDFLAGS := -T fxcg50.ld -lm -lgint-cg -lc -lgint-cg -lgcc
+SH_LDFLAGS := -T fxcg50.ld -ljustui-cg -lm -lgint-cg -lc -lgint-cg -lgcc
 
 all: PythonExtra.g3a
 

@@ -11,6 +11,10 @@
 #include <string.h>
 #include "console.h"
 
+#include "py/mphal.h"
+#include "../../shared/readline/readline.h"
+#include "keymap.h"
+
 //=== Dynamic console lines ===//
 
 bool console_line_init(console_line_t *line, int prealloc_size)
@@ -136,6 +140,7 @@ console_t *console_create(int backlog_size)
     cons->lines = NULL;
     cons->line_count = 0;
     cons->backlog_size = max(backlog_size, PE_CONSOLE_LINE_MAX_LENGTH);
+    cons->render_needed = true;
     if(!console_new_line(cons)) {
         free(cons);
         return NULL;
@@ -157,6 +162,7 @@ bool console_new_line(console_t *cons)
         return false;
     cons->line_count++;
     cons->cursor = 0;
+    cons->render_needed = true;
 
     /* Routinely clean the backlog every time a line is added. */
 //    console_clean_backlog(cons);
@@ -201,6 +207,7 @@ bool console_write_block_at_cursor(console_t *cons, char const *str, int n)
         if(!console_line_insert(last_line, cons->cursor, str, round_size))
             return false;
         cons->cursor += round_size;
+        cons->render_needed = true;
         if(round_size < n && !console_new_line(cons))
             return false;
         n -= round_size;
@@ -257,12 +264,15 @@ bool console_write_at_cursor(console_t *cons, char const *buf, int n)
                 cons->cursor += (cons->cursor < last_line->size);
             }
         }
+
+        cons->render_needed = true;
     }
 
     return true;
 }
 
-void console_render(int x, int y, console_t *cons, int w, int lines)
+void console_render(int x, int y, console_t const *cons, int w, int dy,
+    int lines)
 {
     int watermark = lines;
 
@@ -277,10 +287,15 @@ void console_render(int x, int y, console_t *cons, int w, int lines)
         bool show_cursor = (i == cons->line_count - 1);
 
         if(watermark + line->render_lines > 0)
-            y = console_line_render(x, y, line, w, PE_CONSOLE_LINE_SPACING,
-                -watermark, show_cursor ? cons->cursor : -1);
+            y = console_line_render(x, y, line, w, dy, -watermark,
+                show_cursor ? cons->cursor : -1);
         watermark += line->render_lines;
     }
+}
+
+void console_clear_render_flag(console_t *cons)
+{
+    cons->render_needed = false;
 }
 
 void console_destroy(console_t *cons)
@@ -289,4 +304,57 @@ void console_destroy(console_t *cons)
         console_line_deinit(&cons->lines[i]);
     free(cons->lines);
     free(cons);
+}
+
+//=== Input method ===//
+
+/* Features needed to bypass MicroPython's readline:
+   * Undefined MICROPY_HAL_HAS_VT100
+   * Multi-line input
+     - Provide PS1 and PS2
+     - Auto-indent
+     - TODO: How is it stored?
+   * History
+     - Let's use `MP_STATE_PORT(readline_hist)` for a start
+     - Keep track of history browsing state
+     - While at it do the zsh history search, which is goated
+     - Use readline_push_history()
+   * Cursor movement (fairly easy)
+   * Handle special inputs
+     - ^C, ^D, backspace
+     - Erase line (^K)
+   * Autocompletion
+     - Use mp_repl_autocomplete() which should hook just fine */
+
+int console_key_event_to_char(key_event_t ev)
+{
+    int key = ev.key;
+
+    /* (The following meanings are only for non-empty lines) */
+    /* TODO: Check cons->cursor before triggering them */
+
+    if(key == KEY_LEFT && ev.shift)
+        return CHAR_CTRL_A; /* go-to-start-of-line */
+    if(key == KEY_LEFT)
+        return CHAR_CTRL_B; /* go-back-one-char */
+    if(key == KEY_ACON)
+        return CHAR_CTRL_C; /* cancel */
+    if(key == KEY_DEL && !ev.shift)
+        return 8; /* delete-at-cursor */
+    if(key == KEY_RIGHT && ev.shift)
+        return CHAR_CTRL_E; /* go-to-end-of-line */
+    if(key == KEY_RIGHT)
+        return CHAR_CTRL_F; /* go-forward-one-char */
+    if(key == KEY_DEL && ev.shift)
+        return CHAR_CTRL_K; /* kill from cursor to end-of-line */
+    if(key == KEY_DOWN)
+        return CHAR_CTRL_N; /* go to next line in history */
+    if(key == KEY_UP)
+        return CHAR_CTRL_P; /* go to previous line in history */
+    if(key == KEY_EXIT)
+        return CHAR_CTRL_D; /* eof */
+    if(key == KEY_EXE)
+        return '\r';
+
+    return keymap_translate(key, ev.shift, ev.alpha);
 }
