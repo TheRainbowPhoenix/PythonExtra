@@ -37,6 +37,7 @@
 #include "genhdr/mpversion.h"
 
 #ifdef FX9860G
+extern bopti_image_t const img_fkeys_main;
 #define _(fx, cg) (fx)
 #else
 #define _(fx, cg) (cg)
@@ -71,11 +72,9 @@ static bool py_file_filter(struct dirent const *ent)
 {
     if(!jfileselect_default_filter(ent))
         return false;
-
-    if(ent->d_type == DT_REG && !strendswith(ent->d_name, ".py"))
-        return false;
-
-    return true;
+    if(ent->d_type == DT_DIR)
+        return true;
+    return strendswith(ent->d_name, ".py");
 }
 
 int main(int argc, char **argv)
@@ -112,6 +111,14 @@ int main(int argc, char **argv)
     // * (keep the OS heap for normal malloc())
     mp_init();
 
+    /* TODO: Add an option for the shorter prompt */
+#ifdef FX9860G
+    MP_STATE_VM(sys_mutable[MP_SYS_MUTABLE_PS1]) =
+        MP_OBJ_NEW_QSTR(qstr_from_str(">"));
+    MP_STATE_VM(sys_mutable[MP_SYS_MUTABLE_PS2]) =
+        MP_OBJ_NEW_QSTR(qstr_from_str("."));
+#endif
+
     /* Run REPL manually */
     pyexec_mode_kind = PYEXEC_MODE_FRIENDLY_REPL;
     pyexec_event_repl_init();
@@ -121,17 +128,13 @@ int main(int argc, char **argv)
     jscene *scene = jscene_create_fullscreen(NULL);
     jlabel *title = jlabel_create("PythonExtra", scene);
     jwidget *stack = jwidget_create(scene);
-    jfkeys *fkeys = jfkeys_create("/FILES;/SHELL;;;;", scene);
+    jfkeys *fkeys = jfkeys_create2(&img_fkeys_main, "/FILES;/SHELL", scene);
     (void)fkeys;
 
-    jwidget_set_background(title, C_BLACK);
-    jlabel_set_text_color(title, C_WHITE);
     jwidget_set_stretch(title, 1, 0, false);
-    jwidget_set_padding(title, _(1, 3), _(2, 6), _(1, 3), _(2, 6));
 
-    jlayout_set_vbox(scene)->spacing = _(1, 3);
+    jlayout_set_vbox(scene)->spacing = _(0, 3);
     jlayout_set_stack(stack);
-    jwidget_set_padding(stack, 0, 6, 0, 6);
     jwidget_set_stretch(stack, 1, 1, false);
 
     /* Filesystem tab */
@@ -144,6 +147,17 @@ int main(int argc, char **argv)
     widget_shell *shell = widget_shell_create(pe_shell_console, stack);
     widget_shell_set_line_spacing(shell, _(1, 3));
     jwidget_set_stretch(shell, 1, 1, false);
+
+#ifdef FX9860G
+    bool show_title_in_shell = false;
+    jwidget_set_padding(title, 0, 0, 1, 0);
+#else
+    bool show_title_in_shell = true;
+    jwidget_set_background(title, C_BLACK);
+    jlabel_set_text_color(title, C_WHITE);
+    jwidget_set_padding(title, 3, 6, 3, 6);
+    jwidget_set_padding(stack, 0, 6, 0, 6);
+#endif
 
     /* Initial state */
     jfileselect_browse(fileselect, "/");
@@ -164,10 +178,14 @@ int main(int argc, char **argv)
             continue;
         int key = e.key.key;
 
-        if(key == KEY_F1)
+        if(key == KEY_F1) {
             jscene_show_and_focus(scene, fileselect);
-        if(key == KEY_F2)
+            jwidget_set_visible(title, true);
+        }
+        if(key == KEY_F2) {
             jscene_show_and_focus(scene, shell);
+            jwidget_set_visible(title, show_title_in_shell);
+        }
     }
 
     //=== Deinitialization ===//

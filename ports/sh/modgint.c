@@ -132,7 +132,9 @@ STATIC mp_obj_t modgint_dclear(mp_obj_t arg1)
 
 STATIC mp_obj_t modgint_dupdate(void)
 {
-    pe_shell_graphics_mode();
+/* TODO: Port graphics mode notification over to the JustUI setup */
+//    pe_shell_graphics_mode();
+
     dupdate();
     return mp_const_none;
 }

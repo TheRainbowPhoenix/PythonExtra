@@ -6,7 +6,7 @@ This is a MicroPython port for fx-CG 50, fx-9860G III and related CASIO calculat
 
 **Build instructions**
 
-Requires the [fxSDK](/Lephenixnoir/fxsdk). Go to `ports/fxcg50` or `ports/fx9860g3` and run `make`.
+Requires the [fxSDK](/Lephenixnoir/fxsdk). Go to `ports/fxcg50` or `ports/fx9860g3` and run `make`. If it doesn't build, first try to use the `dev` branches for [fxSDK](/Lephenixnoir/fxSDK), [gint](/Lephenixnoir/gint), [fxlibc](/Lephenixnoir/fxlib) and [JustUI](/Lephenixnoir/JustUI).
 
 Most of the code is in `ports/sh` and is shared between the platforms.
 

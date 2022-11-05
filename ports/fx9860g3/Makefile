@@ -3,6 +3,10 @@ include ../../py/mkenv.mk
 SH_CFLAGS := -DFX9860G
 SH_LDFLAGS := -T fx9860g.ld -ljustui-fx -lm -lgint-fx -lc -lgint-fx -lgcc
 
+SH_ASSETS := img_fkeys_main.png
+SH_METADATA := fxconv-metadata.txt
+SH_CONVFLAGS := --fx
+
 all: PythonExtra.g1a
 
 PythonExtra.g1a: $(BUILD)/firmware.bin icon.png

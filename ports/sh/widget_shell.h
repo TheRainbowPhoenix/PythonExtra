@@ -4,6 +4,25 @@
 //.-'` `---`  '   License: MIT (except some files; see LICENSE)              //
 //---------------------------------------------------------------------------//
 // pe.widget_shell: JustUI widget for the shell
+//
+// This widget wraps the terminal-like `console_t` in a JustUI widget and
+// implements the keyboard interface part of edition commands (the console
+// manipulates the text being edited and this is just the command).
+//
+// The shell has a special refreshing mechanism. It is not redraw as soon as
+// new data is printed, as that would be a performance bottleneck (especially
+// on fx-CG models) as surprisingly many MicroPython builtins output strings a
+// single character at a time. Instead it refreshes at a fixed framerate if
+// data has been printed since the last frame.
+//
+// This asynchronous refreshing can cause issues if the program wishes to use
+// graphics mode, as it could override the program's work on the VRAM. To avoid
+// this issue, whenever the built-in function gint.dupdate() is used, pending
+// shell redraws are dropped and all screen updates are left to the program
+// until the shell is used again through print() or input().
+//
+// TODO: Move the framerate-based update logic directly into JustUI.
+//---
 
 #ifndef __PYTHONEXTRA_WIDGET_SHELL_H
 #define __PYTHONEXTRA_WIDGET_SHELL_H

@@ -26,10 +26,13 @@ SRC_C = \
 SRC_QSTR += \
     shared/readline/readline.c \
     shared/runtime/pyexec.c \
+    ports/sh/main.c \
     ports/sh/modgint.c \
     ports/sh/modtime.c \
 
-OBJ = $(PY_O) $(addprefix $(BUILD)/, $(SRC_C:.c=.o))
+ASSETS_O := $(SH_ASSETS:%=$(BUILD)/sh_assets/%.o)
+
+OBJ = $(PY_O) $(ASSETS_O) $(addprefix $(BUILD)/, $(SRC_C:.c=.o))
 
 $(BUILD)/firmware.bin: $(BUILD)/firmware.elf
 	$(Q)$(CC:gcc=objcopy) -O binary -R .bss -R .gint_bss $< $@
@@ -38,5 +41,9 @@ $(BUILD)/firmware.elf: $(OBJ)
 	$(ECHO) "LINK $@"
 	$(Q)$(CC) $(LDFLAGS) -o $@ $^ $(LIBS)
 	$(Q)$(SIZE) $@
+
+$(BUILD)/sh_assets/%.o: % $(SH_METADATA)
+	$(Q)mkdir -p $(dir $@)
+	$(Q)fxconv --toolchain=$(CROSS_COMPILE:%-=%) $(SH_CONVFLAGS) $< -o $@
 
 include $(TOP)/py/mkrules.mk
