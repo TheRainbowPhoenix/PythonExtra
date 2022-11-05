@@ -3,7 +3,7 @@ include ../../py/mkenv.mk
 SH_CFLAGS := -DFX9860G
 SH_LDFLAGS := -T fx9860g.ld -ljustui-fx -lm -lgint-fx -lc -lgint-fx -lgcc
 
-SH_ASSETS := img_fkeys_main.png
+SH_ASSETS := img_fkeys_main.png font_5x7.png font_4x4.png font_4x6.png
 SH_METADATA := fxconv-metadata.txt
 SH_CONVFLAGS := --fx
 

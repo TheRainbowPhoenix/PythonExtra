@@ -1,3 +1,31 @@
 *.png:
   type: bopti-image
   name_regex: (.*)\.png \1
+
+font_*.png:
+  type: font
+  charset: print
+  grid.padding: 1
+  grid.border: 0
+
+font_5x7.png:
+  type: font
+  charset: print
+  grid.size: 5x7
+  grid.padding: 1
+  grid.border: 0
+
+font_4x4.png:
+  type: font
+  charset: print
+  grid.size: 4x4
+  grid.padding: 1
+  grid.border: 0
+
+font_4x6.png:
+  type: font
+  charset: print
+  grid.size: 5x6
+  grid.padding: 1
+  grid.border: 0
+  proportional: true

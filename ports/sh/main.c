@@ -8,6 +8,8 @@
 #include "py/gc.h"
 #include "py/stackctrl.h"
 #include "py/builtin.h"
+#include "py/mphal.h"
+#include "py/repl.h"
 #include "shared/runtime/gchelper.h"
 #include "shared/runtime/pyexec.h"
 
@@ -30,14 +32,17 @@
 #include "console.h"
 #include "widget_shell.h"
 
-//---
+/* TODO: Expand debug configuration to not be hardcoded */
+#define DEBUG 0
 
-#include "py/mphal.h"
-#include "py/repl.h"
-#include "genhdr/mpversion.h"
+#if DEBUG
+#include <gint/usb.h>
+#include <gint/usb-ff-bulk.h>
+#endif
 
 #ifdef FX9860G
 extern bopti_image_t const img_fkeys_main;
+extern font_t const font_4x4, font_4x6, font_5x7;
 #define _(fx, cg) (fx)
 #else
 #define _(fx, cg) (cg)
@@ -79,6 +84,11 @@ static bool py_file_filter(struct dirent const *ent)
 
 int main(int argc, char **argv)
 {
+#if DEBUG
+    usb_interface_t const *intf[] = { &usb_ff_bulk, NULL };
+    usb_open(intf, GINT_CALL_NULL);
+#endif
+
     //=== Init sequence ===//
 
     pe_shell_console = console_create(8192);
@@ -151,6 +161,7 @@ int main(int argc, char **argv)
 #ifdef FX9860G
     bool show_title_in_shell = false;
     jwidget_set_padding(title, 0, 0, 1, 0);
+    widget_shell_set_font(shell, &font_4x6);
 #else
     bool show_title_in_shell = true;
     jwidget_set_background(title, C_BLACK);
@@ -177,6 +188,11 @@ int main(int argc, char **argv)
         if(e.type != JWIDGET_KEY || e.key.type == KEYEV_UP)
             continue;
         int key = e.key.key;
+
+#if DEBUG
+        if(usb_is_open() && key == KEY_SQUARE && !e.key.shift && e.key.alpha)
+            usb_fxlink_screenshot(true);
+#endif
 
         if(key == KEY_F1) {
             jscene_show_and_focus(scene, fileselect);
