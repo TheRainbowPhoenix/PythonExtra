@@ -12,17 +12,10 @@
 /* Type identified for widget_shell */
 static int widget_shell_id = -1;
 
+/* Events */
+uint16_t WIDGET_SHELL_MOD_CHANGED;
+
 //=== Modifier states ===//
-
-enum {
-    MOD_IDLE,                   /* Not active */
-    MOD_INSTANT,                /* Instant-loaded but not yet used */
-    MOD_INSTANT_USED,           /* Instant-loaded and has been used */
-
-    MOD_LOCKED,                 /* Locked */
-    MOD_LOCKED_INSTANT,         /* Locked and instant-loaded but not used */
-    MOD_LOCKED_INSTANT_USED,    /* Locked and instant-loaded and used */
-};
 
 /* Handle a key press/release for a modifier */
 static int mod_down(int state)
@@ -59,6 +52,11 @@ static bool mod_active(int state)
 {
     return state == MOD_LOCKED || state == MOD_INSTANT
         || state == MOD_INSTANT_USED;
+}
+/* Whether a modifier is in an instant mode */
+static bool mod_instant(int state)
+{
+    return state != MOD_IDLE && state != MOD_LOCKED;
 }
 
 //=== Shell widget ===//
@@ -123,6 +121,23 @@ void widget_shell_set_line_spacing(widget_shell *s, int line_spacing)
     s->widget.dirty = 1;
 }
 
+void widget_shell_get_modifiers(widget_shell *s, int *shift, int *alpha)
+{
+    if(shift)
+        *shift = s->shift;
+    if(alpha)
+        *alpha = s->alpha;
+}
+
+void widget_shell_modifier_info(int shift, int alpha,
+    int *layer, bool *instant)
+{
+    if(layer)
+        *layer = mod_active(shift) + 2 * mod_active(alpha);
+    if(instant)
+        *instant = mod_instant(shift) || mod_instant(alpha);
+}
+
 //---
 // Polymorphic widget operations
 //---
@@ -158,6 +173,26 @@ static void widget_shell_poly_render(void *s0, int x, int y)
     dfont(old_font);
 }
 
+static void widget_shell_update_mod(widget_shell *s, key_event_t ev)
+{
+    int *mod = (ev.key == KEY_SHIFT) ? &s->shift : &s->alpha;
+    int new_mod = (ev.type == KEYEV_UP) ? mod_up(*mod) : mod_down(*mod);
+    if(new_mod != *mod)
+        jwidget_emit(s, (jevent){ .type = WIDGET_SHELL_MOD_CHANGED });
+    *mod = new_mod;
+}
+static void widget_shell_use_mods(widget_shell *s)
+{
+    int new_shift = mod_down_other(s->shift);
+    int new_alpha = mod_down_other(s->alpha);
+
+    if(new_shift != s->shift || new_alpha != s->alpha)
+        jwidget_emit(s, (jevent){ .type = WIDGET_SHELL_MOD_CHANGED });
+
+    s->shift = new_shift;
+    s->alpha = new_alpha;
+}
+
 static bool widget_shell_poly_event(void *s0, jevent e)
 {
     widget_shell *s = s0;
@@ -166,12 +201,8 @@ static bool widget_shell_poly_event(void *s0, jevent e)
         return false;
     key_event_t ev = e.key;
 
-    if(ev.key == KEY_SHIFT) {
-        s->shift = ev.type == KEYEV_UP ? mod_up(s->shift) : mod_down(s->shift);
-        return true;
-    }
-    if(ev.key == KEY_ALPHA) {
-        s->alpha = ev.type == KEYEV_UP ? mod_up(s->alpha) : mod_down(s->alpha);
+    if(ev.key == KEY_SHIFT || ev.key == KEY_ALPHA) {
+        widget_shell_update_mod(s, ev);
         return true;
     }
 
@@ -181,9 +212,7 @@ static bool widget_shell_poly_event(void *s0, jevent e)
     ev.mod = true;
     ev.shift = mod_active(s->shift);
     ev.alpha = mod_active(s->alpha);
-
-    s->shift = mod_down_other(s->shift);
-    s->alpha = mod_down_other(s->alpha);
+    widget_shell_use_mods(s);
 
     /* TODO: Handle input events better in the shell widget! */
     int c = console_key_event_to_char(ev);
@@ -216,4 +245,5 @@ __attribute__((constructor))
 static void j_register_widget_shell(void)
 {
     widget_shell_id = j_register_widget(&type_widget_shell, "jwidget");
+    WIDGET_SHELL_MOD_CHANGED = j_register_event();
 }

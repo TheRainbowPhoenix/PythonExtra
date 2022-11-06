@@ -32,6 +32,17 @@
 #include <gint/display.h>
 #include "console.h"
 
+/* Modifier states */
+enum {
+    MOD_IDLE,                   /* Not active */
+    MOD_INSTANT,                /* Instant-loaded but not yet used */
+    MOD_INSTANT_USED,           /* Instant-loaded and has been used */
+
+    MOD_LOCKED,                 /* Locked */
+    MOD_LOCKED_INSTANT,         /* Locked and instant-loaded but not used */
+    MOD_LOCKED_INSTANT_USED,    /* Locked and instant-loaded and used */
+};
+
 /* widget_shell: Multi-line Python shell input */
 typedef struct {
     jwidget widget;
@@ -53,6 +64,9 @@ typedef struct {
 
 } widget_shell;
 
+/* Event IDs */
+extern uint16_t WIDGET_SHELL_MOD_CHANGED;
+
 /* Update frequency, ie. cap on the number of shell redraws per second. */
 #define WIDGET_SHELL_FPS 30
 
@@ -63,5 +77,19 @@ widget_shell *widget_shell_create(console_t *console, void *parent);
 void widget_shell_set_text_color(widget_shell *shell, int color);
 void widget_shell_set_font(widget_shell *shell, font_t const *font);
 void widget_shell_set_line_spacing(widget_shell *shell, int line_spacing);
+
+/* Get current modifier states */
+void widget_shell_get_modifiers(widget_shell *shell, int *shift, int *alpha);
+
+/* Turn a pair of shift/alpha modifiers into a more presentable form:
+   - The *current layer* which shows currently active modifiers:
+       0: Normal
+       1: Shifted (SHIFT)
+       2: Lowercase (ALPHA)
+       3: Uppercase (SHIFT+ALPHA)
+   - The *instant* boolean which is set when one of the modifiers is in
+     instant mode. This is the case when either SHIFT or ALPHA is pressed. */
+void widget_shell_modifier_info(int shift, int alpha,
+    int *layer, bool *instant);
 
 #endif /* __PYTHONEXTRA_WIDGET_SHELL_H */

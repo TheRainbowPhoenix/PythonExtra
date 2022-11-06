@@ -1,0 +1,4 @@
+img_*.png:
+  type: bopti-image
+  name_regex: (.*)\.png \1
+  profile: p4

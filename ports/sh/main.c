@@ -42,9 +42,11 @@
 
 #ifdef FX9860G
 extern bopti_image_t const img_fkeys_main;
+extern bopti_image_t const img_modifier_states;
 extern font_t const font_4x4, font_4x6, font_5x7;
 #define _(fx, cg) (fx)
 #else
+extern bopti_image_t const img_modifier_states;
 #define _(fx, cg) (cg)
 #endif
 
@@ -179,9 +181,26 @@ int main(int argc, char **argv)
     while(1) {
         jevent e = jscene_run(scene);
 
+        if(e.type == WIDGET_SHELL_MOD_CHANGED)
+            scene->widget.update = true;
+
         if(e.type == JSCENE_PAINT) {
             dclear(C_WHITE);
             jscene_render(scene);
+
+            /* Render shell modifiers above the scene in a convenient spot */
+            int shift, alpha, layer;
+            bool instant;
+            widget_shell_get_modifiers(shell, &shift, &alpha);
+            widget_shell_modifier_info(shift, alpha, &layer, &instant);
+            int icon = 2 * layer + !instant;
+#ifdef FX9860G
+            dsubimage(118, 58, &img_modifier_states, 9*icon+1, 1, 8, 6,
+                DIMAGE_NONE);
+#else
+            dsubimage(377, 207, &img_modifier_states, 16*icon, 0, 15, 14,
+                DIMAGE_NONE);
+#endif
             dupdate();
         }
 

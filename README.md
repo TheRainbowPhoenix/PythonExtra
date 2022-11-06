@@ -16,7 +16,6 @@ Most of the code is in `ports/sh` and is shared between the platforms.
 
 Bugs to fix:
 - Fix not world switching during filesystem accesses (very unstable)
-- Fix console line spacing being hardcoded instead of using font data
 - Fix the console not garbage collecting its lines (enable and test the feature)
 
 Python features:
@@ -28,7 +27,6 @@ Python features:
 UI:
 - Shell escapes: move cursor, history
 - Better input system in the shell
-- Use [JustUI](/Lephenixnoir/JustUI) to get a file browser (already available)
 - Add an option for fixed-width font which also sets $COLUMNS properly so that
   MicroPython paginates (requires better getenv/setenv support in fxlib)
 - Use [unicode-fonts](/Lephenixnoir/unicode-fonts) to provide Unicode support

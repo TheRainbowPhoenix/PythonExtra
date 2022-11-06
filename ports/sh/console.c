@@ -339,14 +339,12 @@ int console_key_event_to_char(key_event_t ev)
         return CHAR_CTRL_B; /* go-back-one-char */
     if(key == KEY_ACON)
         return CHAR_CTRL_C; /* cancel */
-    if(key == KEY_DEL && !ev.shift)
+    if(key == KEY_DEL)
         return 8; /* delete-at-cursor */
     if(key == KEY_RIGHT && ev.shift)
         return CHAR_CTRL_E; /* go-to-end-of-line */
     if(key == KEY_RIGHT)
         return CHAR_CTRL_F; /* go-forward-one-char */
-    if(key == KEY_DEL && ev.shift)
-        return CHAR_CTRL_K; /* kill from cursor to end-of-line */
     if(key == KEY_DOWN)
         return CHAR_CTRL_N; /* go to next line in history */
     if(key == KEY_UP)

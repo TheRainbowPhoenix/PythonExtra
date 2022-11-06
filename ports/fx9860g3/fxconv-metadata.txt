@@ -1,8 +1,9 @@
-*.png:
+img_*.png:
   type: bopti-image
   name_regex: (.*)\.png \1
 
 font_*.png:
+  name_regex: (.*)\.png \1
   type: font
   charset: print
   grid.padding: 1
