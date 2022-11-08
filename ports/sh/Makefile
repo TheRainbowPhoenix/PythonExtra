@@ -13,6 +13,7 @@ SRC_C = \
     ports/sh/main.c \
     ports/sh/console.c \
     ports/sh/keymap.c \
+    ports/sh/modcasioplot.c \
     ports/sh/modgint.c \
     ports/sh/modtime.c \
     ports/sh/mphalport.c \
@@ -27,6 +28,7 @@ SRC_QSTR += \
     shared/readline/readline.c \
     shared/runtime/pyexec.c \
     ports/sh/main.c \
+    ports/sh/modcasioplot.c \
     ports/sh/modgint.c \
     ports/sh/modtime.c \
 
