@@ -14,6 +14,7 @@ static int widget_shell_id = -1;
 
 /* Events */
 uint16_t WIDGET_SHELL_MOD_CHANGED;
+uint16_t WIDGET_SHELL_CHAR_INPUT;
 
 //=== Modifier states ===//
 
@@ -216,9 +217,10 @@ static bool widget_shell_poly_event(void *s0, jevent e)
 
     /* TODO: Handle input events better in the shell widget! */
     int c = console_key_event_to_char(ev);
-    /* TODO: Can widget_shell_poly_event please not call into MicroPython? */
+
     if(c != 0) {
-        pyexec_event_repl_process_char(c);
+        jevent e = { .type = WIDGET_SHELL_CHAR_INPUT, .data = c };
+        jwidget_emit(s, e);
         return true;
     }
 
@@ -246,4 +248,5 @@ static void j_register_widget_shell(void)
 {
     widget_shell_id = j_register_widget(&type_widget_shell, "jwidget");
     WIDGET_SHELL_MOD_CHANGED = j_register_event();
+    WIDGET_SHELL_CHAR_INPUT = j_register_event();
 }

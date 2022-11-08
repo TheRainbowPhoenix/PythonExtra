@@ -181,9 +181,6 @@ int main(int argc, char **argv)
     while(1) {
         jevent e = jscene_run(scene);
 
-        if(e.type == WIDGET_SHELL_MOD_CHANGED)
-            scene->widget.update = true;
-
         if(e.type == JSCENE_PAINT) {
             dclear(C_WHITE);
             jscene_render(scene);
@@ -202,6 +199,26 @@ int main(int argc, char **argv)
                 DIMAGE_NONE);
 #endif
             dupdate();
+        }
+
+        if(e.type == WIDGET_SHELL_MOD_CHANGED)
+            scene->widget.update = true;
+
+        if(e.type == WIDGET_SHELL_CHAR_INPUT)
+            shell_write_char(e.data);
+
+        if(e.type == JFILESELECT_VALIDATED) {
+            char const *path = jfileselect_selected_file(fileselect);
+            char *module = path_to_module(path);
+            if(module) {
+                jscene_show_and_focus(scene, shell);
+                jwidget_set_visible(title, show_title_in_shell);
+
+                shell_write_str("import ");
+                shell_write_str(module);
+                shell_write_str("\r\n");
+                free(module);
+            }
         }
 
         if(e.type != JWIDGET_KEY || e.key.type == KEYEV_UP)

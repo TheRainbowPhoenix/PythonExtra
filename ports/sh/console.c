@@ -192,6 +192,43 @@ void console_clean_backlog(console_t *cons)
     cons->line_count = remains;
 }
 
+void console_render(int x, int y, console_t const *cons, int w, int dy,
+    int lines)
+{
+    int watermark = lines;
+
+    for(int i = 0; i < cons->line_count; i++) {
+        console_line_update_render_lines(&cons->lines[i], w);
+        watermark -= cons->lines[i].render_lines;
+    }
+
+    /* Show only visible lines */
+    for(int i = 0; i < cons->line_count; i++) {
+        console_line_t *line = &cons->lines[i];
+        bool show_cursor = (i == cons->line_count - 1);
+
+        if(watermark + line->render_lines > 0)
+            y = console_line_render(x, y, line, w, dy, -watermark,
+                show_cursor ? cons->cursor : -1);
+        watermark += line->render_lines;
+    }
+}
+
+void console_clear_render_flag(console_t *cons)
+{
+    cons->render_needed = false;
+}
+
+void console_destroy(console_t *cons)
+{
+    for(int i = 0; i < cons->line_count; i++)
+        console_line_deinit(&cons->lines[i]);
+    free(cons->lines);
+    free(cons);
+}
+
+//=== Edition functions ===//
+
 bool console_write_block_at_cursor(console_t *cons, char const *str, int n)
 {
     if(!cons->line_count && !console_new_line(cons))
@@ -219,6 +256,8 @@ bool console_write_block_at_cursor(console_t *cons, char const *str, int n)
 bool console_write_at_cursor(console_t *cons, char const *buf, int n)
 {
     int offset = 0;
+    if(n < 0)
+        n = strlen(buf);
 
     while(offset < n) {
         /* Find the first '\n', '\e' or end of buffer */
@@ -271,39 +310,11 @@ bool console_write_at_cursor(console_t *cons, char const *buf, int n)
     return true;
 }
 
-void console_render(int x, int y, console_t const *cons, int w, int dy,
-    int lines)
+void console_clear_current_line(console_t *cons)
 {
-    int watermark = lines;
-
-    for(int i = 0; i < cons->line_count; i++) {
-        console_line_update_render_lines(&cons->lines[i], w);
-        watermark -= cons->lines[i].render_lines;
-    }
-
-    /* Show only visible lines */
-    for(int i = 0; i < cons->line_count; i++) {
-        console_line_t *line = &cons->lines[i];
-        bool show_cursor = (i == cons->line_count - 1);
-
-        if(watermark + line->render_lines > 0)
-            y = console_line_render(x, y, line, w, dy, -watermark,
-                show_cursor ? cons->cursor : -1);
-        watermark += line->render_lines;
-    }
-}
-
-void console_clear_render_flag(console_t *cons)
-{
-    cons->render_needed = false;
-}
-
-void console_destroy(console_t *cons)
-{
-    for(int i = 0; i < cons->line_count; i++)
-        console_line_deinit(&cons->lines[i]);
-    free(cons->lines);
-    free(cons);
+    console_line_t *last_line = &cons->lines[cons->line_count - 1];
+    console_line_delete(last_line, 0, last_line->size);
+    cons->cursor = 0;
 }
 
 //=== Input method ===//

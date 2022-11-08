@@ -93,6 +93,17 @@ bool console_new_line(console_t *cons);
 /* Clean up backlog if the total memory usage is exceeded. */
 void console_clean_backlog(console_t *cons);
 
+/* Render the console with the current font, at (x,y) in a rectangle of width
+   `w` and `lines` total lines separated by `dy` pixels. */
+void console_render(int x, int y, console_t const *cons, int w, int dy,
+   int lines);
+
+void console_clear_render_flag(console_t *cons);
+
+void console_destroy(console_t *cons);
+
+//=== Edition functions ===//
+
 /* Write string at the cursor's position within the last line. This writes a
    raw string without interpreting escape sequences and newlines. */
 bool console_write_block_at_cursor(console_t *cons, char const *str, int n);
@@ -101,13 +112,8 @@ bool console_write_block_at_cursor(console_t *cons, char const *str, int n);
    interprets escape sequences and newlines. */
 bool console_write_at_cursor(console_t *cons, char const *str, int n);
 
-/* TODO: Expand this function */
-void console_render(int x, int y, console_t const *cons, int w, int dy,
-   int lines);
-
-void console_clear_render_flag(console_t *cons);
-
-void console_destroy(console_t *cons);
+/* Clear the current line. */
+void console_clear_current_line(console_t *cons);
 
 //=== Input method ===//
 
