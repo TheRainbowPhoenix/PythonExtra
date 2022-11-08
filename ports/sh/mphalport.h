@@ -7,9 +7,7 @@
 
 #include <gint/clock.h>
 #include <time.h>
-
-/* Set the interrupt character in the terminal. */
-void mp_hal_set_interrupt_char(char c);
+#include "shared/runtime/interrupt_char.h"
 
 /* Receive a single character from shell (blocking). */
 int mp_hal_stdin_rx_chr(void);

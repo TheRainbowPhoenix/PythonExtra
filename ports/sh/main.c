@@ -14,6 +14,7 @@
 #include "shared/runtime/pyexec.h"
 
 #include <gint/display.h>
+#include <gint/drivers/keydev.h>
 #include <gint/keyboard.h>
 #include <gint/fs.h>
 
@@ -84,6 +85,50 @@ static bool py_file_filter(struct dirent const *ent)
     return strendswith(ent->d_name, ".py");
 }
 
+static void shell_write_char(int c)
+{
+    pyexec_event_repl_process_char(c);
+}
+static void shell_write_str(char const *str)
+{
+    while(*str)
+        pyexec_event_repl_process_char(*str++);
+}
+
+static char *path_to_module(char const *path)
+{
+    if(path[0] == '/')
+        path++;
+
+    int i, n = strlen(path);
+    char *module = malloc(n + 1);
+    if(!module)
+        return NULL;
+
+    for(i = 0; i < n; i++) {
+        if(i == n - 3 && !strcmp(path + i, ".py"))
+            break;
+        module[i] = (path[i] == '/') ? '.' : path[i];
+    }
+    module[i] = 0;
+    return module;
+}
+
+/* Filter AC/ON push events asynchronously from the keyboard driver and
+   interrupt MicroPython instead. */
+static bool async_filter(key_event_t ev)
+{
+    if(mp_interrupt_char < 0)
+        return true;
+    if(ev.type == KEYEV_DOWN && ev.key == KEY_ACON) {
+        /* This function is designed to be called asynchronously. */
+        mp_sched_keyboard_interrupt();
+        return false;
+    }
+    return true;
+}
+
+
 int main(int argc, char **argv)
 {
 #if DEBUG
@@ -92,6 +137,8 @@ int main(int argc, char **argv)
 #endif
 
     //=== Init sequence ===//
+
+    keydev_set_async_filter(keydev_std(), async_filter);
 
     pe_shell_console = console_create(8192);
 
