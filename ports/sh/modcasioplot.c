@@ -114,7 +114,7 @@ MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(draw_string_obj, 5, 5, draw_string);
 STATIC const mp_rom_map_elem_t casioplot_module_globals_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR_casioplot) },
     { MP_ROM_QSTR(MP_QSTR_show_screen), MP_ROM_PTR(&show_screen_obj) },
-    { MP_ROM_QSTR(MP_QSTR_clear_screeb), MP_ROM_PTR(&clear_screen_obj) },
+    { MP_ROM_QSTR(MP_QSTR_clear_screen), MP_ROM_PTR(&clear_screen_obj) },
     { MP_ROM_QSTR(MP_QSTR_set_pixel), MP_ROM_PTR(&set_pixel_obj) },
     { MP_ROM_QSTR(MP_QSTR_get_pixel), MP_ROM_PTR(&get_pixel_obj) },
     { MP_ROM_QSTR(MP_QSTR_draw_string), MP_ROM_PTR(&draw_string_obj) },

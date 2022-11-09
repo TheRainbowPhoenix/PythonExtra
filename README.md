@@ -17,16 +17,16 @@ Most of the code is in `ports/sh` and is shared between the platforms.
 Bugs to fix:
 - Fix not world switching during filesystem accesses (very unstable)
 - Fix the console not garbage collecting its lines (enable and test the feature)
+- Fix not resetting the shell when importing a file from command-line
 
 Python features:
 - Compare features with existing implementations and other brands
 - Get filesystem access (open etc) with the POSIX interface
 - Get a decent amount of RAM not just the fixed 32 kiB that's hardcoded so far
-- Interrupt with AC/ON
 
 UI:
-- Shell escapes: move cursor, history
-- Better input system in the shell
+- Better input system in the shell (don't use VT-100 escapes, then move cursor
+  and handle history)
 - Add an option for fixed-width font which also sets $COLUMNS properly so that
   MicroPython paginates (requires better getenv/setenv support in fxlib)
 - Use [unicode-fonts](/Lephenixnoir/unicode-fonts) to provide Unicode support
