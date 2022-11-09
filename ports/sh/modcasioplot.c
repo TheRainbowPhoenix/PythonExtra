@@ -96,7 +96,9 @@ static mp_obj_t draw_string(size_t n, mp_obj_t const *args)
 
     /* TODO: casioplot: draw_string(): Don't ignore the size parameter */
     /* It is normally "small", "medium" or "large" */
-    (void)args[4];
+    if(n == 5) {
+        (void)args[4];
+    }
 
     font_t const *old_font = dfont(NULL);
     dtext_opt(x, y, color, C_NONE, DTEXT_LEFT, DTEXT_TOP, text, text_len);
@@ -109,7 +111,7 @@ MP_DEFINE_CONST_FUN_OBJ_0(show_screen_obj, show_screen);
 MP_DEFINE_CONST_FUN_OBJ_0(clear_screen_obj, clear_screen);
 MP_DEFINE_CONST_FUN_OBJ_3(set_pixel_obj, set_pixel);
 MP_DEFINE_CONST_FUN_OBJ_2(get_pixel_obj, get_pixel);
-MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(draw_string_obj, 5, 5, draw_string);
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(draw_string_obj, 4, 5, draw_string);
 
 STATIC const mp_rom_map_elem_t casioplot_module_globals_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR_casioplot) },

@@ -35,6 +35,12 @@ UI:
   * Try and provide a font smaller than 5x7 for more compact shell on mono
 - A decent keymap that can input all relevant characters into the shell
 
+Test cases:
+- [ ] Chute tridimensionnelle
+- [ ] Bad Apple
+- [ ] Island of the Dead Kings
+- [ ] Synchro-Donjon
+
 Future wishes:
 - Build for fx-9860G II (requires manual filesystem support)
 - Lephe's secret ideas (complete previous list to unlock)
