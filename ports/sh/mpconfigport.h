@@ -8,6 +8,12 @@
 #include <stdint.h>
 #include <alloca.h>
 
+/* Debugging options: PythonExtra debug tools (pretty much required for any
+   other one), MicroPython's verbose logging. */
+/* PythonExtra's main debug flag */
+#define PE_DEBUG                          (0)
+#define MICROPY_DEBUG_VERBOSE             (0)
+
 /* General feature set selection
    Other options: BASIC_FEATURES, EXTRA_FEATURES, FULL_FEATURES, EVERYTHING */
 #define MICROPY_CONFIG_ROM_LEVEL (MICROPY_CONFIG_ROM_LEVEL_CORE_FEATURES)

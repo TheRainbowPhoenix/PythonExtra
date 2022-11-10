@@ -12,6 +12,7 @@ LIBS += -nostdlib -Wl,--no-warn-rwx-segments $(SH_LDFLAGS) -Wl,-Map=build/map
 SRC_C = \
     ports/sh/main.c \
     ports/sh/console.c \
+    ports/sh/debug.c \
     ports/sh/keymap.c \
     ports/sh/modcasioplot.c \
     ports/sh/modgint.c \

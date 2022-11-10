@@ -16,6 +16,7 @@
 #include <gint/display.h>
 #include <gint/drivers/keydev.h>
 #include <gint/keyboard.h>
+#include <gint/kmalloc.h>
 #include <gint/fs.h>
 
 #include <justui/jscene.h>
@@ -30,16 +31,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "mpconfigport.h"
 #include "console.h"
 #include "widget_shell.h"
-
-/* TODO: Expand debug configuration to not be hardcoded */
-#define DEBUG 0
-
-#if DEBUG
-#include <gint/usb.h>
-#include <gint/usb-ff-bulk.h>
-#endif
+#include "debug.h"
 
 #ifdef FX9860G
 extern bopti_image_t const img_fkeys_main;
@@ -128,13 +123,10 @@ static bool async_filter(key_event_t ev)
     return true;
 }
 
-
 int main(int argc, char **argv)
 {
-#if DEBUG
-    usb_interface_t const *intf[] = { &usb_ff_bulk, NULL };
-    usb_open(intf, GINT_CALL_NULL);
-#endif
+    pe_debug_init();
+    pe_debug_kmalloc();
 
     //=== Init sequence ===//
 
@@ -272,10 +264,10 @@ int main(int argc, char **argv)
             continue;
         int key = e.key.key;
 
-#if DEBUG
-        if(usb_is_open() && key == KEY_SQUARE && !e.key.shift && e.key.alpha)
-            usb_fxlink_screenshot(true);
-#endif
+        if(key == KEY_SQUARE && !e.key.shift && e.key.alpha)
+            pe_debug_screenshot();
+        if(key == KEY_TAN)
+            pe_debug_kmalloc();
 
         if(key == KEY_F1) {
             jscene_show_and_focus(scene, fileselect);
@@ -289,7 +281,6 @@ int main(int argc, char **argv)
 
     //=== Deinitialization ===//
 
-    // Deinitialise the runtime.
     gc_sweep_all();
     mp_deinit();
     console_destroy(pe_shell_console);
