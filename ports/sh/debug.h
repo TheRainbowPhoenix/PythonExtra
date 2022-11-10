@@ -7,7 +7,7 @@
 //
 // Most of the debugging occurs via USB. This module also includes screenshots
 // and other developer-only utilities. The interface always exists but it's
-// completely no-oped if PE_DEBUG isn't set.
+// almost entirely no-oped if PE_DEBUG isn't set.
 //---
 
 #ifndef __PYTHONEXTRA_DEBUG_H
@@ -18,6 +18,10 @@
 
 /* Initialize debugging resources (mostly the USB connection). */
 void pe_debug_init(void);
+
+/* Panic with a message (available even if PE_DEBUG=0). */
+void pe_debug_panic(char const *msg)
+__attribute__((noreturn));
 
 /* Print to the debug stream. This function is also called DEBUG_printf in
    MicroPython code. */

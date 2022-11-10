@@ -3,8 +3,23 @@
 #include <gint/usb-ff-bulk.h>
 #include <gint/kmalloc.h>
 #include <gint/display.h>
+#include <gint/keyboard.h>
 #include <gint/cpu.h>
 #include <stdio.h>
+#include <stdlib.h>
+
+void pe_debug_panic(char const *msg)
+{
+    int dy = dfont_default()->line_height + 2;
+
+    dclear(C_BLACK);
+    dtext(1, 1, C_WHITE, "PythonExtra panic!");
+    dtext(1, 1+dy, C_WHITE, msg);
+    dupdate();
+
+    getkey();
+    exit(1);
+}
 
 #if PE_DEBUG
 

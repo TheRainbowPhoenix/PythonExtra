@@ -18,6 +18,8 @@ Bugs to fix:
 - Fix not world switching during filesystem accesses (very unstable)
 - Fix the console not garbage collecting its lines (enable and test the feature)
 - Fix not resetting the shell when importing a file from command-line
+- Fix current working directory not changing during a module import (for
+  relative imports)
 
 Python features:
 - Compare features with existing implementations and other brands

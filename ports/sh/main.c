@@ -140,26 +140,27 @@ int main(int argc, char **argv)
     open_generic(&stdouterr_type, pe_shell_console, STDOUT_FILENO);
     open_generic(&stdouterr_type, pe_shell_console, STDERR_FILENO);
 
-    /* Initialize MicroPython */
-    #define HEAP_SIZE 32768
-    void *heap = malloc(32768);
-    if(!heap) {
-        dclear(C_WHITE);
-        dtext(1, 1, C_BLACK, "No heap!");
-        getkey();
-        return 1;
-    }
-
+    /* Initialize the MicroPython GC with most available memory */
     mp_stack_ctrl_init();
-    gc_init(heap, heap + HEAP_SIZE);
-    // TODO: gc_add(start, end) for each area we want to allocate to
-    // fx-9860G III:
-    // * (nothing? x_x)
-    // fx-CG 50:
-    // * The entirety of _uram
-    // * The entirety of the extra VRAM
-    // * Possibly memory past 2M
-    // * (keep the OS heap for normal malloc())
+#ifdef FX9860G
+    /* Get *some* memory from the OS heap */
+    void *gc_area = malloc(32768);
+    if(!gc_area)
+        pe_debug_panic("No heap!");
+    gc_init(gc_area, gc_area + 32768);
+#else
+    /* Get everything from the OS stack (~ 350 ko) */
+    size_t gc_area_size;
+    void *gc_area = kmalloc_max(&gc_area_size, "_ostk");
+    gc_init(gc_area, gc_area + gc_area_size);
+
+    /* Other options:
+       - All of _uram (leaving the OS heap for the shell/GUI/etc)
+       - The OS' extra VRAM
+       - Memory past the 2 MB boundary on tested OSes */
+    // gc_add(start, end)...
+#endif
+
     mp_init();
 
     /* TODO: Add an option for the shorter prompt */
