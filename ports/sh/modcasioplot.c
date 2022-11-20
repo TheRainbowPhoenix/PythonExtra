@@ -114,9 +114,9 @@ static mp_obj_t draw_string(size_t n, mp_obj_t const *args)
         color = get_color(args[3]);
     }
 #ifdef FX9860G
-            dfont(&font_4x6);
+    dfont(&font_4x6);
 #else
-            dfont(NULL);
+    dfont(NULL);
 #endif
     if(n == 5) {
         if(MP_QSTR_small == mp_obj_str_get_qstr(args[4])){
@@ -127,7 +127,7 @@ static mp_obj_t draw_string(size_t n, mp_obj_t const *args)
 #endif
         }else if(MP_QSTR_medium == mp_obj_str_get_qstr(args[4])){
 #ifdef FX9860G
-            dfont(&font_4x6);
+            dfont(&font_4x4);
 #else
             dfont(NULL);
 #endif
