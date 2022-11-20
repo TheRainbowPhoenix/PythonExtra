@@ -38,7 +38,7 @@ UI:
 - A decent keymap that can input all relevant characters into the shell
 
 Test cases:
-- [ ] Chute tridimensionnelle
+- [ ] Chute tridimensionnelle (Memory error on G35+eII)
 - [ ] Bad Apple
 - [ ] Island of the Dead Kings
 - [ ] Synchro-Donjon
