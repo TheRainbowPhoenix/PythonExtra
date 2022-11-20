@@ -62,11 +62,16 @@ static mp_obj_t clear_screen(void)
     return mp_const_none;
 }
 
-static mp_obj_t set_pixel(mp_obj_t _x, mp_obj_t _y, mp_obj_t _color)
+static mp_obj_t set_pixel(size_t n, mp_obj_t const *args)
 {
-    int x = mp_obj_get_int(_x);
-    int y = mp_obj_get_int(_y);
-    color_t color = get_color(_color);
+    int x = mp_obj_get_int(args[0]);
+    int y = mp_obj_get_int(args[1]);
+    color_t color;
+    if(n == 3) {
+        color = get_color(args[2]);
+    } else {
+        color = C_BLACK;
+    }
     dpixel(x, y, color);
     return mp_const_none;
 }
@@ -112,7 +117,7 @@ static mp_obj_t draw_string(size_t n, mp_obj_t const *args)
 
 MP_DEFINE_CONST_FUN_OBJ_0(show_screen_obj, show_screen);
 MP_DEFINE_CONST_FUN_OBJ_0(clear_screen_obj, clear_screen);
-MP_DEFINE_CONST_FUN_OBJ_3(set_pixel_obj, set_pixel);
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(set_pixel_obj, 2, 3, set_pixel);
 MP_DEFINE_CONST_FUN_OBJ_2(get_pixel_obj, get_pixel);
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(draw_string_obj, 4, 5, draw_string);
 
