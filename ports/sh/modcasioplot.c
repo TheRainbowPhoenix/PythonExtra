@@ -76,14 +76,17 @@ static mp_obj_t get_pixel(mp_obj_t _x, mp_obj_t _y)
     int x = mp_obj_get_int(_x);
     int y = mp_obj_get_int(_y);
 
+    if(x >= 0 && x < DWIDTH && y >= 0 && y < DHEIGHT) {
 #ifdef FX9860G
-    int bit = gint_vram[(y << 2) + (x >> 5)] & (1 << (~x & 31));
-    color_t color = (bit != 0) ? C_BLACK : C_WHITE;
+        int bit = gint_vram[(y << 2) + (x >> 5)] & (1 << (~x & 31));
+        color_t color = (bit != 0) ? C_BLACK : C_WHITE;
 #else
-    color_t color = gint_vram[DWIDTH * y + x];
+        color_t color = gint_vram[DWIDTH * y + x];
 #endif
 
-    return make_color(color);
+        return make_color(color);
+    }
+    return mp_const_none;
 }
 
 static mp_obj_t draw_string(size_t n, mp_obj_t const *args)
