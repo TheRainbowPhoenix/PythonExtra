@@ -114,7 +114,7 @@ static mp_obj_t draw_string(size_t n, mp_obj_t const *args)
         color = get_color(args[3]);
     }
 #ifdef FX9860G
-    dfont(&font_4x6);
+    dfont(&font_4x4);
 #else
     dfont(NULL);
 #endif
