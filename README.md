@@ -42,6 +42,7 @@ Test cases:
 - [ ] Bad Apple
 - [ ] Island of the Dead Kings
 - [ ] Synchro-Donjon
+- [x] Flappy bird (Working on G35+eII)
 
 Future wishes:
 - Build for fx-9860G II (requires manual filesystem support)
