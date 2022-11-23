@@ -143,22 +143,15 @@ int main(int argc, char **argv)
     /* Initialize the MicroPython GC with most available memory */
     mp_stack_ctrl_init();
 #ifdef FX9860G
-    /* Add some Python ram */
-    kmalloc_arena_t python_ram;
-    python_ram.name = "_uram";
-    python_ram.is_default = 0;
-    python_ram.start = (void*)0x88053800;
-    python_ram.end = (void*)0x8807f000;
-    kmalloc_init_arena(&python_ram, 1);
-    bool success = kmalloc_add_arena(&python_ram);
-    if(!success) {
-        pe_debug_panic("Can't use Python ram!");
-    }
     /* Get *some* memory from the OS heap */
     void *gc_area = malloc(32768);
     if(!gc_area)
         pe_debug_panic("No heap!");
-    gc_init(python_ram.start, python_ram.end);
+    gc_init(gc_area, gc_area + 32768);
+    /* Add some Python ram */
+    void *py_ram_start = (void*)0x88053800;
+    void *py_ram_end = (void*)0x8807f000;
+    gc_add(py_ram_start, py_ram_end);
 #else
     /* Get everything from the OS stack (~ 350 ko) */
     size_t gc_area_size;
