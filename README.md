@@ -20,6 +20,8 @@ Bugs to fix:
 - Fix not resetting the shell when importing a file from command-line
 - Fix current working directory not changing during a module import (for
   relative imports)
+- Fix accumulated events being processed when the program "ends" (if we can
+  detect that)
 
 Python features:
 - Compare features with existing implementations and other brands
