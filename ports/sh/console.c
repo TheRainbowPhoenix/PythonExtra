@@ -171,34 +171,45 @@ bool console_new_line(console_t *cons)
 
 void console_clean_backlog(console_t *cons)
 {
-    int total_size = 0, i = cons->line_count;
+    /* Find how many lines we can keep while using at most cons->backlog_size
+       bytes to store them. The console must always have at least one line. */
+    int first_kept = cons->line_count;
+    int line_size = 0;
+    int total_size = 0;
 
-    /* Determine how many lines (starting from the end) we can fit */
-    while(total_size < cons->backlog_size) {
-        i--;
-        total_size += cons->lines[i].size;
+    do {
+        total_size += line_size;
+        first_kept--;
+        line_size = cons->lines[first_kept].size;
     }
+    while(first_kept > 0 && total_size + line_size <= cons->backlog_size);
 
-    /* Make sure to keep at least one line */
-    int delete_until = i + (i < cons->line_count - 1);
-    int remains = cons->line_count - delete_until;
-
-    /* Remove `delete_until` lines */
-    for(int j = 0; j < delete_until; j++)
+    /* Remove old lines */
+    for(int j = 0; j < first_kept; j++)
         console_line_deinit(&cons->lines[j]);
 
     /* Don't realloc() yet, it will happen soon enough anyway */
-    memmove(cons->lines, cons->lines + delete_until, remains);
-    cons->line_count = remains;
+    memmove(cons->lines, cons->lines + first_kept,
+        (cons->line_count - first_kept) * sizeof cons->lines[0]);
+    cons->line_count -= first_kept;
 }
 
-void console_render(int x, int y, console_t const *cons, int w, int dy,
-    int lines)
+void console_render(int x, int y0, console_t const *cons, int w, int dy,
+    int visible_lines)
 {
-    int watermark = lines;
+    int total_lines = 0;
+    int watermark = visible_lines;
+    int y = y0;
+
+#ifdef FX9860G
+    int text_w = w - 2, scroll_spacing = 1, scroll_w = 1;
+#else
+    int text_w = w - 4, scroll_spacing = 2, scroll_w = 2;
+#endif
 
     for(int i = 0; i < cons->line_count; i++) {
         console_line_update_render_lines(&cons->lines[i], w);
+        total_lines += cons->lines[i].render_lines;
         watermark -= cons->lines[i].render_lines;
     }
 
@@ -208,9 +219,21 @@ void console_render(int x, int y, console_t const *cons, int w, int dy,
         bool show_cursor = (i == cons->line_count - 1);
 
         if(watermark + line->render_lines > 0)
-            y = console_line_render(x, y, line, w, dy, -watermark,
+            y = console_line_render(x, y, line, text_w, dy, -watermark,
                 show_cursor ? cons->cursor : -1);
         watermark += line->render_lines;
+    }
+
+    /* Scrollbar */
+    if(total_lines > visible_lines) {
+        int first_shown = total_lines - visible_lines;
+        int h = dy * visible_lines;
+        int y1 = y0 + h * first_shown / total_lines;
+        int y2 = y0 + h * (first_shown + visible_lines) / total_lines;
+
+        drect(x + text_w + scroll_spacing, y1,
+              x + text_w + scroll_spacing + scroll_w - 1, y2,
+              C_BLACK);
     }
 }
 
