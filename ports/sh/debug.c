@@ -4,9 +4,11 @@
 #include <gint/kmalloc.h>
 #include <gint/display.h>
 #include <gint/keyboard.h>
+#include <gint/timer.h>
 #include <gint/cpu.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "py/mpstate.h"
 
 void pe_debug_panic(char const *msg)
 {
@@ -23,44 +25,53 @@ void pe_debug_panic(char const *msg)
 
 #if PE_DEBUG
 
+#if 0 // Timeout fxlink not supported yet
+static bool timeout_popup(void)
+{
+    dclear(C_BLACK);
+    dtext_opt(DWIDTH/2, DHEIGHT/2 - 21, C_WHITE, C_NONE, DTEXT_MIDDLE,
+        DTEXT_MIDDLE, "An fxlink message timed out!");
+    dtext_opt(DWIDTH/2, DHEIGHT/2 - 7, C_WHITE, C_NONE, DTEXT_MIDDLE,
+        DTEXT_MIDDLE, "Start fxlink and press [EXE]:");
+    dtext_opt(DWIDTH/2, DHEIGHT/2 + 7, C_WHITE, C_NONE, DTEXT_MIDDLE,
+        DTEXT_MIDDLE, "% fxlink -iqw");
+    dtext_opt(DWIDTH/2, DHEIGHT/2 + 21, C_WHITE, C_NONE, DTEXT_MIDDLE,
+        DTEXT_MIDDLE, "or press [EXIT] to drop the message");
+    dupdate();
+
+    while(1) {
+        int key = getkey().key;
+        if(key == KEY_EXE)
+            return false;
+        if(key == KEY_EXIT)
+            return true;
+    }
+}
+#endif
+
 void pe_debug_init(void)
 {
     usb_interface_t const *intf[] = { &usb_ff_bulk, NULL };
     usb_open(intf, GINT_CALL_NULL);
-
-    dclear(C_BLACK);
-    dtext_opt(DWIDTH/2, DHEIGHT/2 - 3, C_WHITE, C_NONE, DTEXT_MIDDLE,
-        DTEXT_BOTTOM, "Waiting for USB connection...");
-    dtext_opt(DWIDTH/2, DHEIGHT/2 + 3, C_WHITE, C_NONE, DTEXT_MIDDLE,
-        DTEXT_TOP, "% fxlink -iqw");
-    dupdate();
-
-    while(!usb_is_open()) sleep();
+    usb_open_wait();
 }
 
-void pe_debug_printf(char const *fmt, ...)
+int pe_debug_printf(char const *fmt, ...)
 {
-    char str_default[256];
-
+    char str[512];
     va_list args;
+
     va_start(args, fmt);
-    char *str;
-    vasprintf(&str, fmt, args);
+    int rc = vsnprintf(str, sizeof str, fmt, args);
     va_end(args);
 
-    if(str == NULL) {
-        va_start(args, fmt);
-        str = str_default;
-        vsnprintf(str, sizeof str_default, fmt, args);
-        va_end(args);
-    }
-
-    if(usb_is_open())
-        usb_fxlink_text(str, 0);
+    usb_open_wait();
+    usb_fxlink_text(str, 0);
+    return rc;
 }
 
 /* This function is used in MicroPython. */
-void DEBUG_printf(char const *fmt, ...)
+int DEBUG_printf(char const *fmt, ...)
 __attribute__((alias("pe_debug_printf")));
 
 void pe_debug_kmalloc(void)
@@ -78,8 +89,8 @@ void pe_debug_kmalloc(void)
 
 void pe_debug_screenshot(void)
 {
-    if(usb_is_open())
-        usb_fxlink_screenshot(true);
+    usb_open_wait();
+    usb_fxlink_screenshot(true);
 }
 
 #endif /* PE_DEBUG */
