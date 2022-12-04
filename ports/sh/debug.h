@@ -25,7 +25,7 @@ __attribute__((noreturn));
 
 /* Print to the debug stream. This function is also called DEBUG_printf in
    MicroPython code. */
-void pe_debug_printf(char const *fmt, ...);
+int pe_debug_printf(char const *fmt, ...);
 
 /* Print information about allocation status. */
 void pe_debug_kmalloc(void);
