@@ -113,13 +113,17 @@ static char *path_to_module(char const *path)
    interrupt MicroPython instead. */
 static bool async_filter(key_event_t ev)
 {
-    if(mp_interrupt_char < 0)
-        return true;
-    if(ev.type == KEYEV_DOWN && ev.key == KEY_ACON) {
-        /* This function is designed to be called asynchronously. */
-        mp_sched_keyboard_interrupt();
+    /* Gobble all events related to AC/ON to make sure that the keyboard driver
+       treats them as handled. Otherwise, we'd run the risk of filling the
+       event queue (if the user doesn't read from it) thus preventing the
+       driver from handling AC/ON releases, which disables further presses. */
+    if(mp_interrupt_char >= 0 && ev.key == KEY_ACON) {
+        /* This function supports asynchronous calls, by design. */
+        if(ev.type == KEYEV_DOWN)
+            mp_sched_keyboard_interrupt();
         return false;
     }
+
     return true;
 }
 
