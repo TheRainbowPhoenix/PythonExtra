@@ -94,6 +94,7 @@ widget_shell *widget_shell_create(console_t *console, void *parent)
     s->font = dfont_default();
     s->color = C_BLACK;
     s->line_spacing = 0;
+    s->scroll = 0;
     s->lines = 0;
 
     s->shift = MOD_IDLE;
@@ -167,11 +168,11 @@ static void widget_shell_poly_render(void *s0, int x, int y)
     widget_shell *s = s0;
     int line_height = s->font->line_height + s->line_spacing;
 
-    font_t const *old_font = dfont(s->font);
-    console_render(x, y, s->console, jwidget_content_width(s), line_height,
+    console_compute_view(s->console, s->font, jwidget_content_width(s),
         s->lines);
+    s->scroll = console_clamp_scrollpos(s->console, s->scroll);
+    console_render(x, y, s->console, line_height, s->scroll);
     console_clear_render_flag(s->console);
-    dfont(old_font);
 }
 
 static void widget_shell_update_mod(widget_shell *s, key_event_t ev)
@@ -204,6 +205,16 @@ static bool widget_shell_poly_event(void *s0, jevent e)
 
     if(ev.key == KEY_SHIFT || ev.key == KEY_ALPHA) {
         widget_shell_update_mod(s, ev);
+        return true;
+    }
+    if(ev.type != KEYEV_UP && ev.key == KEY_UP) {
+        s->scroll++;
+        s->widget.update = true;
+        return true;
+    }
+    if(ev.type != KEYEV_UP && ev.key == KEY_DOWN) {
+        s->scroll--;
+        s->widget.update = true;
         return true;
     }
 

@@ -56,6 +56,8 @@ typedef struct {
     uint16_t color;
     /* Extra line spacing */
     int8_t line_spacing;
+    /* Current scroll position */
+    console_scrollpos_t scroll;
 
     /* Internal information */
     int timer_id;

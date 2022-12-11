@@ -103,7 +103,7 @@ void console_line_update_render_lines(console_line_t *line, int width)
 }
 
 int console_line_render(int x, int y, console_line_t *line, int w, int dy,
-    int show_from, int cursor)
+    int show_from, int show_until, int cursor)
 {
     char const *p = line->data;
     char const *endline = p + strlen(p);
@@ -114,7 +114,7 @@ int console_line_render(int x, int y, console_line_t *line, int w, int dy,
         char const *endscreen = drsize(p, NULL, w, NULL);
         int len = endscreen - p;
 
-        if(line_number >= show_from) {
+        if(line_number >= show_from && line_number < show_until) {
             dtext_opt(x, y, C_BLACK, C_NONE, DTEXT_LEFT, DTEXT_TOP, p, len);
             if(cursor >= line_offset && cursor <= line_offset + len) {
                 int w, h;
@@ -139,8 +139,16 @@ console_t *console_create(int backlog_size)
     console_t *cons = malloc(sizeof *cons);
     cons->lines = NULL;
     cons->line_count = 0;
+
+    cons->absolute_lineno = 1;
     cons->backlog_size = max(backlog_size, PE_CONSOLE_LINE_MAX_LENGTH);
+
     cons->render_needed = true;
+    cons->render_font = NULL;
+    cons->render_width = 0;
+    cons->render_lines = 0;
+    cons->render_total_lines = 0;
+
     if(!console_new_line(cons)) {
         free(cons);
         return NULL;
@@ -169,6 +177,13 @@ bool console_new_line(console_t *cons)
     return true;
 }
 
+/* static console_line_t *console_get_absolute_line(console_t const *cons,
+    int lineno)
+{
+    int i = lineno - cons->absolute_lineno;
+    return (i >= 0 && i < cons->line_count) ? &cons->lines[i] : NULL;
+} */
+
 void console_clean_backlog(console_t *cons)
 {
     /* Find how many lines we can keep while using at most cons->backlog_size
@@ -192,49 +207,9 @@ void console_clean_backlog(console_t *cons)
     memmove(cons->lines, cons->lines + first_kept,
         (cons->line_count - first_kept) * sizeof cons->lines[0]);
     cons->line_count -= first_kept;
-}
 
-void console_render(int x, int y0, console_t const *cons, int w, int dy,
-    int visible_lines)
-{
-    int total_lines = 0;
-    int watermark = visible_lines;
-    int y = y0;
-
-#ifdef FX9860G
-    int text_w = w - 2, scroll_spacing = 1, scroll_w = 1;
-#else
-    int text_w = w - 4, scroll_spacing = 2, scroll_w = 2;
-#endif
-
-    for(int i = 0; i < cons->line_count; i++) {
-        console_line_update_render_lines(&cons->lines[i], w);
-        total_lines += cons->lines[i].render_lines;
-        watermark -= cons->lines[i].render_lines;
-    }
-
-    /* Show only visible lines */
-    for(int i = 0; i < cons->line_count; i++) {
-        console_line_t *line = &cons->lines[i];
-        bool show_cursor = (i == cons->line_count - 1);
-
-        if(watermark + line->render_lines > 0)
-            y = console_line_render(x, y, line, text_w, dy, -watermark,
-                show_cursor ? cons->cursor : -1);
-        watermark += line->render_lines;
-    }
-
-    /* Scrollbar */
-    if(total_lines > visible_lines) {
-        int first_shown = total_lines - visible_lines;
-        int h = dy * visible_lines;
-        int y1 = y0 + h * first_shown / total_lines;
-        int y2 = y0 + h * (first_shown + visible_lines) / total_lines;
-
-        drect(x + text_w + scroll_spacing, y1,
-              x + text_w + scroll_spacing + scroll_w - 1, y2,
-              C_BLACK);
-    }
+    /* Update the absolute number of the first line */
+    cons->absolute_lineno += first_kept;
 }
 
 void console_clear_render_flag(console_t *cons)
@@ -248,6 +223,104 @@ void console_destroy(console_t *cons)
         console_line_deinit(&cons->lines[i]);
     free(cons->lines);
     free(cons);
+}
+
+//=== Rendering functions ===//
+
+/* Compute the shell's horizontal layout as:
+   1. Text width (region where the text is renderer)
+   2. Spacing left of the scrollbar
+   3. Width of the scrollbar */
+static void view_params(int w,
+    int *text_w, int *scroll_spacing, int *scroll_width)
+{
+#ifdef FX9860G
+    if(text_w)
+        *text_w = w - 2;
+    if(scroll_spacing)
+        *scroll_spacing = 1;
+    if(scroll_width)
+        *scroll_width = 1;
+#else
+    if(text_w)
+        *text_w = w - 4;
+    if(scroll_spacing)
+        *scroll_spacing = 2;
+    if(scroll_width)
+        *scroll_width = 2;
+#endif
+}
+
+void console_compute_view(console_t *cons, font_t const *font,
+    int width, int lines)
+{
+    cons->render_font = font;
+    cons->render_width = width;
+    cons->render_lines = lines;
+    cons->render_total_lines = 0;
+
+    int text_w;
+    view_params(width, &text_w, NULL, NULL);
+
+    for(int i = 0; i < cons->line_count; i++) {
+        console_line_update_render_lines(&cons->lines[i], text_w);
+        cons->render_total_lines += cons->lines[i].render_lines;
+    }
+}
+
+console_scrollpos_t console_clamp_scrollpos(console_t const *cons,
+    console_scrollpos_t pos)
+{
+    /* No scrolling case */
+    if(cons->render_total_lines < cons->render_lines)
+        return 0;
+
+    /* Normal clamp */
+    return max(0, min(pos, cons->render_total_lines - cons->render_lines));
+}
+
+void console_render(int x, int y0, console_t const *cons, int dy,
+    console_scrollpos_t pos)
+{
+    int total_lines = cons->render_total_lines;
+    int visible_lines = cons->render_lines;
+    int w = cons->render_width;
+    int watermark = visible_lines - total_lines + pos;
+    int y = y0;
+
+    int text_w, scroll_spacing, scroll_w;
+    view_params(w, &text_w, &scroll_spacing, &scroll_w);
+
+    font_t const *old_font = dfont(cons->render_font);
+
+    /* Show only visible lines */
+    for(int i = 0; i < cons->line_count; i++) {
+        console_line_t *line = &cons->lines[i];
+        bool show_cursor = (i == cons->line_count - 1);
+
+        if(watermark + line->render_lines > 0)
+            y = console_line_render(x, y, line, text_w, dy, -watermark,
+                visible_lines - watermark, show_cursor ? cons->cursor : -1);
+        watermark += line->render_lines;
+    }
+
+    dfont(old_font);
+
+    /* Scrollbar */
+    if(total_lines > visible_lines) {
+        int first_shown = total_lines - visible_lines - pos;
+        int h = dy * visible_lines;
+        int y1 = y0 + h * first_shown / total_lines;
+        int y2 = y0 + h * (first_shown + visible_lines) / total_lines;
+
+        int color = C_BLACK;
+#ifdef FXCG50
+        if(pos == 0) color = C_RGB(24, 24, 24);
+#endif
+        drect(x + text_w + scroll_spacing, y1,
+              x + text_w + scroll_spacing + scroll_w - 1, y2,
+              color);
+    }
 }
 
 //=== Edition functions ===//
