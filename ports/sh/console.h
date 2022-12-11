@@ -12,12 +12,18 @@
 // * Dynamically-sized lines with reflow
 // * Cap memory usage based on the total amount of text, not just line count
 // * Basic ANSI-escape-based edition features (but only on the last line)
+//
+// The console tries fairly hard to focus on text manipulation and separate
+// rendering. To render, one must first compute a "view" of the terminal, which
+// essentially determines line wrapping and scrolling bounds, and then use that
+// view and a valid scroll position within it to render.
 //---
 
 #ifndef __PYTHONEXTRA_CONSOLE_H
 #define __PYTHONEXTRA_CONSOLE_H
 
 #include <gint/keyboard.h>
+#include <gint/display.h>
 #include <stdbool.h>
 
 /* Maximum line length, to ensure the console can threshold its memory usage
@@ -62,6 +68,10 @@ void console_line_delete(console_line_t *line, int p, int n);
 /* Update the number of render lines for the chosen width. */
 void console_line_update_render_lines(console_line_t *line, int width);
 
+/* Render a vertical slice of the wrapped line. */
+int console_line_render(int x, int y, console_line_t *line, int w, int dy,
+    int show_from, int show_until, int cursor);
+
 //=== Terminal emulator ===//
 
 typedef struct
@@ -75,13 +85,25 @@ typedef struct
        than PE_CONSOLE_LINE_MAX_LENGTH. */
     int backlog_size;
 
+    /* Absolute number of the first line in the dynamic line array. This is
+       the line number in the user-facing sense (it includes lines that were
+       cleaned up to free memory). */
+    int absolute_lineno;
     /* Cursor position within the last line. */
     int cursor;
 
     /* Whether new data has been added and a frame should be rendered. */
     bool render_needed;
+    /* View parameters from last console_compute_view() */
+    font_t const *render_font;
+    int render_width;
+    int render_lines;
+    int render_total_lines;
 
 } console_t;
+
+/* Scroll position measured as a number of lines up from the bottom. */
+typedef int console_scrollpos_t;
 
 /* Create a new console with the specified backlog size. */
 console_t *console_create(int backlog_size);
@@ -93,14 +115,32 @@ bool console_new_line(console_t *cons);
 /* Clean up backlog if the total memory usage is exceeded. */
 void console_clean_backlog(console_t *cons);
 
-/* Render the console with the current font, at (x,y) in a rectangle of width
-   `w` and `lines` total lines separated by `dy` pixels. */
-void console_render(int x, int y, console_t const *cons, int w, int dy,
-   int lines);
-
+/* Clear the console's render flag, which is used to notify of changes. This
+   function is used when handing control of the display from the console to a
+   Python program so the console doesn't override the program's output. */
 void console_clear_render_flag(console_t *cons);
 
+/* Destroy the console and free all associated memory. */
 void console_destroy(console_t *cons);
+
+//=== Rendering interface ===//
+
+/* Compute a view of the console for rendering and scrolling.
+   @font    Font to render text with (use to compute line wrapping)
+   @width   View width in pixels
+   @lines   Number of text lines (spacing can be changed later) */
+void console_compute_view(console_t *cons, font_t const *font,
+    int width, int lines);
+
+/* Clamp a scrolling position to the range valid of the last computed view. */
+console_scrollpos_t console_clamp_scrollpos(console_t const *cons,
+    console_scrollpos_t pos);
+
+/* Render the console at (x,y). The render `width`, the number of `lines` and
+   the text `font` are all as specified by the latest console_compute_view().
+   `dy` indicates line height. */
+void console_render(int x, int y, console_t const *cons, int dy,
+    console_scrollpos_t pos);
 
 //=== Edition functions ===//
 
