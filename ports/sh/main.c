@@ -152,10 +152,12 @@ int main(int argc, char **argv)
     if(!gc_area)
         pe_debug_panic("No heap!");
     gc_init(gc_area, gc_area + 32768);
+#ifdef PE_DEBUG
     /* Add some Python ram */
     void *py_ram_start = (void*)0x88053800;
     void *py_ram_end = (void*)0x8807f000;
     gc_add(py_ram_start, py_ram_end);
+#endif
 #else
     /* Get everything from the OS stack (~ 350 ko) */
     size_t gc_area_size;

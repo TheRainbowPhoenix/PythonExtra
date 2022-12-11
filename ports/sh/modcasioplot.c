@@ -119,25 +119,25 @@ static mp_obj_t draw_string(size_t n, mp_obj_t const *args)
     dfont(NULL);
 #endif
     if(n == 5) {
-        if(MP_QSTR_small == mp_obj_str_get_qstr(args[4])){
+        if(MP_QSTR_small == mp_obj_str_get_qstr(args[4])) {
 #ifdef FX9860G
             dfont(&font_4x4);
 #else
             dfont(NULL);
 #endif
-        }else if(MP_QSTR_medium == mp_obj_str_get_qstr(args[4])){
+        } else if(MP_QSTR_medium == mp_obj_str_get_qstr(args[4])) {
 #ifdef FX9860G
             dfont(&font_4x4);
 #else
             dfont(NULL);
 #endif
-        }else if(MP_QSTR_large == mp_obj_str_get_qstr(args[4])){
+        } else if(MP_QSTR_large == mp_obj_str_get_qstr(args[4])) {
 #ifdef FX9860G
             dfont(&font_5x7);
 #else
             dfont(NULL);
 #endif
-        }else{
+        }else {
             mp_raise_ValueError("Unknown font size");
         }
     }
