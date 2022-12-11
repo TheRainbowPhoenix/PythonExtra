@@ -173,7 +173,7 @@ bool console_new_line(console_t *cons)
     cons->render_needed = true;
 
     /* Routinely clean the backlog every time a line is added. */
-//    console_clean_backlog(cons);
+    console_clean_backlog(cons);
     return true;
 }
 
@@ -210,6 +210,8 @@ void console_clean_backlog(console_t *cons)
 
     /* Update the absolute number of the first line */
     cons->absolute_lineno += first_kept;
+
+    cons->render_needed = true;
 }
 
 void console_clear_render_flag(console_t *cons)
