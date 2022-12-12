@@ -127,8 +127,6 @@ static bool async_filter(key_event_t ev)
     return true;
 }
 
-#include <gint/timer.h>
-
 void pe_after_python_exec(int input_kind, int exec_flags, void *ret_val,
     int *ret)
 {
@@ -137,6 +135,23 @@ void pe_after_python_exec(int input_kind, int exec_flags, void *ret_val,
     (void)ret_val;
     (void)ret;
     clearevents();
+}
+
+static void pe_reset_micropython(void)
+{
+    mp_deinit();
+    mp_init();
+
+    console_new_line(pe_shell_console);
+
+#ifdef FX9860G
+    char const *msg = "**SHELL INIT.**\n";
+#else
+    char const *msg = "*** SHELL INITIALIZED ***\n";
+#endif
+
+    console_write_at_cursor(pe_shell_console, msg, -1);
+    pyexec_event_repl_init();
 }
 
 int main(int argc, char **argv)
@@ -270,6 +285,7 @@ int main(int argc, char **argv)
                 jscene_show_and_focus(scene, shell);
                 jwidget_set_visible(title, show_title_in_shell);
 
+                pe_reset_micropython();
                 shell_write_str("import ");
                 shell_write_str(module);
                 shell_write_str("\r\n");

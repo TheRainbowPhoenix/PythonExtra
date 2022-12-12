@@ -16,7 +16,6 @@ Most of the code is in `ports/sh` and is shared between the platforms.
 
 Bugs to fix:
 - Fix not world switching during filesystem accesses (very unstable)
-- Fix not resetting the shell when importing a file from command-line
 - Fix current working directory not changing during a module import (for
   relative imports)
 
