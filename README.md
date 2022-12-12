@@ -18,6 +18,8 @@ Bugs to fix:
 - Fix not world switching during filesystem accesses (very unstable)
 - Fix current working directory not changing during a module import (for
   relative imports)
+- Fix casioplot not stopping on the last `show_screen()`
+- Fix casioplot not clearing screen on import
 
 Python features:
 - Compare features with existing implementations and other brands

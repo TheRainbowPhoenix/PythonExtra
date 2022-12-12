@@ -8,6 +8,8 @@
 #include "py/runtime.h"
 #include "py/obj.h"
 #include <gint/display.h>
+#include <stdlib.h>
+#include <string.h>
 
 #ifdef FX9860G
 extern font_t font_4x4;
@@ -106,48 +108,48 @@ static mp_obj_t draw_string(size_t n, mp_obj_t const *args)
     int y = mp_obj_get_int(args[1]);
     size_t text_len;
     char const *text = mp_obj_str_get_data(args[2], &text_len);
+    char *text_free = NULL;
 
+    /* If there are \n in the text, turn them into spaces */
+    if(strchr(text, '\n')) {
+        text_free = strdup(text);
+        if(text_free) {
+            for(size_t i = 0; i < text_len; i++)
+                text_free[i] = (text_free[i] == '\n') ? ' ' : text_free[i];
+        }
+    }
+
+#ifdef FX9860G
+    font_t const *fonts[3] = { &font_4x4, &font_4x4, &font_5x7 };
+#else
     /* TODO: casioplot: draw_string(): Add fonts for CG50 */
-    color_t color;
-    font_t const *old_font = dfont(NULL);
+    font_t const *fonts[3] = {
+        dfont_default(), dfont_default(), dfont_default() };
+#endif
+
+    color_t color = C_BLACK;
     if(n >= 4) {
         color = get_color(args[3]);
     }
-#ifdef FX9860G
-    dfont(&font_4x4);
-#else
-    dfont(NULL);
-#endif
+
+    int font_size = 1;
     if(n == 5) {
-        if(MP_QSTR_small == mp_obj_str_get_qstr(args[4])) {
-#ifdef FX9860G
-            dfont(&font_4x4);
-#else
-            dfont(NULL);
-#endif
-        } else if(MP_QSTR_medium == mp_obj_str_get_qstr(args[4])) {
-#ifdef FX9860G
-            dfont(&font_4x4);
-#else
-            dfont(NULL);
-#endif
-        } else if(MP_QSTR_large == mp_obj_str_get_qstr(args[4])) {
-#ifdef FX9860G
-            dfont(&font_5x7);
-#else
-            dfont(NULL);
-#endif
-        }else {
+        if(MP_QSTR_small == mp_obj_str_get_qstr(args[4]))
+            font_size = 0;
+        else if(MP_QSTR_medium == mp_obj_str_get_qstr(args[4]))
+            font_size = 1;
+        else if(MP_QSTR_large == mp_obj_str_get_qstr(args[4]))
+            font_size = 2;
+        else
             mp_raise_ValueError("Unknown font size");
-        }
-    }
-    if(n < 4) {
-        color = C_BLACK;
     }
 
-    dtext_opt(x, y, color, C_NONE, DTEXT_LEFT, DTEXT_TOP, text, text_len);
+    font_t const *old_font = dfont(fonts[font_size]);
+    dtext_opt(x, y, color, C_NONE, DTEXT_LEFT, DTEXT_TOP,
+        text_free ? text_free : text, text_len);
     dfont(old_font);
 
+    free(text_free);
     return mp_const_none;
 }
 
