@@ -18,8 +18,6 @@ Bugs to fix:
 - Fix not world switching during filesystem accesses (very unstable)
 - Fix current working directory not changing during a module import (for
   relative imports)
-- Fix accumulated events being processed when the program "ends" (if we can
-  detect that)
 
 Python features:
 - Compare features with existing implementations and other brands
@@ -30,20 +28,33 @@ UI:
 - Better input system in the shell (don't use VT-100 escapes, then move cursor
   and handle history)
 - Add an option for fixed-width font which also sets $COLUMNS properly so that
-  MicroPython paginates (requires better getenv/setenv support in fxlib)
+  MicroPython paginates (requires better getenv/setenv support in fxlibc)
 - Use [unicode-fonts](/Lephenixnoir/unicode-fonts) to provide Unicode support
   * Extend it with a fixed-width uf8x9 which maybe changes some glyphs (like
     `i` and `l`; the usual fixed-width unambiguous styles)
   * Try and provide a font smaller than 5x7 for more compact shell on mono
 - A decent keymap that can input all relevant characters into the shell
 
-Test cases:
-- [x] Chute tridimensionnelle (Working on G35+eII)
-- [ ] Bad Apple
-- [ ] Island of the Dead Kings
-- [ ] Synchro-Donjon
-- [x] Flappy bird (Working on G35+eII)
-
 Future wishes:
 - Build for fx-9860G II (requires manual filesystem support)
 - Lephe's secret ideas (complete previous list to unlock)
+
+**Test cases**
+
+* **Works on fx-CG**: Whether the program successfully runs on PythonExtra on
+  models of the fx-CG family. This is typically tested on a Graph 90+E but
+  should include the fx-CG 10/20/50.
+* **Works on G-III**: Whether the program successfully runs on G-III models.
+  This does **not** include older models like the fx-9860G II.
+* **Raw speedup**: Speed difference from using PythonExtra instead of the
+  official Python app, without changing the code.
+* **Full speedup**: Speed difference from using PythonExtra-provided modules
+  for rendering and input (usually `gint`), after changing the program's code.
+
+| Program | Works on fx-CG | Works on G-III | Raw speedup | Full speedup |
+| ------- | -------------- | -------------- | ----------- | ------------ |
+| Chute tridimensionnelle | TODO | Yes | TODO | TODO |
+| Bad Apple | TODO | TODO | TODO | TODO |
+| Island of the Dead Kings | TODO | TODO | TODO | TODO |
+| Synchro-Donjon | TODO | TODO | TODO | TODO |
+| Flappy Bird | Yes | Yes | TODO | TODO |
