@@ -18,6 +18,8 @@ Bugs to fix:
 - Fix not world switching during filesystem accesses (very unstable)
 - Fix current working directory not changing during a module import (for
   relative imports)
+- Fix accumulated events being processed when the program "ends" (if we can
+  detect that)
 
 Python features:
 - Compare features with existing implementations and other brands
@@ -36,10 +38,11 @@ UI:
 - A decent keymap that can input all relevant characters into the shell
 
 Test cases:
-- [ ] Chute tridimensionnelle
+- [x] Chute tridimensionnelle (Working on G35+eII)
 - [ ] Bad Apple
 - [ ] Island of the Dead Kings
 - [ ] Synchro-Donjon
+- [x] Flappy bird (Working on G35+eII)
 
 Future wishes:
 - Build for fx-9860G II (requires manual filesystem support)

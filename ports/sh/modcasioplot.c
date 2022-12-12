@@ -9,6 +9,12 @@
 #include "py/obj.h"
 #include <gint/display.h>
 
+#ifdef FX9860G
+extern font_t font_4x4;
+extern font_t font_4x6;
+extern font_t font_5x7;
+#endif
+
 /* TODO: casioplot: Call show_screen() when program finishes */
 
 static color_t get_color(mp_obj_t color)
@@ -62,11 +68,16 @@ static mp_obj_t clear_screen(void)
     return mp_const_none;
 }
 
-static mp_obj_t set_pixel(mp_obj_t _x, mp_obj_t _y, mp_obj_t _color)
+static mp_obj_t set_pixel(size_t n, mp_obj_t const *args)
 {
-    int x = mp_obj_get_int(_x);
-    int y = mp_obj_get_int(_y);
-    color_t color = get_color(_color);
+    int x = mp_obj_get_int(args[0]);
+    int y = mp_obj_get_int(args[1]);
+    color_t color;
+    if(n == 3) {
+        color = get_color(args[2]);
+    } else {
+        color = C_BLACK;
+    }
     dpixel(x, y, color);
     return mp_const_none;
 }
@@ -76,14 +87,17 @@ static mp_obj_t get_pixel(mp_obj_t _x, mp_obj_t _y)
     int x = mp_obj_get_int(_x);
     int y = mp_obj_get_int(_y);
 
+    if(x >= 0 && x < DWIDTH && y >= 0 && y < DHEIGHT) {
 #ifdef FX9860G
-    int bit = gint_vram[(y << 2) + (x >> 5)] & (1 << (~x & 31));
-    color_t color = (bit != 0) ? C_BLACK : C_WHITE;
+        int bit = gint_vram[(y << 2) + (x >> 5)] & (1 << (~x & 31));
+        color_t color = (bit != 0) ? C_BLACK : C_WHITE;
 #else
-    color_t color = gint_vram[DWIDTH * y + x];
+        color_t color = gint_vram[DWIDTH * y + x];
 #endif
 
-    return make_color(color);
+        return make_color(color);
+    }
+    return mp_const_none;
 }
 
 static mp_obj_t draw_string(size_t n, mp_obj_t const *args)
@@ -92,15 +106,45 @@ static mp_obj_t draw_string(size_t n, mp_obj_t const *args)
     int y = mp_obj_get_int(args[1]);
     size_t text_len;
     char const *text = mp_obj_str_get_data(args[2], &text_len);
-    color_t color = get_color(args[3]);
 
-    /* TODO: casioplot: draw_string(): Don't ignore the size parameter */
-    /* It is normally "small", "medium" or "large" */
+    /* TODO: casioplot: draw_string(): Add fonts for CG50 */
+    color_t color;
+    font_t const *old_font = dfont(NULL);
+    if(n >= 4) {
+        color = get_color(args[3]);
+    }
+#ifdef FX9860G
+    dfont(&font_4x4);
+#else
+    dfont(NULL);
+#endif
     if(n == 5) {
-        (void)args[4];
+        if(MP_QSTR_small == mp_obj_str_get_qstr(args[4])) {
+#ifdef FX9860G
+            dfont(&font_4x4);
+#else
+            dfont(NULL);
+#endif
+        } else if(MP_QSTR_medium == mp_obj_str_get_qstr(args[4])) {
+#ifdef FX9860G
+            dfont(&font_4x4);
+#else
+            dfont(NULL);
+#endif
+        } else if(MP_QSTR_large == mp_obj_str_get_qstr(args[4])) {
+#ifdef FX9860G
+            dfont(&font_5x7);
+#else
+            dfont(NULL);
+#endif
+        }else {
+            mp_raise_ValueError("Unknown font size");
+        }
+    }
+    if(n < 4) {
+        color = C_BLACK;
     }
 
-    font_t const *old_font = dfont(NULL);
     dtext_opt(x, y, color, C_NONE, DTEXT_LEFT, DTEXT_TOP, text, text_len);
     dfont(old_font);
 
@@ -109,9 +153,9 @@ static mp_obj_t draw_string(size_t n, mp_obj_t const *args)
 
 MP_DEFINE_CONST_FUN_OBJ_0(show_screen_obj, show_screen);
 MP_DEFINE_CONST_FUN_OBJ_0(clear_screen_obj, clear_screen);
-MP_DEFINE_CONST_FUN_OBJ_3(set_pixel_obj, set_pixel);
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(set_pixel_obj, 2, 3, set_pixel);
 MP_DEFINE_CONST_FUN_OBJ_2(get_pixel_obj, get_pixel);
-MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(draw_string_obj, 4, 5, draw_string);
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(draw_string_obj, 3, 5, draw_string);
 
 STATIC const mp_rom_map_elem_t casioplot_module_globals_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR_casioplot) },

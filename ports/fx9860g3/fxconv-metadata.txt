@@ -22,6 +22,7 @@ font_4x4.png:
   grid.size: 4x4
   grid.padding: 1
   grid.border: 0
+  proportional: true
 
 font_4x6.png:
   type: font
