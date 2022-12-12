@@ -127,6 +127,18 @@ static bool async_filter(key_event_t ev)
     return true;
 }
 
+#include <gint/timer.h>
+
+void pe_after_python_exec(int input_kind, int exec_flags, void *ret_val,
+    int *ret)
+{
+    (void)input_kind;
+    (void)exec_flags;
+    (void)ret_val;
+    (void)ret;
+    clearevents();
+}
+
 int main(int argc, char **argv)
 {
     pe_debug_init();

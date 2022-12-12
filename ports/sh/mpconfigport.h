@@ -80,6 +80,11 @@
 /* Enable alias of u-modules, eg. urandom -> random */
 #define MICROPY_MODULE_WEAK_LINKS         (1)
 
+/* Command executed automatically after every shell input */
+void pe_after_python_exec(int input_kind, int exec_flags, void *ret_val,
+    int *ret);
+#define MICROPY_BOARD_AFTER_PYTHON_EXEC pe_after_python_exec
+
 /* extra built in names to add to the global namespace
 #define MICROPY_PORT_BUILTINS \
     { MP_ROM_QSTR(MP_QSTR_open), MP_ROM_PTR(&mp_builtin_open_obj) }, */
