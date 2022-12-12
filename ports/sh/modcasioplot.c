@@ -55,6 +55,12 @@ static mp_obj_t make_color(color_t color)
     return mp_obj_new_tuple(3, items);
 }
 
+static mp_obj_t init(void)
+{
+    dclear(C_WHITE);
+    return mp_const_none;
+}
+
 static mp_obj_t show_screen(void)
 {
 /* TODO: Port graphics mode notification over to the JustUI setup */
@@ -153,6 +159,7 @@ static mp_obj_t draw_string(size_t n, mp_obj_t const *args)
     return mp_const_none;
 }
 
+MP_DEFINE_CONST_FUN_OBJ_0(init_obj, init);
 MP_DEFINE_CONST_FUN_OBJ_0(show_screen_obj, show_screen);
 MP_DEFINE_CONST_FUN_OBJ_0(clear_screen_obj, clear_screen);
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(set_pixel_obj, 2, 3, set_pixel);
@@ -161,6 +168,7 @@ MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(draw_string_obj, 3, 5, draw_string);
 
 STATIC const mp_rom_map_elem_t casioplot_module_globals_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR_casioplot) },
+    { MP_ROM_QSTR(MP_QSTR___init__), MP_ROM_PTR(&init_obj) },
     { MP_ROM_QSTR(MP_QSTR_show_screen), MP_ROM_PTR(&show_screen_obj) },
     { MP_ROM_QSTR(MP_QSTR_clear_screen), MP_ROM_PTR(&clear_screen_obj) },
     { MP_ROM_QSTR(MP_QSTR_set_pixel), MP_ROM_PTR(&set_pixel_obj) },

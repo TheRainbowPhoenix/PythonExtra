@@ -37,6 +37,7 @@
 #define MICROPY_PY_BUILTINS_HELP_MODULES  (1) /* in EXTRA_FEATURES */
 #define MICROPY_KBD_EXCEPTION             (1) /* in EXTRA_FEATURES */
 #define MICROPY_PY_SYS_PS1_PS2            (1) /* in EXTRA_FEATURES */
+#define MICROPY_MODULE_BUILTIN_INIT       (1) /* in EXTRA_FEATURES */
 // #define MICROPY_PY_SYS_STDFILES           (1) /* in EXTRA_FEATURES */
 
 #define MICROPY_ALLOC_PATH_MAX            (256)
