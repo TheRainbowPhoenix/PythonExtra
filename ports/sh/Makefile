@@ -18,20 +18,18 @@ SRC_C = \
     ports/sh/modgint.c \
     ports/sh/modtime.c \
     ports/sh/mphalport.c \
+    ports/sh/pyexec.c \
     ports/sh/widget_shell.c \
-    shared/readline/readline.c \
     shared/runtime/gchelper_generic.c \
-    shared/runtime/pyexec.c \
     shared/runtime/stdout_helpers.c \
     shared/runtime/interrupt_char.c \
 
 SRC_QSTR += \
-    shared/readline/readline.c \
-    shared/runtime/pyexec.c \
     ports/sh/main.c \
     ports/sh/modcasioplot.c \
     ports/sh/modgint.c \
     ports/sh/modtime.c \
+    ports/sh/pyexec.c \
 
 ASSETS_O := $(SH_ASSETS:%=$(BUILD)/sh_assets/%.o)
 

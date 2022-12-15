@@ -68,7 +68,7 @@ typedef struct {
 
 /* Event IDs */
 extern uint16_t WIDGET_SHELL_MOD_CHANGED;
-extern uint16_t WIDGET_SHELL_CHAR_INPUT;
+extern uint16_t WIDGET_SHELL_INPUT;
 
 /* Update frequency, ie. cap on the number of shell redraws per second. */
 #define WIDGET_SHELL_FPS 30

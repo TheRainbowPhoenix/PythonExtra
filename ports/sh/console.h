@@ -41,7 +41,9 @@ typedef struct
     /* Allocated size (always ≥ size+1). */
     int alloc_size;
     /* Number or render lines used (updated on-demand). */
-    int render_lines;
+    int16_t render_lines;
+    /* Number of initial characters that can't be edited. */
+    int16_t prefix;
 
 } console_line_t;
 
@@ -59,11 +61,16 @@ bool console_line_alloc(console_line_t *line, int n);
    broken up. */
 int console_line_capacity(console_line_t *line);
 
+/* Set the prefix_size first characters of the line to not be editable. The
+   line must already have that many characters printed. */
+void console_line_set_prefix(console_line_t *line, int prefix_size);
+
 /* Insert n characters at position p. */
 bool console_line_insert(console_line_t *line, int p, char const *str, int n);
 
-/* Remove n characters at position p. */
-void console_line_delete(console_line_t *line, int p, int n);
+/* Remove n characters at position p. Returns the number of characters
+   actually removed after bounds checking. */
+int console_line_delete(console_line_t *line, int p, int n);
 
 /* Update the number of render lines for the chosen width. */
 void console_line_update_render_lines(console_line_t *line, int width);
@@ -144,6 +151,20 @@ void console_render(int x, int y, console_t const *cons, int dy,
 
 //=== Edition functions ===//
 
+/* Set the cursor position within the current line. Returns false if the cursor
+   cannot move there due to bounds. */
+bool console_set_cursor(console_t *cons, int absolute_cursor_pos);
+
+/* Move the cursor position within the current line. Returns false if the
+   cursor position didn't change due to bounds. */
+bool console_move_cursor(console_t *cons, int cursor_movement);
+
+/* Get the contents of the current line (skipping the prefix). If copy=true,
+   returns a copy created with malloc(), otherwise returns a pointer within the
+   original string. Mind that the original might disappear very quickly (as
+   early as the next console_new_line() due to automatic backlog cleaning). */
+char *console_get_line(console_t *cons, bool copy);
+
 /* Write string at the cursor's position within the last line. This writes a
    raw string without interpreting escape sequences and newlines. */
 bool console_write_block_at_cursor(console_t *cons, char const *str, int n);
@@ -151,6 +172,12 @@ bool console_write_block_at_cursor(console_t *cons, char const *str, int n);
 /* Write string at the cursor's position within the last line. This function
    interprets escape sequences and newlines. */
 bool console_write_at_cursor(console_t *cons, char const *str, int n);
+
+/* Set the current cursor position to mark the prefix of the current line. */
+void console_lock_prefix(console_t *cons);
+
+/* Delete n characters from the cursor position. */
+void console_delete_at_cursor(console_t *cons, int n);
 
 /* Clear the current line. */
 void console_clear_current_line(console_t *cons);

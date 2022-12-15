@@ -19,6 +19,7 @@ Bugs to fix:
 - Fix current working directory not changing during a module import (for
   relative imports)
 - Fix casioplot not stopping on the last `show_screen()`
+- Fix shell not rendering during `input()`
 
 Python features:
 - Compare features with existing implementations and other brands
@@ -35,6 +36,11 @@ UI:
     `i` and `l`; the usual fixed-width unambiguous styles)
   * Try and provide a font smaller than 5x7 for more compact shell on mono
 - A decent keymap that can input all relevant characters into the shell
+- Features that would match MicroPython's readline:
+   * Multi-line input (figure out how to store it); also, auto-indent
+   * History (use `MP_STATE_PORT(readline_hist)` with `readline_push_history()`
+     for a start); also, zsh-style search
+   * Autocompletion (use `mp_repl_autocomplete()` which should hook just fine)
 
 Future wishes:
 - Build for fx-9860G II (requires manual filesystem support)

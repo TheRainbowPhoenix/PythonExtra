@@ -9,6 +9,9 @@
 #include <time.h>
 #include "shared/runtime/interrupt_char.h"
 
+/* We don't use a VT100 terminal. */
+#define MICROPY_HAL_HAS_VT100 (0)
+
 /* Receive a single character from shell (blocking). */
 int mp_hal_stdin_rx_chr(void);
 

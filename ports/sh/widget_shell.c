@@ -5,6 +5,7 @@
 //---------------------------------------------------------------------------//
 
 #include "widget_shell.h"
+#include "keymap.h"
 #include <justui/jwidget-api.h>
 #include <gint/timer.h>
 #include <stdlib.h>
@@ -14,7 +15,7 @@ static int widget_shell_id = -1;
 
 /* Events */
 uint16_t WIDGET_SHELL_MOD_CHANGED;
-uint16_t WIDGET_SHELL_CHAR_INPUT;
+uint16_t WIDGET_SHELL_INPUT;
 
 //=== Modifier states ===//
 
@@ -226,12 +227,42 @@ static bool widget_shell_poly_event(void *s0, jevent e)
     ev.alpha = mod_active(s->alpha);
     widget_shell_use_mods(s);
 
-    /* TODO: Handle input events better in the shell widget! */
-    int c = console_key_event_to_char(ev);
+    if(ev.key == KEY_LEFT) {
+        if(console_move_cursor(s->console, -1))
+            s->widget.update = true;
+        return true;
+    }
+    if(ev.key == KEY_RIGHT) {
+        if(console_move_cursor(s->console, +1))
+            s->widget.update = true;
+        return true;
+    }
 
-    if(c != 0) {
-        jevent e = { .type = WIDGET_SHELL_CHAR_INPUT, .data = c };
+    if(ev.key == KEY_ACON) {
+        console_clear_current_line(s->console);
+        return true;
+    }
+
+    if(ev.key == KEY_DEL) {
+        console_delete_at_cursor(s->console, 1);
+        return true;
+    }
+
+    if(ev.key == KEY_EXE) {
+        char *line = console_get_line(s->console, true);
+        console_new_line(s->console);
+
+        jevent e = {
+            .type = WIDGET_SHELL_INPUT,
+            .data = (int)line,
+        };
         jwidget_emit(s, e);
+        return true;
+    }
+
+    char c = keymap_translate(ev.key, ev.shift, ev.alpha);
+    if(c != 0) {
+        console_write_at_cursor(s->console, &c, 1);
         return true;
     }
 
@@ -259,5 +290,5 @@ static void j_register_widget_shell(void)
 {
     widget_shell_id = j_register_widget(&type_widget_shell, "jwidget");
     WIDGET_SHELL_MOD_CHANGED = j_register_event();
-    WIDGET_SHELL_CHAR_INPUT = j_register_event();
+    WIDGET_SHELL_INPUT = j_register_event();
 }

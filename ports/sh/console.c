@@ -28,6 +28,7 @@ bool console_line_init(console_line_t *line, int prealloc_size)
     line->size = 0;
     line->alloc_size = prealloc_size + 1;
     line->render_lines = 0;
+    line->prefix = 0;
     return true;
 }
 
@@ -61,6 +62,11 @@ int console_line_capacity(console_line_t *line)
     return PE_CONSOLE_LINE_MAX_LENGTH - line->size;
 }
 
+void console_line_set_prefix(console_line_t *line, int prefix_size)
+{
+    line->prefix = min(max(0, prefix_size), line->size);
+}
+
 bool console_line_insert(console_line_t *line, int p, char const *str, int n)
 {
     if(p < 0 || p > line->size || n > console_line_capacity(line))
@@ -75,13 +81,22 @@ bool console_line_insert(console_line_t *line, int p, char const *str, int n)
     return true;
 }
 
-void console_line_delete(console_line_t *line, int p, int n)
+int console_line_delete(console_line_t *line, int p, int n)
 {
+    if(p < line->prefix) {
+        int unremovable = line->prefix - p;
+        p += unremovable;
+        n -= unremovable;
+    }
     n = min(n, line->size - p);
+
+    if(n < 0)
+        return 0;
 
     /* Move the end of the string (plus the NUL) n bytes backwards */
     memmove(line->data + p, line->data + p + n, line->size - n - p + 1);
     line->size -= n;
+    return n;
 }
 
 void console_line_update_render_lines(console_line_t *line, int width)
@@ -327,6 +342,30 @@ void console_render(int x, int y0, console_t const *cons, int dy,
 
 //=== Edition functions ===//
 
+bool console_set_cursor(console_t *cons, int pos)
+{
+    console_line_t *last_line = &cons->lines[cons->line_count - 1];
+
+    if(pos < last_line->prefix || pos > last_line->size)
+        return false;
+
+    cons->cursor = pos;
+    return true;
+}
+
+bool console_move_cursor(console_t *cons, int cursor_movement)
+{
+    return console_set_cursor(cons, cons->cursor + cursor_movement);
+}
+
+char *console_get_line(console_t *cons, bool copy)
+{
+    console_line_t *last_line = &cons->lines[cons->line_count - 1];
+    char *str = last_line->data + last_line->prefix;
+
+    return copy ? strdup(str) : str;
+}
+
 bool console_write_block_at_cursor(console_t *cons, char const *str, int n)
 {
     if(!cons->line_count && !console_new_line(cons))
@@ -408,39 +447,33 @@ bool console_write_at_cursor(console_t *cons, char const *buf, int n)
     return true;
 }
 
+void console_lock_prefix(console_t *cons)
+{
+    console_line_set_prefix(&cons->lines[cons->line_count - 1], cons->cursor);
+}
+
+void console_delete_at_cursor(console_t *cons, int n)
+{
+    console_line_t *last_line = &cons->lines[cons->line_count - 1];
+    int real_n = console_line_delete(last_line, cons->cursor - n, n);
+    cons->cursor -= real_n;
+    cons->render_needed = true;
+}
+
 void console_clear_current_line(console_t *cons)
 {
     console_line_t *last_line = &cons->lines[cons->line_count - 1];
-    console_line_delete(last_line, 0, last_line->size);
-    cons->cursor = 0;
+    console_line_delete(last_line, last_line->prefix,
+        last_line->size - last_line->prefix);
+    cons->cursor = last_line->prefix;
+    cons->render_needed = true;
 }
 
-//=== Input method ===//
-
-/* Features needed to bypass MicroPython's readline:
-   * Undefined MICROPY_HAL_HAS_VT100
-   * Multi-line input
-     - Provide PS1 and PS2
-     - Auto-indent
-     - TODO: How is it stored?
-   * History
-     - Let's use `MP_STATE_PORT(readline_hist)` for a start
-     - Keep track of history browsing state
-     - While at it do the zsh history search, which is goated
-     - Use readline_push_history()
-   * Cursor movement (fairly easy)
-   * Handle special inputs
-     - ^C, ^D, backspace
-     - Erase line (^K)
-   * Autocompletion
-     - Use mp_repl_autocomplete() which should hook just fine */
+//=== Terminal input ===//
 
 int console_key_event_to_char(key_event_t ev)
 {
     int key = ev.key;
-
-    /* (The following meanings are only for non-empty lines) */
-    /* TODO: Check cons->cursor before triggering them */
 
     if(key == KEY_LEFT && ev.shift)
         return CHAR_CTRL_A; /* go-to-start-of-line */

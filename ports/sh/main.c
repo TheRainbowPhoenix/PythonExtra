@@ -137,12 +137,22 @@ void pe_after_python_exec(int input_kind, int exec_flags, void *ret_val,
     clearevents();
 }
 
+static void pe_print_prompt(int which)
+{
+    char const *prompt = NULL;
+    if(which == 2)
+        prompt = mp_repl_get_ps2();
+    else
+        prompt = mp_repl_get_ps1();
+
+    console_write_at_cursor(pe_shell_console, prompt, -1);
+    console_lock_prefix(pe_shell_console);
+}
+
 static void pe_reset_micropython(void)
 {
     mp_deinit();
     mp_init();
-
-    console_new_line(pe_shell_console);
 
 #ifdef FX9860G
     char const *msg = "**SHELL INIT.**\n";
@@ -150,8 +160,10 @@ static void pe_reset_micropython(void)
     char const *msg = "*** SHELL INITIALIZED ***\n";
 #endif
 
+    console_new_line(pe_shell_console);
     console_write_at_cursor(pe_shell_console, msg, -1);
     pyexec_event_repl_init();
+    pe_print_prompt(1);
 }
 
 int main(int argc, char **argv)
@@ -208,9 +220,8 @@ int main(int argc, char **argv)
         MP_OBJ_NEW_QSTR(qstr_from_str("."));
 #endif
 
-    /* Run REPL manually */
-    pyexec_mode_kind = PYEXEC_MODE_FRIENDLY_REPL;
     pyexec_event_repl_init();
+    pe_print_prompt(1);
 
     //=== GUI setup ===//
 
@@ -281,8 +292,13 @@ int main(int argc, char **argv)
         if(e.type == WIDGET_SHELL_MOD_CHANGED)
             scene->widget.update = true;
 
-        if(e.type == WIDGET_SHELL_CHAR_INPUT)
-            shell_write_char(e.data);
+        if(e.type == WIDGET_SHELL_INPUT) {
+            char *line = (char *)e.data;
+            shell_write_str(line);
+            free(line);
+            shell_write_char('\r');
+            pe_print_prompt(1);
+        }
 
         if(e.type == JFILESELECT_VALIDATED) {
             char const *path = jfileselect_selected_file(fileselect);
