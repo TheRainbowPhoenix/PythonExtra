@@ -7,6 +7,7 @@
 
 #include <stdint.h>
 #include <alloca.h>
+#include "widget_shell.h"
 
 /* Debugging options: PythonExtra debug tools (pretty much required for any
    other one), MicroPython's verbose logging. */
@@ -82,9 +83,15 @@
 #define MICROPY_MODULE_WEAK_LINKS         (1)
 
 /* Command executed automatically after every shell input */
-void pe_after_python_exec(int input_kind, int exec_flags, void *ret_val,
-    int *ret);
+void pe_after_python_exec(
+    int input_kind, int exec_flags, void *ret_val, int *ret);
 #define MICROPY_BOARD_AFTER_PYTHON_EXEC pe_after_python_exec
+
+/* Command executed regularly during execution */
+extern void pe_draw(void);
+extern widget_shell *pe_shell;
+#define MICROPY_VM_HOOK_LOOP \
+    { if(pe_shell->widget.update) pe_draw(); }
 
 /* extra built in names to add to the global namespace
 #define MICROPY_PORT_BUILTINS \
