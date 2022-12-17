@@ -20,8 +20,14 @@
     MP_DEFINE_CONST_FUN_OBJ_1(modgint_ ## NAME ## _obj, modgint_ ## NAME)
 #define FUN_2(NAME) \
     MP_DEFINE_CONST_FUN_OBJ_2(modgint_ ## NAME ## _obj, modgint_ ## NAME)
+#define FUN_3(NAME) \
+    MP_DEFINE_CONST_FUN_OBJ_3(modgint_ ## NAME ## _obj, modgint_ ## NAME)
 #define FUN_VAR(NAME, MIN) \
-    MP_DEFINE_CONST_FUN_OBJ_VAR(modgint_ ## NAME ## _obj, MIN, modgint_ ## NAME)
+    MP_DEFINE_CONST_FUN_OBJ_VAR(modgint_ ## NAME ## _obj, MIN, \
+        modgint_ ## NAME)
+#define FUN_BETWEEN(NAME, MIN, MAX) \
+    MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(modgint_ ## NAME ## _obj, MIN, MAX, \
+        modgint_ ## NAME)
 
 /* <gint/keyboard.h> */
 
@@ -124,8 +130,7 @@ FUN_1(keycode_digit);
 
 STATIC mp_obj_t modgint_dclear(mp_obj_t arg1)
 {
-    mp_int_t color0 = mp_obj_get_int(arg1);
-    int color = MP_OBJ_SMALL_INT_VALUE(color0);
+    mp_int_t color = mp_obj_get_int(arg1);
     dclear(color);
     return mp_const_none;
 }
@@ -139,8 +144,110 @@ STATIC mp_obj_t modgint_dupdate(void)
     return mp_const_none;
 }
 
+STATIC mp_obj_t modgint_drect(size_t n, mp_obj_t const *args)
+{
+    mp_int_t x1 = mp_obj_get_int(args[0]);
+    mp_int_t y1 = mp_obj_get_int(args[1]);
+    mp_int_t x2 = mp_obj_get_int(args[2]);
+    mp_int_t y2 = mp_obj_get_int(args[3]);
+    mp_int_t color = mp_obj_get_int(args[4]);
+    drect(x1, y1, x2, y2, color);
+    return mp_const_none;
+}
+
+STATIC mp_obj_t modgint_drect_border(size_t n, mp_obj_t const *args)
+{
+    mp_int_t x1 = mp_obj_get_int(args[0]);
+    mp_int_t y1 = mp_obj_get_int(args[1]);
+    mp_int_t x2 = mp_obj_get_int(args[2]);
+    mp_int_t y2 = mp_obj_get_int(args[3]);
+    mp_int_t fill_color = mp_obj_get_int(args[4]);
+    mp_int_t border_width = mp_obj_get_int(args[5]);
+    mp_int_t border_color = mp_obj_get_int(args[6]);
+    drect_border(x1, y1, x2, y2, fill_color, border_width, border_color);
+    return mp_const_none;
+}
+
+STATIC mp_obj_t modgint_dpixel(mp_obj_t arg1, mp_obj_t arg2, mp_obj_t arg3)
+{
+    mp_int_t x = mp_obj_get_int(arg1);
+    mp_int_t y = mp_obj_get_int(arg2);
+    mp_int_t color = mp_obj_get_int(arg3);
+    dpixel(x, y, color);
+    return mp_const_none;
+}
+
+STATIC mp_obj_t modgint_dgetpixel(mp_obj_t arg1, mp_obj_t arg2)
+{
+    mp_int_t x = mp_obj_get_int(arg1);
+    mp_int_t y = mp_obj_get_int(arg2);
+    return MP_OBJ_NEW_SMALL_INT(dgetpixel(x, y));
+}
+
+STATIC mp_obj_t modgint_dline(size_t n, mp_obj_t const *args)
+{
+    mp_int_t x1 = mp_obj_get_int(args[0]);
+    mp_int_t y1 = mp_obj_get_int(args[1]);
+    mp_int_t x2 = mp_obj_get_int(args[2]);
+    mp_int_t y2 = mp_obj_get_int(args[3]);
+    mp_int_t color = mp_obj_get_int(args[4]);
+    dline(x1, y1, x2, y2, color);
+    return mp_const_none;
+}
+
+STATIC mp_obj_t modgint_dhline(mp_obj_t arg1, mp_obj_t arg2)
+{
+    mp_int_t y = mp_obj_get_int(arg1);
+    mp_int_t color = mp_obj_get_int(arg2);
+    dhline(y, color);
+    return mp_const_none;
+}
+
+STATIC mp_obj_t modgint_dvline(mp_obj_t arg1, mp_obj_t arg2)
+{
+    mp_int_t x = mp_obj_get_int(arg1);
+    mp_int_t color = mp_obj_get_int(arg2);
+    dvline(x, color);
+    return mp_const_none;
+}
+
+// TODO: modgint: Font management?
+
+STATIC mp_obj_t modgint_dtext_opt(size_t n, mp_obj_t const *args)
+{
+    mp_int_t x = mp_obj_get_int(args[0]);
+    mp_int_t y = mp_obj_get_int(args[1]);
+    mp_int_t fg = mp_obj_get_int(args[2]);
+    mp_int_t bg = mp_obj_get_int(args[3]);
+    mp_int_t halign = mp_obj_get_int(args[4]);
+    mp_int_t valign = mp_obj_get_int(args[5]);
+    char const *str = mp_obj_str_get_str(args[6]);
+    mp_int_t size = mp_obj_get_int(args[7]);
+    dtext_opt(x, y, fg, bg, halign, valign, str, size);
+    return mp_const_none;
+}
+
+STATIC mp_obj_t modgint_dtext(size_t n, mp_obj_t const *args)
+{
+    mp_int_t x = mp_obj_get_int(args[0]);
+    mp_int_t y = mp_obj_get_int(args[1]);
+    mp_int_t fg = mp_obj_get_int(args[2]);
+    char const *str = mp_obj_str_get_str(args[3]);
+    dtext(x, y, fg, str);
+    return mp_const_none;
+}
+
 FUN_1(dclear);
 FUN_0(dupdate);
+FUN_BETWEEN(drect, 5, 5);
+FUN_BETWEEN(drect_border, 7, 7);
+FUN_3(dpixel);
+FUN_2(dgetpixel);
+FUN_BETWEEN(dline, 5, 5);
+FUN_2(dhline);
+FUN_2(dvline);
+FUN_BETWEEN(dtext_opt, 8, 8);
+FUN_BETWEEN(dtext, 4, 4);
 
 /* Module definition */
 
@@ -258,8 +365,24 @@ STATIC const mp_rom_map_elem_t modgint_module_globals_table[] = {
 
     /* <gint/display.h> */
 
+    INT(DTEXT_LEFT),
+    INT(DTEXT_CENTER),
+    INT(DTEXT_RIGHT),
+    INT(DTEXT_TOP),
+    INT(DTEXT_MIDDLE),
+    INT(DTEXT_BOTTOM),
+
     OBJ(dclear),
     OBJ(dupdate),
+    OBJ(drect),
+    OBJ(drect_border),
+    OBJ(dpixel),
+    OBJ(dgetpixel),
+    OBJ(dline),
+    OBJ(dhline),
+    OBJ(dvline),
+    OBJ(dtext_opt),
+    OBJ(dtext),
 };
 STATIC MP_DEFINE_CONST_DICT(
   modgint_module_globals, modgint_module_globals_table);
