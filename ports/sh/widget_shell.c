@@ -174,9 +174,6 @@ static void widget_shell_poly_render(void *s0, int x, int y)
     s->scroll = console_clamp_scrollpos(s->console, s->scroll);
     console_render(x, y, s->console, line_height, s->scroll);
     console_clear_render_flag(s->console);
-
-    dprint_opt(x + jwidget_content_width(s) - 1, y, C_WHITE, 0x5555,
-        DTEXT_RIGHT, DTEXT_TOP, "%d", s->console->cursor);
 }
 
 static void widget_shell_update_mod(widget_shell *s, key_event_t ev)
