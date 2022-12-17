@@ -319,7 +319,7 @@ int main(int argc, char **argv)
     if(!gc_area)
         pe_debug_panic("No heap!");
     gc_init(gc_area, gc_area + 32768);
-#ifdef PE_DEBUG
+#if PE_DEBUG
     /* Add some Python ram */
     void *py_ram_start = (void*)0x88053800;
     void *py_ram_end = (void*)0x8807f000;
