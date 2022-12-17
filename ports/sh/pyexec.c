@@ -56,6 +56,7 @@ STATIC bool repl_display_debugging_info = 0;
 #define EXEC_FLAG_SOURCE_IS_VSTR        (1 << 4)
 #define EXEC_FLAG_SOURCE_IS_FILENAME    (1 << 5)
 #define EXEC_FLAG_SOURCE_IS_READER      (1 << 6)
+#define EXEC_FLAG_SOURCE_IS_STR         (1 << 7)
 
 // parses, compiles and executes the code in the lexer
 // frees the lexer before returning
@@ -95,6 +96,9 @@ STATIC int parse_compile_execute(const void *source, mp_parse_input_kind_t input
             if (exec_flags & EXEC_FLAG_SOURCE_IS_VSTR) {
                 const vstr_t *vstr = source;
                 lex = mp_lexer_new_from_str_len(MP_QSTR__lt_stdin_gt_, vstr->buf, vstr->len, 0);
+            } else if (exec_flags & EXEC_FLAG_SOURCE_IS_STR) {
+                lex = mp_lexer_new_from_str_len(MP_QSTR__lt_stdin_gt_,
+                    source, strlen(source), 0);
             } else if (exec_flags & EXEC_FLAG_SOURCE_IS_READER) {
                 lex = mp_lexer_new(MP_QSTR__lt_stdin_gt_, *(mp_reader_t *)source);
             } else if (exec_flags & EXEC_FLAG_SOURCE_IS_FILENAME) {
@@ -184,9 +188,6 @@ STATIC int parse_compile_execute(const void *source, mp_parse_input_kind_t input
 
 #if MICROPY_ENABLE_COMPILER
 
-
-STATIC int pyexec_raw_repl_process_char(int c);
-
 void pyexec_event_repl_init(void) {
     MP_STATE_VM(repl_line) = vstr_new(32);
 
@@ -223,6 +224,21 @@ int pyexec_event_repl_process_char(int c) {
     int res = pyexec_raw_repl_process_char(c);
     pyexec_repl_active = 0;
     return res;
+}
+
+int pyexec_repl_execute(char const *line) {
+    pyexec_repl_active = 1;
+
+    int ret = parse_compile_execute(line,
+        MP_PARSE_SINGLE_INPUT,
+        EXEC_FLAG_ALLOW_DEBUGGING | EXEC_FLAG_IS_REPL |
+            EXEC_FLAG_SOURCE_IS_STR);
+    if (ret & PYEXEC_FORCED_EXIT) {
+        return ret;
+    }
+
+    pyexec_repl_active = 0;
+    return 0;
 }
 
 MP_REGISTER_ROOT_POINTER(vstr_t * repl_line);

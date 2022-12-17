@@ -37,9 +37,9 @@ typedef struct
     /* Line contents, NUL-terminated. The buffer might be larger. */
     char *data;
     /* Size of contents (not counting the NUL). */
-    int size;
+    int16_t size;
     /* Allocated size (always ≥ size+1). */
-    int alloc_size;
+    int16_t alloc_size;
     /* Number or render lines used (updated on-demand). */
     int16_t render_lines;
     /* Number of initial characters that can't be edited. */
@@ -79,33 +79,103 @@ void console_line_update_render_lines(console_line_t *line, int width);
 int console_line_render(int x, int y, console_line_t *line, int w, int dy,
     int show_from, int show_until, int cursor);
 
+//=== Rotating line storage ===//
+
+/* linebuf_t: A rotating array of console lines. */
+typedef struct
+{
+    /* A rotating array of `capacity` lines starting at position `start` and
+       holding `size` lines. The array is pre-allocated. */
+    console_line_t *lines;
+
+    /* Invariants:
+       - capacity > 0
+       - 0 <= size <= capacity
+       - 0 <= start < capacity
+       - When size is 0, start is undefined. */
+    int capacity, start, size;
+
+    /* To keep track of lines' identity, the rotating array includes an extra
+       numbering system. Each line is assigned an *absolute* line number which
+       starts at 1 and increases every time a line is added. That number is
+       independent of rotation.
+
+       Absolute line number of the next line to be removed. This identifies
+       the `start` line, unless the buffer is empty. Regardless, the interval
+       [buf->absolute .. buf->absolute + buf->size) always covers exactly the
+       set of lines that are held in the buffer. */
+    int absolute;
+
+    /* To avoid memory explosion, the rotating array can be set to clean up old
+       lines when the total memory consumption is too high. `backlog_size`
+       specifies how many bytes of text lines are allowed to hold. */
+    int backlog_size;
+    /* Total size of current lines, in bytes, excluding the last line. */
+    int total_size_except_last;
+
+    /* Last absolute line that has been both laid out for rendering and frozen
+       for edition (ie. followed by another line). Lazy rendering can always
+       start at `absolute_rendered+1`. */
+    int absolute_rendered;
+    /* Total number of rendered lines for the buffer. */
+    int total_rendered;
+
+} linebuf_t;
+
+/* Initialize a rotating buffer by allocating `line_count` lines. The buffer
+   will allow up to `backlog_size` bytes of text data and clean up lines past
+   that limit. This function does not free pre-existing data in `buf`. */
+bool linebuf_init(linebuf_t *buf, int capacity, int backlog_size);
+
+/* Free a rotating buffer and clean it up. */
+void linebuf_deinit(linebuf_t *buf);
+
+/* Absolute line numbers of the "start" and "end" of the buffer. The set of
+   lines in the buffer is always [start ... end). If the buffer is empty, the
+   interval is empty and neither line number is in the buffer. */
+int linebuf_start(linebuf_t const *buf);
+int linebuf_end(linebuf_t const *buf);
+
+/* Get a pointer to the line with the given absolute number. */
+console_line_t *linebuf_get_line(linebuf_t const *buf, int absolute_number);
+
+/* Get a pointer to the last line in the buffer (usually the editable line). */
+console_line_t *linebuf_get_last_line(linebuf_t const *buf);
+
+/* Add a new line to the buffer (recycling an old one if needed). */
+console_line_t *linebuf_new_line(linebuf_t *buf);
+
+/* Recycle the `n` oldest lines from the buffer. */
+void linebuf_recycle_oldest_lines(linebuf_t *buf, int n);
+
+/* Clean up lines to try and keep the memory footprint of the text under
+   `backlog_size` bytes. Always keeps at least the last line. */
+void linebuf_clean_backlog(linebuf_t *buf);
+
+/* Update the render width computation for all lines in the buffer. If `lazy`
+   is false, all lines are re-laid out. But in the console the width often
+   remains the same for many renders, and only the last line can be edited. In
+   this case, `lazy` can be set to true, and only lines added or edited since
+   the previous render will be re-laid out. */
+void linebuf_update_render(linebuf_t *buf, int width, bool lazy);
+
 //=== Terminal emulator ===//
 
 typedef struct
 {
-    /* A dynamic array of console_line_t. Never empty. */
-    console_line_t *lines;
-    int line_count;
+    /* A rotating array of console_line_t. Never empty. */
+    linebuf_t lines;
 
-    /* Maximum (not 100% strict) amount of storage that is conserved in log.
-       When this limit is exceeded, old lines are cleaned. This must be more
-       than PE_CONSOLE_LINE_MAX_LENGTH. */
-    int backlog_size;
-
-    /* Absolute number of the first line in the dynamic line array. This is
-       the line number in the user-facing sense (it includes lines that were
-       cleaned up to free memory). */
-    int absolute_lineno;
     /* Cursor position within the last line. */
     int cursor;
 
     /* Whether new data has been added and a frame should be rendered. */
     bool render_needed;
-    /* View parameters from last console_compute_view() */
+
+    /* View geometry parameters from last console_compute_view(). */
     font_t const *render_font;
     int render_width;
     int render_lines;
-    int render_total_lines;
 
 } console_t;
 
@@ -113,14 +183,11 @@ typedef struct
 typedef int console_scrollpos_t;
 
 /* Create a new console with the specified backlog size. */
-console_t *console_create(int backlog_size);
+console_t *console_create(int backlog_size, int maximum_line_count);
 
 /* Create a new empty line at the bottom of the console, and move the cursor
-   there. Previous lines can no longer be edited. Returns false on error. */
-bool console_new_line(console_t *cons);
-
-/* Clean up backlog if the total memory usage is exceeded. */
-void console_clean_backlog(console_t *cons);
+   there. Previous lines can no longer be edited. */
+void console_newline(console_t *cons);
 
 /* Clear the console's render flag, which is used to notify of changes. This
    function is used when handing control of the display from the console to a
@@ -167,11 +234,11 @@ char *console_get_line(console_t *cons, bool copy);
 
 /* Write string at the cursor's position within the last line. This writes a
    raw string without interpreting escape sequences and newlines. */
-bool console_write_block_at_cursor(console_t *cons, char const *str, int n);
+bool console_write_raw(console_t *cons, char const *str, int n);
 
 /* Write string at the cursor's position within the last line. This function
    interprets escape sequences and newlines. */
-bool console_write_at_cursor(console_t *cons, char const *str, int n);
+bool console_write(console_t *cons, char const *str, int n);
 
 /* Set the current cursor position to mark the prefix of the current line. */
 void console_lock_prefix(console_t *cons);

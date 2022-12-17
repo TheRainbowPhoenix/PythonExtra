@@ -250,7 +250,7 @@ static bool widget_shell_poly_event(void *s0, jevent e)
 
     if(ev.key == KEY_EXE) {
         char *line = console_get_line(s->console, true);
-        console_new_line(s->console);
+        console_newline(s->console);
 
         jevent e = {
             .type = WIDGET_SHELL_INPUT,
@@ -262,7 +262,7 @@ static bool widget_shell_poly_event(void *s0, jevent e)
 
     char c = keymap_translate(ev.key, ev.shift, ev.alpha);
     if(c != 0) {
-        console_write_at_cursor(s->console, &c, 1);
+        console_write_raw(s->console, &c, 1);
         return true;
     }
 

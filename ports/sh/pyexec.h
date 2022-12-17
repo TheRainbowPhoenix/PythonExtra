@@ -41,6 +41,7 @@ int pyexec_file_if_exists(const char *filename);
 int pyexec_frozen_module(const char *name);
 void pyexec_event_repl_init(void);
 int pyexec_event_repl_process_char(int c);
+int pyexec_repl_execute(char const *line);
 extern uint8_t pyexec_repl_active;
 
 #if MICROPY_REPL_INFO

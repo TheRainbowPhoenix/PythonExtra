@@ -11,7 +11,7 @@
 #include "py/mphal.h"
 #include "py/repl.h"
 #include "shared/runtime/gchelper.h"
-#include "shared/runtime/pyexec.h"
+#include "pyexec.h"
 
 #include <gint/display.h>
 #include <gint/drivers/keydev.h>
@@ -49,7 +49,7 @@ extern bopti_image_t const img_modifier_states;
 static ssize_t stdouterr_write(void *data, void const *buf, size_t size)
 {
     console_t *cons = data;
-    console_write_at_cursor(cons, buf, size);
+    console_write(cons, buf, size);
     return size;
 }
 
@@ -61,7 +61,10 @@ fs_descriptor_type_t stdouterr_type = {
 };
 
 /* The global terminal. */
-console_t *pe_shell_console;
+console_t *pe_console = NULL;
+/* The global JustUI scene and widget shell. */
+jscene *pe_scene = NULL;
+widget_shell *pe_shell = NULL;
 
 static bool strendswith(char const *str, char const *suffix)
 {
@@ -78,16 +81,6 @@ static bool py_file_filter(struct dirent const *ent)
     if(ent->d_type == DT_DIR)
         return true;
     return strendswith(ent->d_name, ".py");
-}
-
-static void shell_write_char(int c)
-{
-    pyexec_event_repl_process_char(c);
-}
-static void shell_write_str(char const *str)
-{
-    while(*str)
-        pyexec_event_repl_process_char(*str++);
 }
 
 static char *path_to_module(char const *path)
@@ -145,8 +138,8 @@ static void pe_print_prompt(int which)
     else
         prompt = mp_repl_get_ps1();
 
-    console_write_at_cursor(pe_shell_console, prompt, -1);
-    console_lock_prefix(pe_shell_console);
+    console_write(pe_console, prompt, -1);
+    console_lock_prefix(pe_console);
 }
 
 static void pe_reset_micropython(void)
@@ -160,10 +153,31 @@ static void pe_reset_micropython(void)
     char const *msg = "*** SHELL INITIALIZED ***\n";
 #endif
 
-    console_new_line(pe_shell_console);
-    console_write_at_cursor(pe_shell_console, msg, -1);
+    console_newline(pe_console);
+    console_write(pe_console, msg, -1);
     pyexec_event_repl_init();
     pe_print_prompt(1);
+}
+
+void pe_draw(void)
+{
+    dclear(C_WHITE);
+    jscene_render(pe_scene);
+
+    /* Render shell modifiers above the scene in a convenient spot */
+    int shift, alpha, layer;
+    bool instant;
+    widget_shell_get_modifiers(pe_shell, &shift, &alpha);
+    widget_shell_modifier_info(shift, alpha, &layer, &instant);
+    int icon = 2 * layer + !instant;
+#ifdef FX9860G
+    dsubimage(118, 58, &img_modifier_states, 9*icon+1, 1, 8, 6,
+        DIMAGE_NONE);
+#else
+    dsubimage(377, 207, &img_modifier_states, 16*icon, 0, 15, 14,
+        DIMAGE_NONE);
+#endif
+    dupdate();
 }
 
 int main(int argc, char **argv)
@@ -175,13 +189,13 @@ int main(int argc, char **argv)
 
     keydev_set_async_filter(keydev_std(), async_filter);
 
-    pe_shell_console = console_create(8192);
+    pe_console = console_create(8192, 200);
 
     /* Set up standard streams */
     close(STDOUT_FILENO);
     close(STDERR_FILENO);
-    open_generic(&stdouterr_type, pe_shell_console, STDOUT_FILENO);
-    open_generic(&stdouterr_type, pe_shell_console, STDERR_FILENO);
+    open_generic(&stdouterr_type, pe_console, STDOUT_FILENO);
+    open_generic(&stdouterr_type, pe_console, STDERR_FILENO);
 
     /* Initialize the MicroPython GC with most available memory */
     mp_stack_ctrl_init();
@@ -225,15 +239,15 @@ int main(int argc, char **argv)
 
     //=== GUI setup ===//
 
-    jscene *scene = jscene_create_fullscreen(NULL);
-    jlabel *title = jlabel_create("PythonExtra", scene);
-    jwidget *stack = jwidget_create(scene);
-    jfkeys *fkeys = jfkeys_create2(&img_fkeys_main, "/FILES;/SHELL", scene);
+    pe_scene = jscene_create_fullscreen(NULL);
+    jlabel *title = jlabel_create("PythonExtra", pe_scene);
+    jwidget *stack = jwidget_create(pe_scene);
+    jfkeys *fkeys = jfkeys_create2(&img_fkeys_main, "/FILES;/SHELL", pe_scene);
     (void)fkeys;
 
     jwidget_set_stretch(title, 1, 0, false);
 
-    jlayout_set_vbox(scene)->spacing = _(0, 3);
+    jlayout_set_vbox(pe_scene)->spacing = _(0, 3);
     jlayout_set_stack(stack);
     jwidget_set_stretch(stack, 1, 1, false);
 
@@ -244,9 +258,9 @@ int main(int argc, char **argv)
     jwidget_set_stretch(fileselect, 1, 1, false);
 
     /* Shell tab */
-    widget_shell *shell = widget_shell_create(pe_shell_console, stack);
-    widget_shell_set_line_spacing(shell, _(1, 3));
-    jwidget_set_stretch(shell, 1, 1, false);
+    pe_shell = widget_shell_create(pe_console, stack);
+    widget_shell_set_line_spacing(pe_shell, _(1, 3));
+    jwidget_set_stretch(pe_shell, 1, 1, false);
 
 #ifdef FX9860G
     bool show_title_in_shell = false;
@@ -262,41 +276,24 @@ int main(int argc, char **argv)
 
     /* Initial state */
     jfileselect_browse(fileselect, "/");
-    jscene_show_and_focus(scene, fileselect);
+    jscene_show_and_focus(pe_scene, fileselect);
 
     //=== Event handling ===//
 
     while(1) {
-        jevent e = jscene_run(scene);
+        jevent e = jscene_run(pe_scene);
 
         if(e.type == JSCENE_PAINT) {
-            dclear(C_WHITE);
-            jscene_render(scene);
-
-            /* Render shell modifiers above the scene in a convenient spot */
-            int shift, alpha, layer;
-            bool instant;
-            widget_shell_get_modifiers(shell, &shift, &alpha);
-            widget_shell_modifier_info(shift, alpha, &layer, &instant);
-            int icon = 2 * layer + !instant;
-#ifdef FX9860G
-            dsubimage(118, 58, &img_modifier_states, 9*icon+1, 1, 8, 6,
-                DIMAGE_NONE);
-#else
-            dsubimage(377, 207, &img_modifier_states, 16*icon, 0, 15, 14,
-                DIMAGE_NONE);
-#endif
-            dupdate();
+            pe_draw();
         }
 
         if(e.type == WIDGET_SHELL_MOD_CHANGED)
-            scene->widget.update = true;
+            pe_scene->widget.update = true;
 
         if(e.type == WIDGET_SHELL_INPUT) {
             char *line = (char *)e.data;
-            shell_write_str(line);
+            pyexec_repl_execute(line);
             free(line);
-            shell_write_char('\r');
             pe_print_prompt(1);
         }
 
@@ -304,13 +301,18 @@ int main(int argc, char **argv)
             char const *path = jfileselect_selected_file(fileselect);
             char *module = path_to_module(path);
             if(module) {
-                jscene_show_and_focus(scene, shell);
+                jscene_show_and_focus(pe_scene, pe_shell);
                 jwidget_set_visible(title, show_title_in_shell);
 
                 pe_reset_micropython();
-                shell_write_str("import ");
-                shell_write_str(module);
-                shell_write_str("\r\n");
+
+                char *str = malloc(8 + strlen(module) + 1);
+                if(str) {
+                    strcpy(str, "import ");
+                    strcat(str, module);
+                    pyexec_repl_execute(str);
+                    free(str);
+                }
                 free(module);
             }
         }
@@ -325,11 +327,11 @@ int main(int argc, char **argv)
             pe_debug_kmalloc();
 
         if(key == KEY_F1) {
-            jscene_show_and_focus(scene, fileselect);
+            jscene_show_and_focus(pe_scene, fileselect);
             jwidget_set_visible(title, true);
         }
         if(key == KEY_F2) {
-            jscene_show_and_focus(scene, shell);
+            jscene_show_and_focus(pe_scene, pe_shell);
             jwidget_set_visible(title, show_title_in_shell);
         }
     }
@@ -338,7 +340,7 @@ int main(int argc, char **argv)
 
     gc_sweep_all();
     mp_deinit();
-    console_destroy(pe_shell_console);
+    console_destroy(pe_console);
     return 0;
 }
 

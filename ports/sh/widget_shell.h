@@ -71,7 +71,7 @@ extern uint16_t WIDGET_SHELL_MOD_CHANGED;
 extern uint16_t WIDGET_SHELL_INPUT;
 
 /* Update frequency, ie. cap on the number of shell redraws per second. */
-#define WIDGET_SHELL_FPS 30
+#define WIDGET_SHELL_FPS 10
 
 /* widget_shell_create(): Create a shell widget tied to a console */
 widget_shell *widget_shell_create(console_t *console, void *parent);

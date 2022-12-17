@@ -65,3 +65,15 @@ Future wishes:
 | Island of the Dead Kings | TODO | TODO | TODO | TODO |
 | Synchro-Donjon | TODO | TODO | TODO | TODO |
 | Flappy Bird | Yes | Yes | TODO | TODO |
+
+**Basic benchmarks**
+
+PythonExtra is slightly faster than the official Python app, probably due to
+optimization during compilation of the VM. The tests below show the effect on
+basic Python operations.
+
+| Test | Program | Official Python (fx-CG 50) | PythonExtra (fx-CG 50) |
+| ---- | ------- | -------------------------- | ---------------------- |
+| VM speed | `for i in range(1000000): pass` | ~12 seconds | 8.9 seconds |
+| Shell output | `for i in range(100000): print(i)` | ~22 seconds | 11.3 seconds |
+| Large integers | 250! (500 repeats) | ~15 seconds | 8.6 seconds |

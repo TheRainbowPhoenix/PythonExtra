@@ -35,9 +35,7 @@ bool console_line_init(console_line_t *line, int prealloc_size)
 void console_line_deinit(console_line_t *line)
 {
     free(line->data);
-    line->data = NULL;
-    line->size = 0;
-    line->alloc_size = 0;
+    memset(line, 0, sizeof *line);
 }
 
 bool console_line_alloc(console_line_t *line, int n)
@@ -46,7 +44,7 @@ bool console_line_alloc(console_line_t *line, int n)
         return true;
 
     /* Always increase the size by at least 16 so we can insert many times in a
-       row without worrying about excessive insertions. */
+       row without worrying about excessive allocations. */
     int newsize = max(line->alloc_size + 16, n + 1);
     char *newdata = realloc(line->data, newsize);
     if(!newdata)
@@ -147,86 +145,188 @@ int console_line_render(int x, int y, console_line_t *line, int w, int dy,
     return y;
 }
 
+//=== Rotating line storage ===//
+
+bool linebuf_init(linebuf_t *buf, int capacity, int backlog_size)
+{
+    if(capacity <= 0)
+        return false;
+
+    buf->lines = malloc(capacity * sizeof *buf->lines);
+    if(!buf->lines)
+        return false;
+
+    buf->capacity = capacity;
+    buf->start = 0;
+    buf->size = 0;
+    buf->absolute = 1;
+    buf->backlog_size = backlog_size;
+    buf->total_size_except_last = 0;
+    buf->absolute_rendered = 0;
+    buf->total_rendered = 0;
+    return true;
+}
+
+void linebuf_deinit(linebuf_t *buf)
+{
+    free(buf->lines);
+    memset(buf, 0, sizeof *buf);
+}
+
+/* Lines in the buffer are identified by their positions within the `lines`
+   array, which are integers equipped with modulo arithmetic (we call them
+   "indices"). We abstract away the rotation by numbering stored lines from 0
+   to buf->size - 1, and we call these numbers "nths". When we want to identify
+   lines independent of rotation, we use their absolute line number.
+
+   Such numbers refer to lines stored in the buffer if:
+     (index)   0 <= linebuf_index_to_nth(buf, index) < size
+     (nth)     0 <= nth < size
+     (abs)     0 <= abs - buf->absolute < size */
+
+GINLINE static int linebuf_nth_to_index(linebuf_t const *buf, int nth)
+{
+    return (buf->start + nth) % buf->capacity;
+}
+
+/* Get the nth line. */
+GINLINE static console_line_t *linebuf_get_nth_line(linebuf_t const *buf,
+    int nth)
+{
+    if(nth < 0 || nth >= buf->size)
+        return NULL;
+
+    return &buf->lines[linebuf_nth_to_index(buf, nth)];
+}
+
+/* Move `index` by `diff`; assumes |diff| <= buf->capacity. */
+GINLINE static int linebuf_index_add(linebuf_t const *buf, int index, int diff)
+{
+    return (index + diff + buf->capacity) % buf->capacity;
+}
+
+int linebuf_start(linebuf_t const *buf)
+{
+    return buf->absolute;
+}
+
+int linebuf_end(linebuf_t const *buf)
+{
+    return buf->absolute + buf->size;
+}
+
+console_line_t *linebuf_get_line(linebuf_t const *buf, int abs)
+{
+    return linebuf_get_nth_line(buf, abs - buf->absolute);
+}
+
+console_line_t *linebuf_get_last_line(linebuf_t const *buf)
+{
+    return linebuf_get_nth_line(buf, buf->size - 1);
+}
+
+console_line_t *linebuf_newline(linebuf_t *buf)
+{
+    /* Make space if the buffer is full */
+    linebuf_recycle_oldest_lines(buf, buf->size - buf->capacity + 1);
+
+    /* Freeze the current last line's size */
+    if(buf->size > 0) {
+        console_line_t *L = linebuf_get_nth_line(buf, buf->size - 1);
+        buf->total_size_except_last += L->size;
+    }
+
+    buf->size++;
+    console_line_t *L = linebuf_get_nth_line(buf, buf->size - 1);
+    console_line_init(L, 16);
+    return L;
+}
+
+void linebuf_recycle_oldest_lines(linebuf_t *buf, int count)
+{
+    count = min(count, buf->size);
+    if(count <= 0)
+        return;
+
+    for(int nth = 0; nth < count; nth++) {
+        console_line_t *L = linebuf_get_nth_line(buf, nth);
+        buf->total_rendered -= L->render_lines;
+        if(nth != buf->size - 1)
+            buf->total_size_except_last -= L->size;
+        console_line_deinit(L);
+    }
+
+    buf->start = linebuf_index_add(buf, buf->start, count);
+    buf->size -= count;
+    buf->absolute += count;
+}
+
+void linebuf_clean_backlog(linebuf_t *buf)
+{
+    if(buf->size <= 0)
+        return;
+
+    int remove = 0;
+    int n = buf->total_size_except_last + linebuf_get_last_line(buf)->size;
+
+    while(remove < buf->size - 1 && n > buf->backlog_size) {
+        n -= linebuf_get_nth_line(buf, remove)->size;
+        remove++;
+    }
+
+    linebuf_recycle_oldest_lines(buf, remove);
+}
+
+void linebuf_update_render(linebuf_t *buf, int width, bool lazy)
+{
+    int start = linebuf_start(buf);
+    int end = linebuf_end(buf);
+    if(lazy)
+        start = max(start, buf->absolute_rendered + 1);
+
+    for(int abs = start; abs < end; abs++) {
+        console_line_t *L = linebuf_get_nth_line(buf, abs - buf->absolute);
+        buf->total_rendered -= L->render_lines;
+        console_line_update_render_lines(L, width);
+        buf->total_rendered += L->render_lines;
+    }
+
+    buf->absolute_rendered = max(buf->absolute_rendered, end - 2);
+}
+
 //=== Terminal emulator ===//
 
-console_t *console_create(int backlog_size)
+console_t *console_create(int backlog_size, int maximum_line_count)
 {
+    backlog_size = max(backlog_size, PE_CONSOLE_LINE_MAX_LENGTH);
+    maximum_line_count = max(maximum_line_count, 1);
+
     console_t *cons = malloc(sizeof *cons);
-    cons->lines = NULL;
-    cons->line_count = 0;
+    if(!linebuf_init(&cons->lines, maximum_line_count, backlog_size)) {
+        free(cons);
+        return NULL;
+    }
 
-    cons->absolute_lineno = 1;
-    cons->backlog_size = max(backlog_size, PE_CONSOLE_LINE_MAX_LENGTH);
-
+    cons->cursor = -1;
     cons->render_needed = true;
     cons->render_font = NULL;
     cons->render_width = 0;
     cons->render_lines = 0;
-    cons->render_total_lines = 0;
 
-    if(!console_new_line(cons)) {
-        free(cons);
-        return NULL;
-    }
+    console_newline(cons);
     return cons;
 }
 
-bool console_new_line(console_t *cons)
+void console_newline(console_t *cons)
 {
-    int newsize = (cons->line_count + 1) * sizeof *cons->lines;
-    console_line_t *newlines = realloc(cons->lines, newsize);
-    if(!newlines)
-        return false;
-    cons->lines = newlines;
-
-    /* If this fails we keep the extended lines buffer. The next realloc() will
-       be a no-op and we don't have to track anything. */
-    if(!console_line_init(&cons->lines[cons->line_count], 16))
-        return false;
-    cons->line_count++;
+    linebuf_newline(&cons->lines);
     cons->cursor = 0;
     cons->render_needed = true;
 
-    /* Routinely clean the backlog every time a line is added. */
-    console_clean_backlog(cons);
-    return true;
-}
-
-/* static console_line_t *console_get_absolute_line(console_t const *cons,
-    int lineno)
-{
-    int i = lineno - cons->absolute_lineno;
-    return (i >= 0 && i < cons->line_count) ? &cons->lines[i] : NULL;
-} */
-
-void console_clean_backlog(console_t *cons)
-{
-    /* Find how many lines we can keep while using at most cons->backlog_size
-       bytes to store them. The console must always have at least one line. */
-    int first_kept = cons->line_count;
-    int line_size = 0;
-    int total_size = 0;
-
-    do {
-        total_size += line_size;
-        first_kept--;
-        line_size = cons->lines[first_kept].size;
-    }
-    while(first_kept > 0 && total_size + line_size <= cons->backlog_size);
-
-    /* Remove old lines */
-    for(int j = 0; j < first_kept; j++)
-        console_line_deinit(&cons->lines[j]);
-
-    /* Don't realloc() yet, it will happen soon enough anyway */
-    memmove(cons->lines, cons->lines + first_kept,
-        (cons->line_count - first_kept) * sizeof cons->lines[0]);
-    cons->line_count -= first_kept;
-
-    /* Update the absolute number of the first line */
-    cons->absolute_lineno += first_kept;
-
-    cons->render_needed = true;
+    /* This is a good time to clean up the backlog. */
+    // TODO: This might actually be the performance bottleneck, because we do a
+    // long loop only to find out that the total size is still reasonable!
+    linebuf_clean_backlog(&cons->lines);
 }
 
 void console_clear_render_flag(console_t *cons)
@@ -236,9 +336,7 @@ void console_clear_render_flag(console_t *cons)
 
 void console_destroy(console_t *cons)
 {
-    for(int i = 0; i < cons->line_count; i++)
-        console_line_deinit(&cons->lines[i]);
-    free(cons->lines);
+    linebuf_deinit(&cons->lines);
     free(cons);
 }
 
@@ -271,38 +369,31 @@ static void view_params(int w,
 void console_compute_view(console_t *cons, font_t const *font,
     int width, int lines)
 {
+    /* If a view with the same width was previously computed, do a lazy
+       update: recompute only the last lines. */
+    bool lazy = (width != 0 && cons->render_width == width);
     cons->render_font = font;
     cons->render_width = width;
     cons->render_lines = lines;
-    cons->render_total_lines = 0;
-
-    int text_w;
-    view_params(width, &text_w, NULL, NULL);
-
-    for(int i = 0; i < cons->line_count; i++) {
-        console_line_update_render_lines(&cons->lines[i], text_w);
-        cons->render_total_lines += cons->lines[i].render_lines;
-    }
+    linebuf_update_render(&cons->lines, width, lazy);
 }
 
 console_scrollpos_t console_clamp_scrollpos(console_t const *cons,
     console_scrollpos_t pos)
 {
     /* No scrolling case */
-    if(cons->render_total_lines < cons->render_lines)
+    if(cons->lines.total_rendered < cons->render_lines)
         return 0;
 
-    /* Normal clamp */
-    return max(0, min(pos, cons->render_total_lines - cons->render_lines));
+    return max(0, min(pos, cons->lines.total_rendered - cons->render_lines));
 }
 
 void console_render(int x, int y0, console_t const *cons, int dy,
     console_scrollpos_t pos)
 {
-    int total_lines = cons->render_total_lines;
+    int total_lines = cons->lines.total_rendered;
     int visible_lines = cons->render_lines;
     int w = cons->render_width;
-    int watermark = visible_lines - total_lines + pos;
     int y = y0;
 
     int text_w, scroll_spacing, scroll_w;
@@ -310,15 +401,27 @@ void console_render(int x, int y0, console_t const *cons, int dy,
 
     font_t const *old_font = dfont(cons->render_font);
 
-    /* Show only visible lines */
-    for(int i = 0; i < cons->line_count; i++) {
-        console_line_t *line = &cons->lines[i];
-        bool show_cursor = (i == cons->line_count - 1);
+    /* Show only visible lines. We want to avoid counting all the lines in the
+       console, and instead start from the end. */
+    int line_y = visible_lines + pos;
+    int L_start = linebuf_start(&cons->lines);
+    int L_end = linebuf_end(&cons->lines);
+    int i = linebuf_end(&cons->lines);
 
-        if(watermark + line->render_lines > 0)
-            y = console_line_render(x, y, line, text_w, dy, -watermark,
-                visible_lines - watermark, show_cursor ? cons->cursor : -1);
-        watermark += line->render_lines;
+    while(i > L_start && line_y > 0)
+        line_y -= linebuf_get_line(&cons->lines, --i)->render_lines;
+
+    /* If there isn't enough content to fill the view, start at the top. */
+    line_y = min(line_y, pos);
+
+    while(i < L_end  && line_y < visible_lines) {
+        console_line_t *line = linebuf_get_line(&cons->lines, i);
+        bool show_cursor = (i == L_end - 1);
+
+        y = console_line_render(x, y, line, text_w, dy, -line_y,
+            visible_lines - line_y, show_cursor ? cons->cursor : -1);
+        line_y += line->render_lines;
+        i++;
     }
 
     dfont(old_font);
@@ -342,11 +445,16 @@ void console_render(int x, int y0, console_t const *cons, int dy,
 
 //=== Edition functions ===//
 
+GINLINE static console_line_t *last_line(console_t *cons)
+{
+    return linebuf_get_last_line(&cons->lines);
+}
+
 bool console_set_cursor(console_t *cons, int pos)
 {
-    console_line_t *last_line = &cons->lines[cons->line_count - 1];
+    console_line_t *L = last_line(cons);
 
-    if(pos < last_line->prefix || pos > last_line->size)
+    if(pos < L->prefix || pos > L->size)
         return false;
 
     cons->cursor = pos;
@@ -360,37 +468,35 @@ bool console_move_cursor(console_t *cons, int cursor_movement)
 
 char *console_get_line(console_t *cons, bool copy)
 {
-    console_line_t *last_line = &cons->lines[cons->line_count - 1];
-    char *str = last_line->data + last_line->prefix;
-
+    console_line_t *L = last_line(cons);
+    char *str = L->data + L->prefix;
     return copy ? strdup(str) : str;
 }
 
-bool console_write_block_at_cursor(console_t *cons, char const *str, int n)
+bool console_write_raw(console_t *cons, char const *str, int n)
 {
-    if(!cons->line_count && !console_new_line(cons))
-        return false;
+    if(!cons->lines.size)
+        console_newline(cons);
 
-    /* Split up n characters into chunks that remain within each line's storage
-       capacity. */
+    /* Split string into chunks smaller than each line's storage capacity. */
     while(n > 0) {
-        console_line_t *last_line = &cons->lines[cons->line_count - 1];
-        int capacity = console_line_capacity(last_line);
+        console_line_t *L = last_line(cons);
+        int capacity = console_line_capacity(L);
         int round_size = min(n, capacity);
 
-        if(!console_line_insert(last_line, cons->cursor, str, round_size))
+        if(!console_line_insert(L, cons->cursor, str, round_size))
             return false;
         cons->cursor += round_size;
         cons->render_needed = true;
-        if(round_size < n && !console_new_line(cons))
-            return false;
+        if(round_size < n)
+            console_newline(cons);
         n -= round_size;
     }
 
     return true;
 }
 
-bool console_write_at_cursor(console_t *cons, char const *buf, int n)
+bool console_write(console_t *cons, char const *buf, int n)
 {
     int offset = 0;
     if(n < 0)
@@ -403,7 +509,7 @@ bool console_write_at_cursor(console_t *cons, char const *buf, int n)
             end++;
 
         int line_size = end - (buf + offset);
-        if(!console_write_block_at_cursor(cons, buf + offset, line_size))
+        if(!console_write_raw(cons, buf + offset, line_size))
             return false;
 
         offset += line_size;
@@ -411,33 +517,32 @@ bool console_write_at_cursor(console_t *cons, char const *buf, int n)
             break;
 
         if(buf[offset] == '\n') {
-            if(!console_new_line(cons))
-                return false;
+            console_newline(cons);
             offset++;
         }
         else if(buf[offset] == 8) {
             offset++;
-            console_line_t *last_line = &cons->lines[cons->line_count - 1];
+            console_line_t *L = last_line(cons);
             if(cons->cursor > 0) {
-                console_line_delete(last_line, cons->cursor-1, 1);
+                console_line_delete(L, cons->cursor-1, 1);
                 cons->cursor--;
             }
         }
         else if(buf[offset] == '\e') {
-            console_line_t *last_line = &cons->lines[cons->line_count - 1];
+            console_line_t *L = last_line(cons);
             offset++;
 
             /* TODO: Handle more complex escape sequences */
             if(offset + 2 <= n && buf[offset] == '[' && buf[offset+1] == 'K') {
-                console_line_delete(last_line, cons->cursor,
-                    last_line->size - cons->cursor);
+                console_line_delete(L, cons->cursor,
+                    L->size - cons->cursor);
                 offset += 2;
             }
             if(offset + 2 <= n && buf[offset] == 1 && buf[offset+1] == 'D') {
                 cons->cursor -= (cons->cursor > 0);
             }
             if(offset + 2 <= n && buf[offset] == 1 && buf[offset+1] == 'C') {
-                cons->cursor += (cons->cursor < last_line->size);
+                cons->cursor += (cons->cursor < L->size);
             }
         }
 
@@ -449,23 +554,21 @@ bool console_write_at_cursor(console_t *cons, char const *buf, int n)
 
 void console_lock_prefix(console_t *cons)
 {
-    console_line_set_prefix(&cons->lines[cons->line_count - 1], cons->cursor);
+    console_line_set_prefix(last_line(cons), cons->cursor);
 }
 
 void console_delete_at_cursor(console_t *cons, int n)
 {
-    console_line_t *last_line = &cons->lines[cons->line_count - 1];
-    int real_n = console_line_delete(last_line, cons->cursor - n, n);
+    int real_n = console_line_delete(last_line(cons), cons->cursor - n, n);
     cons->cursor -= real_n;
     cons->render_needed = true;
 }
 
 void console_clear_current_line(console_t *cons)
 {
-    console_line_t *last_line = &cons->lines[cons->line_count - 1];
-    console_line_delete(last_line, last_line->prefix,
-        last_line->size - last_line->prefix);
-    cons->cursor = last_line->prefix;
+    console_line_t *L = last_line(cons);
+    console_line_delete(L, L->prefix, L->size - L->prefix);
+    cons->cursor = L->prefix;
     cons->render_needed = true;
 }
 
