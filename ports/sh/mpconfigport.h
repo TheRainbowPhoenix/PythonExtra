@@ -53,7 +53,7 @@
 #define MICROPY_PY_BUILTINS_FILTER        (1)
 #define MICROPY_PY_BUILTINS_FROZENSET     (1)
 #define MICROPY_PY_BUILTINS_HELP          (1)
-#define MICROPY_PY_BUILTINS_INPUT         (0) // TODO: Implement input()
+#define MICROPY_PY_BUILTINS_INPUT         (1)
 #define MICROPY_PY_BUILTINS_MEMORYVIEW    (1)
 #define MICROPY_PY_BUILTINS_MIN_MAX       (1)
 #define MICROPY_PY_BUILTINS_PROPERTY      (1)

@@ -123,6 +123,11 @@ int console_line_render(int x, int y, console_line_t *line, int w, int dy,
     int line_offset = 0;
     int line_number = 0;
 
+    if(p == endline && cursor == 0) {
+        int h;
+        dsize("", NULL, NULL, &h);
+        dline(x, y, x, y+h-1, C_BLACK);
+    }
     while(p < endline) {
         char const *endscreen = drsize(p, NULL, w, NULL);
         int len = endscreen - p;
