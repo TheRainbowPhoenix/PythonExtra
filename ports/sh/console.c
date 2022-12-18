@@ -15,6 +15,30 @@
 #include "../../shared/readline/readline.h"
 #include "keymap.h"
 
+/* Compute the shell's horizontal layout as:
+   1. Text width (region where the text is renderer)
+   2. Spacing left of the scrollbar
+   3. Width of the scrollbar */
+static void view_params(int w,
+    int *text_w, int *scroll_spacing, int *scroll_width)
+{
+#ifdef FX9860G
+    if(text_w)
+        *text_w = w - 2;
+    if(scroll_spacing)
+        *scroll_spacing = 1;
+    if(scroll_width)
+        *scroll_width = 1;
+#else
+    if(text_w)
+        *text_w = w - 4;
+    if(scroll_spacing)
+        *scroll_spacing = 2;
+    if(scroll_width)
+        *scroll_width = 2;
+#endif
+}
+
 //=== Dynamic console lines ===//
 
 bool console_line_init(console_line_t *line, int prealloc_size)
@@ -99,20 +123,14 @@ int console_line_delete(console_line_t *line, int p, int n)
 
 void console_line_update_render_lines(console_line_t *line, int width)
 {
+    char const *p = line->data;
     line->render_lines = 0;
 
-    char const *p = line->data;
-    char const *endline = p + strlen(p);
-
-    if(endline == p) {
-        line->render_lines = 1;
-        return;
-    }
-
-    while(p < endline) {
+    do {
         line->render_lines++;
         p = drsize(p, NULL, width, NULL);
     }
+    while(*p);
 }
 
 int console_line_render(int x, int y, console_line_t *line, int w, int dy,
@@ -289,10 +307,13 @@ void linebuf_update_render(linebuf_t *buf, int width, bool lazy)
     if(lazy)
         start = max(start, buf->absolute_rendered + 1);
 
+    int text_w;
+    view_params(width, &text_w, NULL, NULL);
+
     for(int abs = start; abs < end; abs++) {
         console_line_t *L = linebuf_get_nth_line(buf, abs - buf->absolute);
         buf->total_rendered -= L->render_lines;
-        console_line_update_render_lines(L, width);
+        console_line_update_render_lines(L, text_w);
         buf->total_rendered += L->render_lines;
     }
 
@@ -346,30 +367,6 @@ void console_destroy(console_t *cons)
 }
 
 //=== Rendering functions ===//
-
-/* Compute the shell's horizontal layout as:
-   1. Text width (region where the text is renderer)
-   2. Spacing left of the scrollbar
-   3. Width of the scrollbar */
-static void view_params(int w,
-    int *text_w, int *scroll_spacing, int *scroll_width)
-{
-#ifdef FX9860G
-    if(text_w)
-        *text_w = w - 2;
-    if(scroll_spacing)
-        *scroll_spacing = 1;
-    if(scroll_width)
-        *scroll_width = 1;
-#else
-    if(text_w)
-        *text_w = w - 4;
-    if(scroll_spacing)
-        *scroll_spacing = 2;
-    if(scroll_width)
-        *scroll_width = 2;
-#endif
-}
 
 void console_compute_view(console_t *cons, font_t const *font,
     int width, int lines)
