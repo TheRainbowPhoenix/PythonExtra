@@ -364,7 +364,8 @@ STATIC const mp_rom_map_elem_t modgint_module_globals_table[] = {
     OBJ(keycode_digit),
 
     /* <gint/display.h> */
-
+    INT(C_WHITE),
+    INT(C_BLACK),
     INT(DTEXT_LEFT),
     INT(DTEXT_CENTER),
     INT(DTEXT_RIGHT),
