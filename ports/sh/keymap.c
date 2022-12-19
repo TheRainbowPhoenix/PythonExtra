@@ -42,7 +42,7 @@ uint32_t keymap_translate(int key, bool shift, bool alpha)
 		if(key == KEY_SUB) return ']';
 		if(key == KEY_DOT) return '=';
 		if(key == KEY_0) return ':';
-		if(key == KEY_EXP) return 0x3c0; // 'π'
+//		if(key == KEY_EXP) return 0x3c0; // 'π'
 	}
 	if(!shift && alpha) {
 		/* The first 3 rows have no useful characters */
