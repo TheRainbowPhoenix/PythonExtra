@@ -180,6 +180,7 @@ void pe_draw(void)
 
 static void pe_reset_micropython(void)
 {
+    gc_sweep_all();
     mp_deinit();
     mp_init();
 
