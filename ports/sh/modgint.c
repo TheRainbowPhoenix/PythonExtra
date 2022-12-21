@@ -14,6 +14,8 @@
 #include <gint/display.h>
 #include <gint/keyboard.h>
 
+void pe_enter_graphics_mode(void);
+
 #define FUN_0(NAME) \
     MP_DEFINE_CONST_FUN_OBJ_0(modgint_ ## NAME ## _obj, modgint_ ## NAME)
 #define FUN_1(NAME) \
@@ -28,6 +30,12 @@
 #define FUN_BETWEEN(NAME, MIN, MAX) \
     MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(modgint_ ## NAME ## _obj, MIN, MAX, \
         modgint_ ## NAME)
+
+STATIC mp_obj_t modgint___init__(void)
+{
+    pe_enter_graphics_mode();
+    return mp_const_none;
+}
 
 /* <gint/keyboard.h> */
 
@@ -137,9 +145,7 @@ STATIC mp_obj_t modgint_dclear(mp_obj_t arg1)
 
 STATIC mp_obj_t modgint_dupdate(void)
 {
-/* TODO: Port graphics mode notification over to the JustUI setup */
-//    pe_shell_graphics_mode();
-
+    pe_enter_graphics_mode();
     dupdate();
     return mp_const_none;
 }
@@ -237,6 +243,7 @@ STATIC mp_obj_t modgint_dtext(size_t n, mp_obj_t const *args)
     return mp_const_none;
 }
 
+FUN_0(__init__);
 FUN_1(dclear);
 FUN_0(dupdate);
 FUN_BETWEEN(drect, 5, 5);
@@ -259,6 +266,7 @@ FUN_BETWEEN(dtext, 4, 4);
 
 STATIC const mp_rom_map_elem_t modgint_module_globals_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR_gint) },
+    OBJ(__init__),
 
     /* <gint/keycodes.h> */
 
@@ -364,14 +372,26 @@ STATIC const mp_rom_map_elem_t modgint_module_globals_table[] = {
     OBJ(keycode_digit),
 
     /* <gint/display.h> */
-    INT(C_WHITE),
-    INT(C_BLACK),
+
+    INT(DWIDTH),
+    INT(DHEIGHT),
     INT(DTEXT_LEFT),
     INT(DTEXT_CENTER),
     INT(DTEXT_RIGHT),
     INT(DTEXT_TOP),
     INT(DTEXT_MIDDLE),
     INT(DTEXT_BOTTOM),
+
+    INT(C_WHITE),
+    INT(C_LIGHT),
+    INT(C_DARK),
+    INT(C_BLACK),
+    INT(C_NONE),
+#ifdef FXCG50
+    INT(C_RED),
+    INT(C_GREEN),
+    INT(C_BLUE),
+#endif
 
     OBJ(dclear),
     OBJ(dupdate),

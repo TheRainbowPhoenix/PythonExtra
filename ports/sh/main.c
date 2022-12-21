@@ -155,6 +155,13 @@ extern bopti_image_t const img_modifier_states;
 #define _(fx, cg) (cg)
 #endif
 
+void pe_enter_graphics_mode(void)
+{
+    /* Cancel any pending update of the shell */
+    PE.console->render_needed = false;
+    PE.shell->widget.update = 0;
+}
+
 void pe_draw(void)
 {
     dclear(C_WHITE);

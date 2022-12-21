@@ -63,9 +63,8 @@ static mp_obj_t init(void)
 
 static mp_obj_t show_screen(void)
 {
-/* TODO: Port graphics mode notification over to the JustUI setup */
-//    pe_shell_graphics_mode();
-
+    void pe_enter_graphics_mode(void);
+    pe_enter_graphics_mode();
     dupdate();
     return mp_const_none;
 }
