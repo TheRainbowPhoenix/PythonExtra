@@ -31,7 +31,7 @@ Located in [`ports/sh/examples`](ports/sh/examples).
 | Chute tridimensionnelle | Yes | Yes | x1.36 | x2.26 ⁽¹⁾ |
 | Bad Apple | Meh⁽²⁾ | - | TODO | TODO |
 | Island of the Dead Kings | TODO | TODO | TODO | TODO |
-| Synchro-Donjon | TODO | TODO | TODO | TODO |
+| Synchro-Donjon (AI mode) | Yes | TODO | x1.82 | - |
 | Flappy Bird | Yes | Yes | x1.04 | x2.35 |
 
 ⁽¹⁾ After upgrading to full-screen 396x224 instead of the original 120x80. (!)
