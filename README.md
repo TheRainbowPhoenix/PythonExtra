@@ -28,13 +28,15 @@ Located in [`ports/sh/examples`](ports/sh/examples).
 
 | Program | fx-CG | G-III | Raw speedup | Full speedup |
 | ------- | ----- | ----- | ----------- | ------------ |
-| Chute tridimensionnelle | TODO | Yes | TODO | TODO |
-| Bad Apple | Meh⁽¹⁾ | - | TODO | TODO |
+| Chute tridimensionnelle | Yes | Yes | x1.36 | x2.26 ⁽¹⁾ |
+| Bad Apple | Meh⁽²⁾ | - | TODO | TODO |
 | Island of the Dead Kings | TODO | TODO | TODO | TODO |
 | Synchro-Donjon | TODO | TODO | TODO | TODO |
 | Flappy Bird | Yes | Yes | x1.04 | x2.35 |
 
-⁽¹⁾ Bad Apple requires unloading modules to not run out of memory, and I
+⁽¹⁾ After upgrading to full-screen 396x224 instead of the original 120x80. (!)
+
+⁽²⁾ Bad Apple requires unloading modules to not run out of memory, and I
 haven't been able to consistently do that. See the `unload-modules` branch.
 
 ---
