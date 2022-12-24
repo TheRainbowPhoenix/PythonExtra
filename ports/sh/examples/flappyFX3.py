@@ -66,7 +66,7 @@ def draw_jeu():
   """initialise l'affichage en dessinant l'ensemble des elements graphiques"""
   dclear(C_WHITE)
   draw_fbird(d_fbird - d_fenetre, y_altitude(alt_fbird), d_fbird_ancien - d_fenetre, y_altitude(alt_fbird_ancien))
-  for k in range(score - 1, len(d_tuyaux)):
+  for k in range(0, len(d_tuyaux)):
     d_tuyau = d_tuyaux[k]
     if d_tuyau+L_TUYAU >= d_fenetre and d_tuyau < d_fenetre+L_FENETRE:
       draw_tuyaux(d_tuyau - d_fenetre, hinf_tuyaux[k], hsup_tuyaux[k])
