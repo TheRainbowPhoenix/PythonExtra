@@ -322,13 +322,29 @@ int main(int argc, char **argv)
     /* Initialize the MicroPython GC with most available memory */
     mp_stack_ctrl_init();
 #ifdef FX9860G
-    /* Get *some* memory from the OS heap */
-    void *gc_area = malloc(32768);
-    if(!gc_area)
+    /* Put basically all the OS heap into the Python GC. For our own purposes
+       we'll use gint's _uram arena and the leftover from the OS heap. */
+    int size = 65536;
+    bool first = true;
+
+    while(size >= 2048) {
+        void *area = kmalloc(size, "_os");
+        if(area) {
+            if(first)
+                gc_init(area, area + size);
+            else
+                gc_add(area, area + size);
+            first = false;
+        }
+        else size /= 2;
+    }
+
+    if(first)
         pe_debug_panic("No heap!");
-    gc_init(gc_area, gc_area + 32768);
+
 #if PE_DEBUG
     /* Add some Python ram */
+    // https://www.planet-casio.com/Fr/forums/topic15269-10-khicas-add-in-calcul-formel-pour-graph-90e-et-35eii.html#189284
     void *py_ram_start = (void*)0x88053800;
     void *py_ram_end = (void*)0x8807f000;
     gc_add(py_ram_start, py_ram_end);
