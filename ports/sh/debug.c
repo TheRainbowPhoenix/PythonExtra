@@ -74,6 +74,14 @@ int pe_debug_printf(char const *fmt, ...)
 int DEBUG_printf(char const *fmt, ...)
 __attribute__((alias("pe_debug_printf")));
 
+static void print_strn(void *env, const char *str, size_t len) {
+    (void)env;
+    usb_open_wait();
+    usb_fxlink_text(str, len);
+}
+
+mp_print_t const mp_debug_print = { NULL, print_strn };
+
 void pe_debug_kmalloc(void)
 {
     kmalloc_gint_stats_t *s;

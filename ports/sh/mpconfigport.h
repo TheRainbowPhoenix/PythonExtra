@@ -14,6 +14,13 @@
 /* PythonExtra's main debug flag */
 #define PE_DEBUG                          (0)
 #define MICROPY_DEBUG_VERBOSE             (0)
+/* Custom flag to remove DEBUG_printf in alloc/GC (very verbose) */
+#define MICROPY_DEBUG_VERBOSE_ALLOC       (0)
+
+#if PE_DEBUG
+extern const struct _mp_print_t mp_debug_print;
+#define MICROPY_DEBUG_PRINTER             (&mp_debug_print)
+#endif
 
 /* General feature set selection
    Other options: BASIC_FEATURES, EXTRA_FEATURES, FULL_FEATURES, EVERYTHING */

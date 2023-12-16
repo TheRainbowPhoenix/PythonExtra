@@ -34,7 +34,7 @@
 
 #if MICROPY_ENABLE_GC
 
-#if MICROPY_DEBUG_VERBOSE // print debugging info
+#if MICROPY_DEBUG_VERBOSE && MICROPY_DEBUG_VERBOSE_ALLOC
 #define DEBUG_PRINT (1)
 #define DEBUG_printf DEBUG_printf
 #else // don't print debugging info
