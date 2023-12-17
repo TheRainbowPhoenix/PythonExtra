@@ -176,6 +176,11 @@ typedef struct _mp_state_vm_t {
     mp_obj_dict_t *mp_module_builtins_override_dict;
     #endif
 
+    // list (stack) of nested imports for relative import resolution
+    #if MICROPY_RELATIVE_FILE_IMPORTS
+    mp_obj_t mp_import_stack;
+    #endif
+
     // Include any root pointers registered with MP_REGISTER_ROOT_POINTER().
     #ifndef NO_QSTR
     // Only include root pointer definitions when not doing qstr extraction, because

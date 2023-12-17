@@ -290,6 +290,12 @@ STATIC mp_obj_t list_pop(size_t n_args, const mp_obj_t *args) {
     return ret;
 }
 
+mp_obj_t mp_obj_list_pop(mp_obj_t self_in, mp_obj_t index)
+{
+    mp_obj_t args[] = {self_in, index};
+    return list_pop(2, args);
+}
+
 STATIC void mp_quicksort(mp_obj_t *head, mp_obj_t *tail, mp_obj_t key_fn, mp_obj_t binop_less_result) {
     MP_STACK_CHECK();
     while (head < tail) {

@@ -22,6 +22,10 @@ extern const struct _mp_print_t mp_debug_print;
 #define MICROPY_DEBUG_PRINTER             (&mp_debug_print)
 #endif
 
+/* Custom option to use relative imports. For instance when working at the fs
+   root, 'import b' in '/folder/a.py' will import 'folder/b.py' not '/b.py'. */
+#define MICROPY_RELATIVE_FILE_IMPORTS     (1)
+
 /* General feature set selection
    Other options: BASIC_FEATURES, EXTRA_FEATURES, FULL_FEATURES, EVERYTHING */
 #define MICROPY_CONFIG_ROM_LEVEL (MICROPY_CONFIG_ROM_LEVEL_CORE_FEATURES)

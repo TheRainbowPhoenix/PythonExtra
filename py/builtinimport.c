@@ -444,6 +444,7 @@ STATIC mp_obj_t process_import_at_level(qstr full_mod_name, qstr level_mod_name,
             } else {
                 // No-op. Nothing to load.
                 // mp_warning("%s is imported as namespace package", vstr_str(&path));
+                DEBUG_printf("%s is imported as namespace package\n", vstr_str(path));
             }
             // Remove /__init__.py suffix.
             path->len = orig_path_len;
@@ -521,6 +522,23 @@ mp_obj_t mp_builtin___import___default(size_t n_args, const mp_obj_t *args) {
     VSTR_FIXED(path, MICROPY_ALLOC_PATH_MAX)
     mp_obj_t top_module_obj = MP_OBJ_NULL;
     mp_obj_t outer_module_obj = MP_OBJ_NULL;
+
+    #if MICROPY_RELATIVE_FILE_IMPORTS
+    size_t is_len;
+    mp_obj_t *is_items;
+    mp_obj_list_get(MP_STATE_VM(mp_import_stack), &is_len, &is_items);
+    if(is_len > 0) {
+        // Start next to last import
+        char const *prev = qstr_str(MP_OBJ_QSTR_VALUE(is_items[is_len - 1]));
+        char const *slash = strchr(prev, '/');
+        int prev_len = (slash ? slash : prev) - prev;
+        vstr_add_strn(&path, prev, prev_len);
+        outer_module_obj = mp_obj_new_module(MP_QSTR___blankmodule);
+        mp_store_attr(outer_module_obj, MP_QSTR___path__, mp_obj_new_str(vstr_str(&path), vstr_len(&path)));
+        DEBUG_printf("last import was '%s'\n", prev);
+        DEBUG_printf("starting in '%.*s'\n", (int)vstr_len(&path), vstr_str(&path));
+    }
+    #endif
 
     // Search for the end of each component.
     size_t current_component_start = 0;

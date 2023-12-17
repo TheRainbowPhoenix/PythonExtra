@@ -119,6 +119,10 @@ void mp_init(void) {
     MP_STATE_VM(mp_module_builtins_override_dict) = NULL;
     #endif
 
+    #if MICROPY_RELATIVE_FILE_IMPORTS
+    MP_STATE_VM(mp_import_stack) = mp_obj_new_list(0, NULL);
+    #endif
+
     #if MICROPY_PERSISTENT_CODE_TRACK_RELOC_CODE
     MP_STATE_VM(track_reloc_code_list) = MP_OBJ_NULL;
     #endif
@@ -1585,13 +1589,28 @@ mp_obj_t mp_parse_compile_execute(mp_lexer_t *lex, mp_parse_input_kind_t parse_i
     mp_globals_set(globals);
     mp_locals_set(locals);
 
+    #if MICROPY_RELATIVE_FILE_IMPORTS
+    char const *volatile name = qstr_str(lex->source_name);
+    (void)name;
+    if (parse_input_kind == MP_PARSE_FILE_INPUT) {
+        mp_obj_list_append(MP_STATE_VM(mp_import_stack), MP_OBJ_NEW_QSTR(lex->source_name));
+        #if DEBUG_PRINT
+        DEBUG_printf("pushing import: ", name);
+        mp_obj_print_helper(MICROPY_DEBUG_PRINTER, MP_STATE_VM(mp_import_stack), PRINT_REPR);
+        DEBUG_printf("\n");
+        #endif
+    }
+    #endif
+
     nlr_buf_t nlr;
+    bool volatile failed = false;
+    mp_obj_t volatile ret;
+
     if (nlr_push(&nlr) == 0) {
         qstr source_name = lex->source_name;
         mp_parse_tree_t parse_tree = mp_parse(lex, parse_input_kind);
         mp_obj_t module_fun = mp_compile(&parse_tree, source_name, parse_input_kind == MP_PARSE_SINGLE_INPUT);
 
-        mp_obj_t ret;
         if (MICROPY_PY_BUILTINS_COMPILE && globals == NULL) {
             // for compile only, return value is the module function
             ret = module_fun;
@@ -1604,13 +1623,27 @@ mp_obj_t mp_parse_compile_execute(mp_lexer_t *lex, mp_parse_input_kind_t parse_i
         nlr_pop();
         mp_globals_set(old_globals);
         mp_locals_set(old_locals);
-        return ret;
     } else {
         // exception; restore context and re-raise same exception
         mp_globals_set(old_globals);
         mp_locals_set(old_locals);
-        nlr_jump(nlr.ret_val);
+        failed = true;
     }
+
+    #if MICROPY_RELATIVE_FILE_IMPORTS
+    if (parse_input_kind == MP_PARSE_FILE_INPUT) {
+        mp_obj_list_pop(MP_STATE_VM(mp_import_stack), MP_OBJ_NEW_SMALL_INT(-1));
+        #if DEBUG_PRINT
+        DEBUG_printf("popping import: ", name);
+        mp_obj_print_helper(MICROPY_DEBUG_PRINTER, MP_STATE_VM(mp_import_stack), PRINT_REPR);
+        DEBUG_printf("\n");
+        #endif
+    }
+    #endif
+
+    if(failed)
+        nlr_jump(nlr.ret_val);
+    return ret;
 }
 
 #endif // MICROPY_ENABLE_COMPILER
