@@ -9,12 +9,12 @@ SH_ASSETS := \
 SH_METADATA := fxconv-metadata.txt
 SH_CONVFLAGS := --fx
 
-all: PythonExtra.g1a
+all: PythonEx.g1a
 
-PythonExtra.g1a: $(BUILD)/firmware.bin icon.png
+PythonEx.g1a: $(BUILD)/firmware.bin icon.png
 	fxgxa --g1a -n PythonExtra -i icon.png $< -o $@
 
 send: all
-	fxlink -sw PythonExtra.g1a
+	fxlink -sw PythonEx.g1a
 
 include $(TOP)/ports/sh/Makefile
