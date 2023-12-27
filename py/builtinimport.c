@@ -530,7 +530,7 @@ mp_obj_t mp_builtin___import___default(size_t n_args, const mp_obj_t *args) {
     if(is_len > 0) {
         // Start next to last import
         char const *prev = qstr_str(MP_OBJ_QSTR_VALUE(is_items[is_len - 1]));
-        char const *slash = strchr(prev, '/');
+        char const *slash = strrchr(prev, '/');
         int prev_len = (slash ? slash : prev) - prev;
         vstr_add_strn(&path, prev, prev_len);
         outer_module_obj = mp_obj_new_module(MP_QSTR___blankmodule);
