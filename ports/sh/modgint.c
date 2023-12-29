@@ -75,6 +75,12 @@ STATIC mp_obj_t modgint_clearevents(void)
     return mp_const_none;
 }
 
+STATIC mp_obj_t modgint_cleareventflips(void)
+{
+    cleareventflips();
+    return mp_const_none;
+}
+
 STATIC mp_obj_t modgint_keydown(mp_obj_t arg1)
 {
     mp_int_t key = mp_obj_get_int(arg1);
@@ -96,6 +102,18 @@ STATIC mp_obj_t modgint_keydown_any(size_t n, mp_obj_t const *args)
     for(size_t i = 0; i < n; i++)
         down |= keydown(mp_obj_get_int(args[i])) != 0;
     return mp_obj_new_bool(down);
+}
+
+STATIC mp_obj_t modgint_keypressed(mp_obj_t arg1)
+{
+    mp_int_t key = mp_obj_get_int(arg1);
+    return mp_obj_new_bool(keypressed(key) != 0);
+}
+
+STATIC mp_obj_t modgint_keyreleased(mp_obj_t arg1)
+{
+    mp_int_t key = mp_obj_get_int(arg1);
+    return mp_obj_new_bool(keyreleased(key) != 0);
 }
 
 STATIC mp_obj_t modgint_getkey(void)
@@ -125,10 +143,13 @@ STATIC mp_obj_t modgint_keycode_digit(mp_obj_t arg1)
 }
 
 FUN_0(clearevents);
+FUN_0(cleareventflips);
 FUN_0(pollevent);
 FUN_1(keydown);
 FUN_VAR(keydown_all, 0);
 FUN_VAR(keydown_any, 0);
+FUN_1(keypressed);
+FUN_1(keyreleased);
 FUN_0(getkey);
 FUN_1/*2*/(getkey_opt);
 FUN_1(keycode_function);
@@ -363,9 +384,12 @@ STATIC const mp_rom_map_elem_t modgint_module_globals_table[] = {
     OBJ(pollevent),
     // OBJ(waitevent),
     OBJ(clearevents),
+    OBJ(cleareventflips),
     OBJ(keydown),
     OBJ(keydown_all),
     OBJ(keydown_any),
+    OBJ(keypressed),
+    OBJ(keyreleased),
     OBJ(getkey),
     OBJ(getkey_opt),
     OBJ(keycode_function),
