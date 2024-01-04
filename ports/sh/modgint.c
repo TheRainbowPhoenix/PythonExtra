@@ -157,6 +157,16 @@ FUN_1(keycode_digit);
 
 /* <gint/display.h> */
 
+#ifdef FXCG50
+STATIC mp_obj_t modgint_C_RGB(mp_obj_t arg1, mp_obj_t arg2, mp_obj_t arg3)
+{
+    mp_int_t r = mp_obj_get_int(arg1);
+    mp_int_t g = mp_obj_get_int(arg2);
+    mp_int_t b = mp_obj_get_int(arg3);
+    return MP_OBJ_NEW_SMALL_INT(C_RGB(r, g, b));
+}
+#endif
+
 STATIC mp_obj_t modgint_dclear(mp_obj_t arg1)
 {
     mp_int_t color = mp_obj_get_int(arg1);
@@ -238,6 +248,49 @@ STATIC mp_obj_t modgint_dvline(mp_obj_t arg1, mp_obj_t arg2)
     return mp_const_none;
 }
 
+/* dellipse(x, y, r, *, fill=C_NONE, border=C_NONE) */
+STATIC mp_obj_t modgint_dcircle(
+    size_t n_args, const mp_obj_t *pargs, mp_map_t *kwargs)
+{
+    static mp_arg_t const allowed_args[] = {
+        { MP_QSTR_x, MP_ARG_INT | MP_ARG_REQUIRED, {.u_rom_obj=MP_ROM_NONE} },
+        { MP_QSTR_y, MP_ARG_INT | MP_ARG_REQUIRED, {.u_rom_obj=MP_ROM_NONE} },
+        { MP_QSTR_r, MP_ARG_INT | MP_ARG_REQUIRED, {.u_rom_obj=MP_ROM_NONE} },
+        { MP_QSTR_fill, MP_ARG_INT | MP_ARG_KW_ONLY, {.u_int=C_NONE} },
+        { MP_QSTR_border, MP_ARG_INT | MP_ARG_KW_ONLY, {.u_int=C_NONE} },
+    };
+
+    mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
+    mp_arg_parse_all(n_args, pargs, kwargs, MP_ARRAY_SIZE(allowed_args),
+        allowed_args, args);
+
+    dcircle(args[0].u_int, args[1].u_int, args[2].u_int, args[3].u_int,
+            args[4].u_int);
+    return mp_const_none;
+}
+
+/* dellipse(x1, y1, x2, y2, *, fill=C_NONE, border=C_NONE) */
+STATIC mp_obj_t modgint_dellipse(
+    size_t n_args, const mp_obj_t *pargs, mp_map_t *kwargs)
+{
+    static mp_arg_t const allowed_args[] = {
+        { MP_QSTR_x1, MP_ARG_INT | MP_ARG_REQUIRED, {.u_rom_obj=MP_ROM_NONE} },
+        { MP_QSTR_y1, MP_ARG_INT | MP_ARG_REQUIRED, {.u_rom_obj=MP_ROM_NONE} },
+        { MP_QSTR_x2, MP_ARG_INT | MP_ARG_REQUIRED, {.u_rom_obj=MP_ROM_NONE} },
+        { MP_QSTR_y2, MP_ARG_INT | MP_ARG_REQUIRED, {.u_rom_obj=MP_ROM_NONE} },
+        { MP_QSTR_fill, MP_ARG_INT | MP_ARG_KW_ONLY, {.u_int=C_NONE} },
+        { MP_QSTR_border, MP_ARG_INT | MP_ARG_KW_ONLY, {.u_int=C_NONE} },
+    };
+
+    mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
+    mp_arg_parse_all(n_args, pargs, kwargs, MP_ARRAY_SIZE(allowed_args),
+        allowed_args, args);
+
+    dellipse(args[0].u_int, args[1].u_int, args[2].u_int, args[3].u_int,
+             args[4].u_int, args[5].u_int);
+    return mp_const_none;
+}
+
 // TODO: modgint: Font management?
 
 STATIC mp_obj_t modgint_dtext_opt(size_t n, mp_obj_t const *args)
@@ -265,6 +318,10 @@ STATIC mp_obj_t modgint_dtext(size_t n, mp_obj_t const *args)
 }
 
 FUN_0(__init__);
+
+#ifdef FXCG50
+FUN_3(C_RGB);
+#endif
 FUN_1(dclear);
 FUN_0(dupdate);
 FUN_BETWEEN(drect, 5, 5);
@@ -274,6 +331,8 @@ FUN_2(dgetpixel);
 FUN_BETWEEN(dline, 5, 5);
 FUN_2(dhline);
 FUN_2(dvline);
+MP_DEFINE_CONST_FUN_OBJ_KW(modgint_dcircle_obj, 3, modgint_dcircle);
+MP_DEFINE_CONST_FUN_OBJ_KW(modgint_dellipse_obj, 4, modgint_dellipse);
 FUN_BETWEEN(dtext_opt, 8, 8);
 FUN_BETWEEN(dtext, 4, 4);
 
@@ -415,6 +474,7 @@ STATIC const mp_rom_map_elem_t modgint_module_globals_table[] = {
     INT(C_RED),
     INT(C_GREEN),
     INT(C_BLUE),
+    OBJ(C_RGB),
 #endif
 
     OBJ(dclear),
@@ -426,6 +486,8 @@ STATIC const mp_rom_map_elem_t modgint_module_globals_table[] = {
     OBJ(dline),
     OBJ(dhline),
     OBJ(dvline),
+    OBJ(dcircle),
+    OBJ(dellipse),
     OBJ(dtext_opt),
     OBJ(dtext),
 };
