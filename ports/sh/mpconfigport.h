@@ -52,6 +52,7 @@ extern const struct _mp_print_t mp_debug_print;
 #define MICROPY_MODULE_BUILTIN_INIT       (1) /* in EXTRA_FEATURES */
 #define MICROPY_PY_ALL_SPECIAL_METHODS    (1) /* in EXTRA_FEATURES */
 #define MICROPY_PY_REVERSE_SPECIAL_METHODS (1) /* in EXTRA_FEATURES */
+#define MICROPY_PY_BUILTINS_ROUND_INT     (1) /* in EXTRA_FEATURES */
 // #define MICROPY_PY_SYS_STDFILES           (1) /* in EXTRA_FEATURES */
 
 #define MICROPY_ALLOC_PATH_MAX            (256)
