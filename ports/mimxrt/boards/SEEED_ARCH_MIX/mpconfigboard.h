@@ -1,6 +1,8 @@
 #define MICROPY_HW_BOARD_NAME "Seeed ARCH MIX"
 #define MICROPY_HW_MCU_NAME   "MIMXRT1052DVL5B"
 
+#define MICROPY_PY_NETWORK_HOSTNAME_DEFAULT "mpy-arch-mix"
+
 // MIMXRT1050_EVKB has 1 user LED
 #define MICROPY_HW_LED1_PIN (pin_GPIO_AD_B0_09)
 #define MICROPY_HW_LED2_PIN (pin_GPIO_AD_B0_10)
@@ -29,6 +31,16 @@
     { 0 }, { 0 }, \
     { 0 }, { 0 }, \
     { IOMUXC_GPIO_AD_B1_10_LPUART8_TX }, { IOMUXC_GPIO_AD_B1_11_LPUART8_RX },
+
+#define IOMUX_TABLE_UART_CTS_RTS \
+    { IOMUXC_GPIO_AD_B0_14_LPUART1_CTS_B }, { IOMUXC_GPIO_AD_B0_15_LPUART1_RTS_B }, \
+    { IOMUXC_GPIO_AD_B1_00_LPUART2_CTS_B }, { IOMUXC_GPIO_AD_B1_01_LPUART2_RTS_B }, \
+    { IOMUXC_GPIO_AD_B1_04_LPUART3_CTS_B }, { IOMUXC_GPIO_AD_B1_05_LPUART3_RTS_B }, \
+    { IOMUXC_GPIO_EMC_17_LPUART4_CTS_B }, { IOMUXC_GPIO_EMC_18_LPUART4_RTS_B }, \
+    { 0 }, { 0 }, \
+    { 0 }, { 0 }, \
+    { 0 }, { 0 }, \
+    { IOMUXC_GPIO_SD_B0_02_LPUART8_CTS_B }, { IOMUXC_GPIO_SD_B0_03_LPUART8_RTS_B },
 
 #define MICROPY_HW_SPI_INDEX { 3, 4 }
 
@@ -73,6 +85,7 @@
 #define I2S_IOMUXC_GPR_MODE { 0, kIOMUXC_GPR_SAI1MClkOutputDir }
 #define I2S_DMA_REQ_SRC_RX { 0, kDmaRequestMuxSai1Rx }
 #define I2S_DMA_REQ_SRC_TX { 0, kDmaRequestMuxSai1Tx }
+#define I2S_AUDIO_PLL_CLOCK (2U)
 
 #define I2S_GPIO(_hwid, _fn, _mode, _pin, _iomux) \
     { \
@@ -113,9 +126,6 @@
 #define ENET_PHY            LAN8720
 #define ENET_PHY_OPS        phylan8720_ops
 #define ENET_TX_CLK_OUTPUT  false
-
-// Etherner PIN definitions
-// No reset and interrupt pin by intention
 
 #define IOMUX_TABLE_ENET \
     { IOMUXC_GPIO_B1_04_ENET_RX_DATA00, 0, 0xB0E9u }, \

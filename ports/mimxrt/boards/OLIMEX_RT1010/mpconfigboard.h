@@ -1,9 +1,9 @@
 #define MICROPY_HW_BOARD_NAME "RT1010-Py-DevKIT"
 #define MICROPY_HW_MCU_NAME   "MIMXRT1011DAE5A"
-#define MICROPY_HW_USB_STR_MANUF "Olimex Ltd."
+#define MICROPY_HW_USB_MANUFACTURER_STRING "Olimex Ltd."
 #define MICROPY_HW_USB_VID 0x15ba
 #define MICROPY_HW_USB_PID 0x0046
-#define MICROPY_PY_UOS_DUPTERM_BUILTIN_STREAM (0)
+#define MICROPY_PY_OS_DUPTERM_BUILTIN_STREAM (0)
 
 // Olimex RT1010-Py has 1 board LED
 #define MICROPY_HW_LED1_PIN (pin_GPIO_11)
@@ -11,19 +11,26 @@
 #define MICROPY_HW_LED_OFF(pin) (mp_hal_pin_low(pin))
 
 #define MICROPY_HW_NUM_PIN_IRQS (2 * 32)
+#define MICROPY_PY_MACHINE_SDCARD    (0)
 
 // Define mapping logical UART # to hardware UART #
 // LPUART1 on RX/TX    -> 1
 // LPUART4 on D5/D6    -> 2
 
 #define MICROPY_HW_UART_NUM     (sizeof(uart_index_table) / sizeof(uart_index_table)[0])
-#define MICROPY_HW_UART_INDEX   { 0, 1, 4 }
+#define MICROPY_HW_UART_INDEX   { 0, 1, 3, 4 }
 
 #define IOMUX_TABLE_UART \
     { IOMUXC_GPIO_10_LPUART1_TXD }, { IOMUXC_GPIO_09_LPUART1_RXD }, \
     { 0 }, { 0 }, \
-    { 0 }, { 0 }, \
+    { IOMUXC_GPIO_08_LPUART3_TXD }, { IOMUXC_GPIO_07_LPUART3_RXD }, \
     { IOMUXC_GPIO_06_LPUART4_TXD }, { IOMUXC_GPIO_05_LPUART4_RXD },
+
+#define IOMUX_TABLE_UART_CTS_RTS \
+    { IOMUXC_GPIO_08_LPUART1_CTS_B }, { IOMUXC_GPIO_07_LPUART1_RTS_B }, \
+    { 0 }, { 0 }, \
+    { IOMUXC_GPIO_AD_14_LPUART3_CTS_B }, { IOMUXC_GPIO_AD_13_LPUART3_RTS_B }, \
+    { IOMUXC_GPIO_AD_14_LPUART4_CTS_B }, { IOMUXC_GPIO_AD_13_LPUART4_RTS_B },
 
 #define MICROPY_HW_SPI_INDEX { 0, 1, 2 }
 
@@ -57,6 +64,7 @@
 #define I2S_IOMUXC_GPR_MODE { 0, kIOMUXC_GPR_SAI1MClkOutputDir, 0, kIOMUXC_GPR_SAI3MClkOutputDir }
 #define I2S_DMA_REQ_SRC_RX { 0, kDmaRequestMuxSai1Rx, 0, kDmaRequestMuxSai3Rx }
 #define I2S_DMA_REQ_SRC_TX { 0, kDmaRequestMuxSai1Tx, 0, kDmaRequestMuxSai3Tx }
+#define I2S_AUDIO_PLL_CLOCK (2U)
 
 #define I2S_GPIO(_hwid, _fn, _mode, _pin, _iomux) \
     { \

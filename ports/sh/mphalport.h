@@ -16,12 +16,6 @@
 int pe_readline(vstr_t *line, char const *prompt);
 #define mp_hal_readline pe_readline
 
-/* Receive a single character from shell (blocking). */
-int mp_hal_stdin_rx_chr(void);
-
-/* Send a string to shell. */
-void mp_hal_stdout_tx_strn(const char *str, mp_uint_t len);
-
 /* Passive sleep. */
 static inline void mp_hal_delay_ms(mp_uint_t ms)
 {

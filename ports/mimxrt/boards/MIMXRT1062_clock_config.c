@@ -324,7 +324,7 @@ void BOARD_BootClockRUN(void) {
     CLOCK_DisableClock(kCLOCK_Lpuart7);
     CLOCK_DisableClock(kCLOCK_Lpuart8);
     /* Set UART_CLK_PODF. */
-    CLOCK_SetDiv(kCLOCK_UartDiv, 0);
+    CLOCK_SetDiv(kCLOCK_UartDiv, 1);
     /* Set Uart clock source. */
     CLOCK_SetMux(kCLOCK_UartMux, 0);
     /* Disable LCDIF clock gate. */
@@ -487,4 +487,5 @@ void BOARD_BootClockRUN(void) {
     IOMUXC_GPR->GPR5 &= ~IOMUXC_GPR_GPR5_VREF_1M_CLK_GPT2_MASK;
     /* Set SystemCoreClock variable. */
     SystemCoreClock = BOARD_BOOTCLOCKRUN_CORE_CLOCK;
+    CLOCK_SetMode(kCLOCK_ModeRun);
 }

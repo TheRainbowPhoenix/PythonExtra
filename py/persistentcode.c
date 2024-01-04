@@ -40,6 +40,11 @@
 
 #include "py/smallint.h"
 
+// makeqstrdata.py has a fixed list of qstrs at the start that we can assume
+// are available with know indices on all MicroPython implementations, and
+// avoid needing to duplicate the string data in the .mpy file. This is the
+// last one in that list (anything with a qstr less than or equal to this is
+// assumed to be in the list).
 #define QSTR_LAST_STATIC MP_QSTR_zip
 
 #if MICROPY_DYNAMIC_COMPILER
@@ -390,7 +395,11 @@ STATIC mp_raw_code_t *load_raw_code(mp_reader_t *reader, mp_module_context_t *co
     return rc;
 }
 
-mp_compiled_module_t mp_raw_code_load(mp_reader_t *reader, mp_module_context_t *context) {
+void mp_raw_code_load(mp_reader_t *reader, mp_compiled_module_t *cm) {
+    // Set exception handler to close the reader if an exception is raised.
+    MP_DEFINE_NLR_JUMP_CALLBACK_FUNCTION_1(ctx, reader->close, reader->data);
+    nlr_push_jump_callback(&ctx.callback, mp_call_function_1_from_nlr_jump_callback);
+
     byte header[4];
     read_bytes(reader, header, sizeof(header));
     byte arch = MPY_FEATURE_DECODE_ARCH(header[2]);
@@ -414,46 +423,43 @@ mp_compiled_module_t mp_raw_code_load(mp_reader_t *reader, mp_module_context_t *
 
     size_t n_qstr = read_uint(reader);
     size_t n_obj = read_uint(reader);
-    mp_module_context_alloc_tables(context, n_qstr, n_obj);
+    mp_module_context_alloc_tables(cm->context, n_qstr, n_obj);
 
     // Load qstrs.
     for (size_t i = 0; i < n_qstr; ++i) {
-        context->constants.qstr_table[i] = load_qstr(reader);
+        cm->context->constants.qstr_table[i] = load_qstr(reader);
     }
 
     // Load constant objects.
     for (size_t i = 0; i < n_obj; ++i) {
-        context->constants.obj_table[i] = load_obj(reader);
+        cm->context->constants.obj_table[i] = load_obj(reader);
     }
 
     // Load top-level module.
-    mp_compiled_module_t cm2;
-    cm2.rc = load_raw_code(reader, context);
-    cm2.context = context;
+    cm->rc = load_raw_code(reader, cm->context);
 
     #if MICROPY_PERSISTENT_CODE_SAVE
-    cm2.has_native = MPY_FEATURE_DECODE_ARCH(header[2]) != MP_NATIVE_ARCH_NONE;
-    cm2.n_qstr = n_qstr;
-    cm2.n_obj = n_obj;
+    cm->has_native = MPY_FEATURE_DECODE_ARCH(header[2]) != MP_NATIVE_ARCH_NONE;
+    cm->n_qstr = n_qstr;
+    cm->n_obj = n_obj;
     #endif
 
-    reader->close(reader->data);
-
-    return cm2;
+    // Deregister exception handler and close the reader.
+    nlr_pop_jump_callback(true);
 }
 
-mp_compiled_module_t mp_raw_code_load_mem(const byte *buf, size_t len, mp_module_context_t *context) {
+void mp_raw_code_load_mem(const byte *buf, size_t len, mp_compiled_module_t *context) {
     mp_reader_t reader;
     mp_reader_new_mem(&reader, buf, len, 0);
-    return mp_raw_code_load(&reader, context);
+    mp_raw_code_load(&reader, context);
 }
 
 #if MICROPY_HAS_FILE_READER
 
-mp_compiled_module_t mp_raw_code_load_file(const char *filename, mp_module_context_t *context) {
+void mp_raw_code_load_file(qstr filename, mp_compiled_module_t *context) {
     mp_reader_t reader;
     mp_reader_new_file(&reader, filename);
-    return mp_raw_code_load(&reader, context);
+    mp_raw_code_load(&reader, context);
 }
 
 #endif // MICROPY_HAS_FILE_READER
@@ -591,21 +597,18 @@ void mp_raw_code_save(mp_compiled_module_t *cm, mp_print_t *print) {
     // header contains:
     //  byte  'M'
     //  byte  version
-    //  byte  feature flags
+    //  byte  native arch (and sub-version if native)
     //  byte  number of bits in a small int
     byte header[4] = {
         'M',
         MPY_VERSION,
-        MPY_FEATURE_ENCODE_SUB_VERSION(MPY_SUB_VERSION),
+        cm->has_native ? MPY_FEATURE_ENCODE_SUB_VERSION(MPY_SUB_VERSION) | MPY_FEATURE_ENCODE_ARCH(MPY_FEATURE_ARCH_DYNAMIC) : 0,
         #if MICROPY_DYNAMIC_COMPILER
         mp_dynamic_compiler.small_int_bits,
         #else
         MP_SMALL_INT_BITS,
         #endif
     };
-    if (cm->has_native) {
-        header[2] |= MPY_FEATURE_ENCODE_ARCH(MPY_FEATURE_ARCH_DYNAMIC);
-    }
     mp_print_bytes(print, header, sizeof(header));
 
     // Number of entries in constant table.
@@ -640,12 +643,12 @@ STATIC void fd_print_strn(void *env, const char *str, size_t len) {
     (void)ret;
 }
 
-void mp_raw_code_save_file(mp_compiled_module_t *cm, const char *filename) {
+void mp_raw_code_save_file(mp_compiled_module_t *cm, qstr filename) {
     MP_THREAD_GIL_EXIT();
-    int fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    int fd = open(qstr_str(filename), O_WRONLY | O_CREAT | O_TRUNC, 0644);
     MP_THREAD_GIL_ENTER();
     if (fd < 0) {
-        mp_raise_OSError_with_filename(errno, filename);
+        mp_raise_OSError_with_filename(errno, qstr_str(filename));
     }
     mp_print_t fd_print = {(void *)(intptr_t)fd, fd_print_strn};
     mp_raw_code_save(cm, &fd_print);

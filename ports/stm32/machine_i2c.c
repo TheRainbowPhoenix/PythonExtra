@@ -24,21 +24,17 @@
  * THE SOFTWARE.
  */
 
-#include <stdio.h>
-#include <string.h>
-
 #include "py/runtime.h"
 #include "py/mphal.h"
 #include "py/mperrno.h"
-#include "extmod/machine_i2c.h"
+#include "extmod/modmachine.h"
 #include "i2c.h"
-#include "modmachine.h"
 
 #if MICROPY_HW_ENABLE_HW_I2C
 
 #define I2C_POLL_DEFAULT_TIMEOUT_US (50000) // 50ms
 
-#if defined(STM32F0) || defined(STM32F4) || defined(STM32F7) || defined(STM32H7)
+#if defined(STM32F0) || defined(STM32F4) || defined(STM32F7) || defined(STM32H7) || defined(STM32L1) || defined(STM32L4)
 
 typedef struct _machine_hard_i2c_obj_t {
     mp_obj_base_t base;
@@ -65,7 +61,7 @@ STATIC const machine_hard_i2c_obj_t machine_hard_i2c_obj[MICROPY_HW_MAX_I2C] = {
 STATIC void machine_hard_i2c_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
     machine_hard_i2c_obj_t *self = MP_OBJ_TO_PTR(self_in);
 
-    #if defined(STM32F4)
+    #if defined(STM32F4) || defined(STM32L1)
 
     uint32_t freq = self->i2c->CR2 & 0x3f;
     uint32_t ccr = self->i2c->CCR;
@@ -186,7 +182,7 @@ STATIC void machine_hard_i2c_init(machine_hard_i2c_obj_t *self, uint32_t freq, u
 /******************************************************************************/
 /* MicroPython bindings for machine API                                       */
 
-#if defined(STM32F0) || defined(STM32F7) || defined(STM32H7)
+#if defined(STM32F0) || defined(STM32F7) || defined(STM32H7) || defined(STM32L4)
 #define MACHINE_I2C_TIMINGR (1)
 #else
 #define MACHINE_I2C_TIMINGR (0)

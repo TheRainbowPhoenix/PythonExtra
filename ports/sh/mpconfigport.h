@@ -83,17 +83,16 @@ extern const struct _mp_print_t mp_debug_print;
 #define MICROPY_PY_GC                     (1)
 #define MICROPY_PY_IO                     (1)
 #define MICROPY_PY_STRUCT                 (1)
+#define MICROPY_PY_RANDOM                 (1)
+#define MICROPY_PY_RANDOM_EXTRA_FUNCS     (1)
 #define MICROPY_PY_SYS                    (1)
-#define MICROPY_PY_URANDOM                (1)
-#define MICROPY_PY_URANDOM_EXTRA_FUNCS    (1)
-#define MICROPY_PY_UTIME                  (1)
-#define MICROPY_PY_UTIME_MP_HAL           (1)
+#define MICROPY_PY_TIME                   (1)
 // TODO: Enable the os module:
 // #define MICROPY_PY_UOS                    (1)
 // TODO: Enable other modules
 // #define MICROPY_PY_URE                    (1) // + other flags?
 
-/* Enable alias of u-modules, eg. urandom -> random */
+/* Enable alias of u-modules */
 #define MICROPY_MODULE_WEAK_LINKS         (1)
 
 /* Command executed automatically after every shell input */

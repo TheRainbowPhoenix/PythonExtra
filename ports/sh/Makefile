@@ -16,7 +16,6 @@ SRC_C = \
     ports/sh/keymap.c \
     ports/sh/modcasioplot.c \
     ports/sh/modgint.c \
-    ports/sh/modtime.c \
     ports/sh/mphalport.c \
     ports/sh/pyexec.c \
     ports/sh/widget_shell.c \
@@ -28,7 +27,6 @@ SRC_QSTR += \
     ports/sh/main.c \
     ports/sh/modcasioplot.c \
     ports/sh/modgint.c \
-    ports/sh/modtime.c \
     ports/sh/pyexec.c \
 
 ASSETS_O := $(SH_ASSETS:%=$(BUILD)/sh_assets/%.o)

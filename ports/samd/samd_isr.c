@@ -41,7 +41,10 @@ extern void EIC_Handler(void);
 
 const ISR isr_vector[];
 volatile uint32_t systick_ms;
-volatile uint32_t systick_ms_upper;
+volatile uint32_t ticks_us64_upper;
+#if defined(MCU_SAMD21)
+volatile uint32_t rng_state;
+#endif
 
 void Reset_Handler(void) __attribute__((naked));
 void Reset_Handler(void) {
@@ -91,17 +94,35 @@ void Default_Handler(void) {
 }
 
 void SysTick_Handler(void) {
+    #if defined(MCU_SAMD21)
+    // Use the phase jitter between the clocks to get some entropy
+    // and accumulate the random number register with a "spiced" LCG.
+    rng_state = (rng_state * 32310901 + 1) ^ (REG_TC4_COUNT32_COUNT >> 1);
+    #endif
+
     uint32_t next_tick = systick_ms + 1;
     systick_ms = next_tick;
-    if (systick_ms == 0) {
-        systick_ms_upper += 1;
-    }
 
     if (soft_timer_next == next_tick) {
         pendsv_schedule_dispatch(PENDSV_DISPATCH_SOFT_TIMER, soft_timer_handler);
     }
 }
 
+void us_timer_IRQ(void) {
+    #if defined(MCU_SAMD21)
+    if (TC4->COUNT32.INTFLAG.reg & TC_INTFLAG_OVF) {
+        ticks_us64_upper++;
+    }
+    TC4->COUNT32.INTFLAG.reg = TC_INTFLAG_OVF;
+    #elif defined(MCU_SAMD51)
+    if (TC0->COUNT32.INTFLAG.reg & TC_INTFLAG_OVF) {
+        ticks_us64_upper++;
+    }
+    TC0->COUNT32.INTFLAG.reg = TC_INTFLAG_OVF;
+    #endif
+}
+
+// Sercom IRQ handler support
 void (*sercom_irq_handler_table[SERCOM_INST_NUM])(int num) = {};
 
 void sercom_register_irq(int sercom_id, void (*sercom_irq_handler)) {
@@ -180,7 +201,7 @@ const ISR isr_vector[] __attribute__((section(".isr_vector"))) = {
     0,                  // 16 Timer Counter Control 1 (TCC1)
     0,                  // 17 Timer Counter Control 2 (TCC2)
     0,                  // 18 Basic Timer Counter 3 (TC3)
-    0,                  // 19 Basic Timer Counter 4 (TC4)
+    &us_timer_IRQ,      // 19 Basic Timer Counter 4 (TC4)
     0,                  // 20 Basic Timer Counter 5 (TC5)
     0,                  // 21 Basic Timer Counter 6 (TC6)
     0,                  // 22 Basic Timer Counter 7 (TC7)
@@ -289,10 +310,10 @@ const ISR isr_vector[] __attribute__((section(".isr_vector"))) = {
     &Sercom7_Handler, // 77 Serial Communication Interface 7 (SERCOM7): SERCOM7_3 - 6
     0,                // 78 Control Area Network 0 (CAN0)
     0,                // 79 Control Area Network 1 (CAN1)
-    &USB_0_Handler_wrapper, // 80 Universal Serial Bus (USB): USB_EORSM_DNRS, ...
-    &USB_1_Handler_wrapper, // 81 Universal Serial Bus (USB): USB_SOF_HSOF
-    &USB_2_Handler_wrapper, // 82 Universal Serial Bus (USB): USB_TRCPT0_0 - _7
-    &USB_3_Handler_wrapper, // 83 Universal Serial Bus (USB): USB_TRCPT1_0 - _7
+    &USB_Handler_wrapper, // 80 Universal Serial Bus (USB): USB_EORSM_DNRS, ...
+    &USB_Handler_wrapper, // 81 Universal Serial Bus (USB): USB_SOF_HSOF
+    &USB_Handler_wrapper, // 82 Universal Serial Bus (USB): USB_TRCPT0_0 - _7
+    &USB_Handler_wrapper, // 83 Universal Serial Bus (USB): USB_TRCPT1_0 - _7
     0,                // 84 Ethernet MAC (GMAC)
     0,                // 85 Timer Counter Control 0 (TCC0): TCC0_CNT_A ...
     0,                // 86 Timer Counter Control 0 (TCC0): TCC0_MC_0
@@ -316,7 +337,7 @@ const ISR isr_vector[] __attribute__((section(".isr_vector"))) = {
     0,                // 104 Timer Counter Control 4 (TCC4): TCC4_CNT_A ...
     0,                // 105 Timer Counter Control 4 (TCC4): TCC4_MC_0
     0,                // 106 Timer Counter Control 4 (TCC4): TCC4_MC_1
-    0,                // 107 Basic Timer Counter 0 (TC0)
+    &us_timer_IRQ,    // 107 Basic Timer Counter 0 (TC0)
     0,                // 108 Basic Timer Counter 1 (TC1)
     0,                // 109 Basic Timer Counter 2 (TC2)
     0,                // 110 Basic Timer Counter 3 (TC3)

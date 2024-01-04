@@ -24,6 +24,9 @@
  * THE SOFTWARE.
  */
 
+// This file should be compiled when included from vfs_lfs.c.
+#if defined(LFS_BUILD_VERSION)
+
 #include <stdio.h>
 #include <string.h>
 
@@ -96,7 +99,7 @@ STATIC void MP_VFS_LFSx(init_config)(MP_OBJ_VFS_LFSx * self, mp_obj_t bdev, size
     config->lookahead_buffer = m_new(uint8_t, config->lookahead / 8);
     #else
     config->block_cycles = 100;
-    config->cache_size = 4 * MAX(read_size, prog_size);
+    config->cache_size = MIN(config->block_size, (4 * MAX(read_size, prog_size)));
     config->lookahead_size = lookahead;
     config->read_buffer = m_new(uint8_t, config->cache_size);
     config->prog_buffer = m_new(uint8_t, config->cache_size);
@@ -320,7 +323,7 @@ STATIC mp_obj_t MP_VFS_LFSx(chdir)(mp_obj_t self_in, mp_obj_t path_in) {
         size_t from = 1;
         char *cwd = vstr_str(&self->cur_dir);
         while (from < CWD_LEN) {
-            for (; cwd[from] == '/' && from < CWD_LEN; ++from) {
+            for (; from < CWD_LEN && cwd[from] == '/'; ++from) {
                 // Scan for the start
             }
             if (from > to) {
@@ -328,7 +331,7 @@ STATIC mp_obj_t MP_VFS_LFSx(chdir)(mp_obj_t self_in, mp_obj_t path_in) {
                 vstr_cut_out_bytes(&self->cur_dir, to, from - to);
                 from = to;
             }
-            for (; cwd[from] != '/' && from < CWD_LEN; ++from) {
+            for (; from < CWD_LEN && cwd[from] != '/'; ++from) {
                 // Scan for the next /
             }
             if ((from - to) == 1 && cwd[to] == '.') {
@@ -518,3 +521,5 @@ MP_DEFINE_CONST_OBJ_TYPE(
     );
 
 #undef VFS_LFSx_QSTR
+
+#endif // defined(LFS_BUILD_VERSION)

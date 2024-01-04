@@ -86,8 +86,11 @@ uintptr_t mp_hal_stdio_poll(uintptr_t poll_flags) {
     if ((poll_flags & MP_STREAM_POLL_RD) && ringbuf_peek(&stdin_ringbuf) != -1) {
         ret |= MP_STREAM_POLL_RD;
     }
+    if ((poll_flags & MP_STREAM_POLL_WR) && tud_cdc_connected() && tud_cdc_write_available() > 0) {
+        ret |= MP_STREAM_POLL_WR;
+    }
     #if MICROPY_PY_OS_DUPTERM
-    ret |= mp_uos_dupterm_poll(poll_flags);
+    ret |= mp_os_dupterm_poll(poll_flags);
     #endif
     return ret;
 }
@@ -100,7 +103,7 @@ int mp_hal_stdin_rx_chr(void) {
             return c;
         }
         #if MICROPY_PY_OS_DUPTERM
-        int dupterm_c = mp_uos_dupterm_rx_chr();
+        int dupterm_c = mp_os_dupterm_rx_chr();
         if (dupterm_c >= 0) {
             return dupterm_c;
         }
@@ -109,24 +112,41 @@ int mp_hal_stdin_rx_chr(void) {
     }
 }
 
-void mp_hal_stdout_tx_strn(const char *str, mp_uint_t len) {
+mp_uint_t mp_hal_stdout_tx_strn(const char *str, mp_uint_t len) {
+    mp_uint_t ret = len;
+    bool did_write = false;
     if (tud_cdc_connected()) {
-        for (size_t i = 0; i < len;) {
+        size_t i = 0;
+        while (i < len) {
             uint32_t n = len - i;
             if (n > CFG_TUD_CDC_EP_BUFSIZE) {
                 n = CFG_TUD_CDC_EP_BUFSIZE;
             }
-            while (n > tud_cdc_write_available()) {
-                __WFE();
+            uint64_t timeout = ticks_us64() + (uint64_t)(MICROPY_HW_USB_CDC_TX_TIMEOUT * 1000);
+            // Wait with a max of USC_CDC_TIMEOUT ms
+            while (n > tud_cdc_write_available() && ticks_us64() < timeout) {
+                MICROPY_EVENT_POLL_HOOK
             }
+            if (ticks_us64() >= timeout) {
+                ret = i;
+                break;
+            }
+
             uint32_t n2 = tud_cdc_write(str + i, n);
             tud_cdc_write_flush();
             i += n2;
         }
+        did_write = true;
+        ret = MIN(i, ret);
     }
     #if MICROPY_PY_OS_DUPTERM
-    mp_uos_dupterm_tx_strn(str, len);
+    int dupterm_res = mp_os_dupterm_tx_strn(str, len);
+    if (dupterm_res >= 0) {
+        did_write = true;
+        ret = MIN((mp_uint_t)dupterm_res, ret);
+    }
     #endif
+    return did_write ? ret : 0;
 }
 
 uint64_t mp_hal_time_ns(void) {
@@ -140,8 +160,13 @@ uint64_t mp_hal_time_ns(void) {
 // MAC address
 
 void mp_hal_get_unique_id(uint8_t id[]) {
+    #if defined CPU_MIMXRT1176_cm7
+    *(uint32_t *)id = OCOTP->FUSEN[0x10].FUSE;
+    *(uint32_t *)(id + 4) = OCOTP->FUSEN[0x11].FUSE;
+    #else
     *(uint32_t *)id = OCOTP->CFG0;
     *(uint32_t *)(id + 4) = OCOTP->CFG1;
+    #endif
 }
 
 // Generate a random locally administered MAC address (LAA)

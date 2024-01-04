@@ -38,15 +38,17 @@
 #include "tusb.h"
 #include "mphalport.h"
 
+extern void machine_rtc_start(bool force);
+
 static void usb_init(void) {
     // Init USB clock
     #if defined(MCU_SAMD21)
-    GCLK->CLKCTRL.reg = GCLK_CLKCTRL_CLKEN | GCLK_CLKCTRL_GEN_GCLK0 | GCLK_CLKCTRL_ID_USB;
+    GCLK->CLKCTRL.reg = GCLK_CLKCTRL_CLKEN | GCLK_CLKCTRL_GEN_GCLK5 | GCLK_CLKCTRL_ID_USB;
     PM->AHBMASK.bit.USB_ = 1;
     PM->APBBMASK.bit.USB_ = 1;
     uint8_t alt = 6; // alt G, USB
     #elif defined(MCU_SAMD51)
-    GCLK->PCHCTRL[USB_GCLK_ID].reg = GCLK_PCHCTRL_CHEN | GCLK_PCHCTRL_GEN_GCLK2;
+    GCLK->PCHCTRL[USB_GCLK_ID].reg = GCLK_PCHCTRL_CHEN | GCLK_PCHCTRL_GEN_GCLK5;
     while (GCLK->PCHCTRL[USB_GCLK_ID].bit.CHEN == 0) {
     }
     MCLK->AHBMASK.bit.USB_ = 1;
@@ -64,7 +66,7 @@ static void usb_init(void) {
     tusb_init();
 }
 
-// Initialize the microsecond counter on TC 0/1
+// Initialize the µs counter on TC 0/1 or TC4/5
 void init_us_counter(void) {
     #if defined(MCU_SAMD21)
 
@@ -85,6 +87,9 @@ void init_us_counter(void) {
     TC4->COUNT32.READREQ.reg = TC_READREQ_RREQ | TC_READREQ_RCONT | 0x10;
     while (TC4->COUNT32.STATUS.bit.SYNCBUSY) {
     }
+    // Enable the IRQ
+    TC4->COUNT32.INTENSET.reg = TC_INTENSET_OVF;
+    NVIC_EnableIRQ(TC4_IRQn);
 
     #elif defined(MCU_SAMD51)
 
@@ -103,16 +108,80 @@ void init_us_counter(void) {
     while (TC0->COUNT32.SYNCBUSY.bit.ENABLE) {
     }
 
+    // Enable the IRQ
+    TC0->COUNT32.INTENSET.reg = TC_INTENSET_OVF;
+    NVIC_EnableIRQ(TC0_IRQn);
     #endif
 }
 
 void samd_init(void) {
     init_clocks(get_cpu_freq());
-    SysTick_Config(get_cpu_freq() / 1000);
     init_us_counter();
     usb_init();
     check_usb_recovery_mode();
     #if defined(MCU_SAMD51)
     mp_hal_ticks_cpu_enable();
     #endif
+    machine_rtc_start(false);
+}
+
+#if MICROPY_PY_MACHINE_I2C || MICROPY_PY_MACHINE_SPI || MICROPY_PY_MACHINE_UART
+
+Sercom *sercom_instance[] = SERCOM_INSTS;
+MP_REGISTER_ROOT_POINTER(void *sercom_table[SERCOM_INST_NUM]);
+
+// Common Sercom functions used by all Serial devices
+void sercom_enable(Sercom *uart, int state) {
+    uart->USART.CTRLA.bit.ENABLE = state; // Set the state on/off
+    // Wait for the Registers to update.
+    while (uart->USART.SYNCBUSY.bit.ENABLE) {
+    }
+}
+
+void sercom_deinit_all(void) {
+    for (int i = 0; i < SERCOM_INST_NUM; i++) {
+        Sercom *uart = sercom_instance[i];
+        uart->USART.INTENCLR.reg = 0xff;
+        sercom_register_irq(i, NULL);
+        sercom_enable(uart, 0);
+        MP_STATE_PORT(sercom_table[i]) = NULL;
+    }
+}
+
+#endif
+
+void samd_get_unique_id(samd_unique_id_t *id) {
+    // Atmel SAM D21E / SAM D21G / SAM D21J
+    // SMART ARM-Based Microcontroller
+    // DATASHEET
+    // 9.6 (SAMD51) or 9.3.3 (or 10.3.3 depending on which manual)(SAMD21) Serial Number
+    //
+    // EXAMPLE (SAMD21)
+    // ----------------
+    // OpenOCD:
+    // Word0:
+    // > at91samd21g18.cpu mdw 0x0080A00C 1
+    // 0x0080a00c: 6e27f15f
+    // Words 1-3:
+    // > at91samd21g18.cpu mdw 0x0080A040 3
+    // 0x0080a040: 50534b54 332e3120 ff091645
+    //
+    // MicroPython (this code and same order as shown in Arduino IDE)
+    // >>> binascii.hexlify(machine.unique_id())
+    // b'6e27f15f50534b54332e3120ff091645'
+
+    #if defined(MCU_SAMD21)
+    uint32_t *id_addresses[4] = {(uint32_t *)0x0080A00C, (uint32_t *)0x0080A040,
+                                 (uint32_t *)0x0080A044, (uint32_t *)0x0080A048};
+    #elif defined(MCU_SAMD51)
+    uint32_t *id_addresses[4] = {(uint32_t *)0x008061FC, (uint32_t *)0x00806010,
+                                 (uint32_t *)0x00806014, (uint32_t *)0x00806018};
+    #endif
+
+    for (int i = 0; i < 4; i++) {
+        for (int k = 0; k < 4; k++) {
+            // 'Reverse' the read bytes into a 32 bit word (Consistent with Arduino)
+            id->bytes[4 * i + k] = (*(id_addresses[i]) >> (24 - k * 8)) & 0xff;
+        }
+    }
 }

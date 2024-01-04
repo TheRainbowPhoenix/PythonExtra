@@ -32,6 +32,7 @@ I2C_SCL = const(9)
 
 # Helper functions
 
+
 # LED & Ambient Light Sensor control
 def led_set(state):
     """Set the state of the BLUE LED on IO13"""
@@ -64,8 +65,9 @@ def get_battery_voltage():
     This is an approximation only, but useful to detect if the charge state of the battery is getting low.
     """
     adc = ADC(Pin(VBAT_SENSE))  # Assign the ADC pin to read
+    adc.atten(ADC.ATTN_2_5DB)  # Needs 2.5DB attenuation for max voltage of 1.116V w/batt of 4.2V
     measuredvbat = adc.read()
-    measuredvbat /= 4095  # divide by 4095 as we are using the default ADC attenuation of 0dB
+    measuredvbat /= 3657  # Divide by 3657 as we are using 2.5dB attenuation, which is max input of 1.25V = 4095 counts
     measuredvbat *= 4.2  # Multiply by 4.2V, our max charge voltage for a 1S LiPo
     return round(measuredvbat, 2)
 

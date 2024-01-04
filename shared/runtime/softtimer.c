@@ -30,12 +30,28 @@
 #include "py/runtime.h"
 #include "softtimer.h"
 
-#define TICKS_PERIOD 0x80000000
-#define TICKS_DIFF(t1, t0) ((int32_t)(((t1 - t0 + TICKS_PERIOD / 2) & (TICKS_PERIOD - 1)) - TICKS_PERIOD / 2))
+#ifdef MICROPY_SOFT_TIMER_TICKS_MS
 
-extern __IO uint32_t uwTick;
+extern __IO uint32_t MICROPY_SOFT_TIMER_TICKS_MS;
 
 volatile uint32_t soft_timer_next;
+
+static inline uint32_t soft_timer_get_ms(void) {
+    return MICROPY_SOFT_TIMER_TICKS_MS;
+}
+
+static void soft_timer_schedule_at_ms(uint32_t ticks_ms) {
+    uint32_t atomic_state = MICROPY_BEGIN_ATOMIC_SECTION();
+    uint32_t uw_tick = MICROPY_SOFT_TIMER_TICKS_MS;
+    if (soft_timer_ticks_diff(ticks_ms, uw_tick) <= 0) {
+        soft_timer_next = uw_tick + 1;
+    } else {
+        soft_timer_next = ticks_ms;
+    }
+    MICROPY_END_ATOMIC_SECTION(atomic_state);
+}
+
+#endif
 
 // Pointer to the pairheap of soft timer objects.
 // This may contain bss/data pointers as well as GC-heap pointers,
@@ -45,23 +61,12 @@ STATIC soft_timer_entry_t *soft_timer_heap;
 STATIC int soft_timer_lt(mp_pairheap_t *n1, mp_pairheap_t *n2) {
     soft_timer_entry_t *e1 = (soft_timer_entry_t *)n1;
     soft_timer_entry_t *e2 = (soft_timer_entry_t *)n2;
-    return TICKS_DIFF(e1->expiry_ms, e2->expiry_ms) < 0;
-}
-
-STATIC void soft_timer_schedule_systick(uint32_t ticks_ms) {
-    uint32_t irq_state = disable_irq();
-    uint32_t uw_tick = uwTick;
-    if (TICKS_DIFF(ticks_ms, uw_tick) <= 0) {
-        soft_timer_next = uw_tick + 1;
-    } else {
-        soft_timer_next = ticks_ms;
-    }
-    enable_irq(irq_state);
+    return soft_timer_ticks_diff(e1->expiry_ms, e2->expiry_ms) < 0;
 }
 
 void soft_timer_deinit(void) {
     // Pop off all the nodes which are allocated on the GC-heap.
-    uint32_t irq_state = raise_irq_pri(IRQ_PRI_PENDSV);
+    MICROPY_PY_PENDSV_ENTER;
     soft_timer_entry_t *heap_from = soft_timer_heap;
     soft_timer_entry_t *heap_to = (soft_timer_entry_t *)mp_pairheap_new(soft_timer_lt);
     while (heap_from != NULL) {
@@ -72,14 +77,14 @@ void soft_timer_deinit(void) {
         }
     }
     soft_timer_heap = heap_to;
-    restore_irq_pri(irq_state);
+    MICROPY_PY_PENDSV_EXIT;
 }
 
 // Must be executed at IRQ_PRI_PENDSV
 void soft_timer_handler(void) {
-    uint32_t ticks_ms = uwTick;
+    uint32_t ticks_ms = soft_timer_get_ms();
     soft_timer_entry_t *heap = soft_timer_heap;
-    while (heap != NULL && TICKS_DIFF(heap->expiry_ms, ticks_ms) <= 0) {
+    while (heap != NULL && soft_timer_ticks_diff(heap->expiry_ms, ticks_ms) <= 0) {
         soft_timer_entry_t *entry = heap;
         heap = (soft_timer_entry_t *)mp_pairheap_pop(soft_timer_lt, &heap->pairheap);
         if (entry->flags & SOFT_TIMER_FLAG_PY_CALLBACK) {
@@ -93,19 +98,17 @@ void soft_timer_handler(void) {
         }
     }
     soft_timer_heap = heap;
-    if (heap == NULL) {
-        // No more timers left, set largest delay possible
-        soft_timer_next = uwTick;
-    } else {
-        // Set soft_timer_next so SysTick calls us back at the correct time
-        soft_timer_schedule_systick(heap->expiry_ms);
+
+    // Schedule the port's timer to call us back at the correct time.
+    if (heap != NULL) {
+        soft_timer_schedule_at_ms(heap->expiry_ms);
     }
 }
 
 void soft_timer_gc_mark_all(void) {
     // Mark all soft timer nodes that are allocated on the GC-heap.
     // To avoid deep C recursion, pop and recreate the pairheap as nodes are marked.
-    uint32_t irq_state = raise_irq_pri(IRQ_PRI_PENDSV);
+    MICROPY_PY_PENDSV_ENTER;
     soft_timer_entry_t *heap_from = soft_timer_heap;
     soft_timer_entry_t *heap_to = (soft_timer_entry_t *)mp_pairheap_new(soft_timer_lt);
     while (heap_from != NULL) {
@@ -117,7 +120,7 @@ void soft_timer_gc_mark_all(void) {
         heap_to = (soft_timer_entry_t *)mp_pairheap_push(soft_timer_lt, &heap_to->pairheap, &entry->pairheap);
     }
     soft_timer_heap = heap_to;
-    restore_irq_pri(irq_state);
+    MICROPY_PY_PENDSV_EXIT;
 }
 
 void soft_timer_static_init(soft_timer_entry_t *entry, uint16_t mode, uint32_t delta_ms, void (*cb)(soft_timer_entry_t *)) {
@@ -130,18 +133,18 @@ void soft_timer_static_init(soft_timer_entry_t *entry, uint16_t mode, uint32_t d
 
 void soft_timer_insert(soft_timer_entry_t *entry, uint32_t initial_delta_ms) {
     mp_pairheap_init_node(soft_timer_lt, &entry->pairheap);
-    entry->expiry_ms = mp_hal_ticks_ms() + initial_delta_ms;
-    uint32_t irq_state = raise_irq_pri(IRQ_PRI_PENDSV);
+    entry->expiry_ms = soft_timer_get_ms() + initial_delta_ms;
+    MICROPY_PY_PENDSV_ENTER;
     soft_timer_heap = (soft_timer_entry_t *)mp_pairheap_push(soft_timer_lt, &soft_timer_heap->pairheap, &entry->pairheap);
     if (entry == soft_timer_heap) {
-        // This new timer became the earliest one so set soft_timer_next
-        soft_timer_schedule_systick(entry->expiry_ms);
+        // This new timer became the earliest one so schedule a callback.
+        soft_timer_schedule_at_ms(entry->expiry_ms);
     }
-    restore_irq_pri(irq_state);
+    MICROPY_PY_PENDSV_EXIT;
 }
 
 void soft_timer_remove(soft_timer_entry_t *entry) {
-    uint32_t irq_state = raise_irq_pri(IRQ_PRI_PENDSV);
+    MICROPY_PY_PENDSV_ENTER;
     soft_timer_heap = (soft_timer_entry_t *)mp_pairheap_delete(soft_timer_lt, &soft_timer_heap->pairheap, &entry->pairheap);
-    restore_irq_pri(irq_state);
+    MICROPY_PY_PENDSV_EXIT;
 }

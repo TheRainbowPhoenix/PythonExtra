@@ -33,6 +33,7 @@
 #include "py/stream.h"
 #include "py/mperrno.h"
 #include "py/mphal.h"
+#include "py/ringbuf.h"
 #include "shared/runtime/interrupt_char.h"
 #include "shared/runtime/mpirq.h"
 #include "uart.h"
@@ -75,6 +76,11 @@ static void uart_rx_cb(uint32_t ch, int d) {
         (*keyex_cb[ch])(d);
     }
     #endif
+
+    #if MICROPY_HW_ENABLE_UART_REPL
+    ringbuf_put(&stdin_ringbuf, d);
+    #endif
+
     // Check the flags to see if the user handler should be called
     if (self->mp_irq_trigger) {
         mp_irq_handler(self->mp_irq_obj);
@@ -418,6 +424,16 @@ mp_uint_t uart_rx_any(machine_uart_obj_t *self) {
 mp_uint_t uart_tx_avail(machine_uart_obj_t *self) {
     int ch = (int)self->uart_id;
     return ra_sci_tx_wait(ch);
+}
+
+mp_uint_t uart_tx_busy(machine_uart_obj_t *self) {
+    int ch = (int)self->uart_id;
+    return ra_sci_tx_busy(ch);
+}
+
+mp_uint_t uart_tx_txbuf(machine_uart_obj_t *self) {
+    int ch = (int)self->uart_id;
+    return ra_sci_tx_bufsize(ch);
 }
 
 // Waits at most timeout milliseconds for at least 1 char to become ready for
