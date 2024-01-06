@@ -248,46 +248,28 @@ STATIC mp_obj_t modgint_dvline(mp_obj_t arg1, mp_obj_t arg2)
     return mp_const_none;
 }
 
-/* dellipse(x, y, r, *, fill=C_NONE, border=C_NONE) */
-STATIC mp_obj_t modgint_dcircle(
-    size_t n_args, const mp_obj_t *pargs, mp_map_t *kwargs)
+STATIC mp_obj_t modgint_dcircle(size_t n_args, const mp_obj_t *args)
 {
-    static mp_arg_t const allowed_args[] = {
-        { MP_QSTR_x, MP_ARG_INT | MP_ARG_REQUIRED, {.u_rom_obj=MP_ROM_NONE} },
-        { MP_QSTR_y, MP_ARG_INT | MP_ARG_REQUIRED, {.u_rom_obj=MP_ROM_NONE} },
-        { MP_QSTR_r, MP_ARG_INT | MP_ARG_REQUIRED, {.u_rom_obj=MP_ROM_NONE} },
-        { MP_QSTR_fill, MP_ARG_INT | MP_ARG_KW_ONLY, {.u_int=C_NONE} },
-        { MP_QSTR_border, MP_ARG_INT | MP_ARG_KW_ONLY, {.u_int=C_NONE} },
-    };
+    mp_int_t x = mp_obj_get_int(args[0]);
+    mp_int_t y = mp_obj_get_int(args[1]);
+    mp_int_t r = mp_obj_get_int(args[2]);
+    mp_int_t fill = mp_obj_get_int(args[3]);
+    mp_int_t border = mp_obj_get_int(args[4]);
 
-    mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
-    mp_arg_parse_all(n_args, pargs, kwargs, MP_ARRAY_SIZE(allowed_args),
-        allowed_args, args);
-
-    dcircle(args[0].u_int, args[1].u_int, args[2].u_int, args[3].u_int,
-            args[4].u_int);
+    dcircle(x, y, r, fill, border);
     return mp_const_none;
 }
 
-/* dellipse(x1, y1, x2, y2, *, fill=C_NONE, border=C_NONE) */
-STATIC mp_obj_t modgint_dellipse(
-    size_t n_args, const mp_obj_t *pargs, mp_map_t *kwargs)
+STATIC mp_obj_t modgint_dellipse(size_t n_args, const mp_obj_t *args)
 {
-    static mp_arg_t const allowed_args[] = {
-        { MP_QSTR_x1, MP_ARG_INT | MP_ARG_REQUIRED, {.u_rom_obj=MP_ROM_NONE} },
-        { MP_QSTR_y1, MP_ARG_INT | MP_ARG_REQUIRED, {.u_rom_obj=MP_ROM_NONE} },
-        { MP_QSTR_x2, MP_ARG_INT | MP_ARG_REQUIRED, {.u_rom_obj=MP_ROM_NONE} },
-        { MP_QSTR_y2, MP_ARG_INT | MP_ARG_REQUIRED, {.u_rom_obj=MP_ROM_NONE} },
-        { MP_QSTR_fill, MP_ARG_INT | MP_ARG_KW_ONLY, {.u_int=C_NONE} },
-        { MP_QSTR_border, MP_ARG_INT | MP_ARG_KW_ONLY, {.u_int=C_NONE} },
-    };
+    mp_int_t x1 = mp_obj_get_int(args[0]);
+    mp_int_t y1 = mp_obj_get_int(args[1]);
+    mp_int_t x2 = mp_obj_get_int(args[2]);
+    mp_int_t y2 = mp_obj_get_int(args[3]);
+    mp_int_t fill = mp_obj_get_int(args[4]);
+    mp_int_t border = mp_obj_get_int(args[5]);
 
-    mp_arg_val_t args[MP_ARRAY_SIZE(allowed_args)];
-    mp_arg_parse_all(n_args, pargs, kwargs, MP_ARRAY_SIZE(allowed_args),
-        allowed_args, args);
-
-    dellipse(args[0].u_int, args[1].u_int, args[2].u_int, args[3].u_int,
-             args[4].u_int, args[5].u_int);
+    dellipse(x1, y1, x2, y2, fill, border);
     return mp_const_none;
 }
 
@@ -331,8 +313,8 @@ FUN_2(dgetpixel);
 FUN_BETWEEN(dline, 5, 5);
 FUN_2(dhline);
 FUN_2(dvline);
-MP_DEFINE_CONST_FUN_OBJ_KW(modgint_dcircle_obj, 3, modgint_dcircle);
-MP_DEFINE_CONST_FUN_OBJ_KW(modgint_dellipse_obj, 4, modgint_dellipse);
+FUN_BETWEEN(dcircle, 5, 5);
+FUN_BETWEEN(dellipse, 6, 6);
 FUN_BETWEEN(dtext_opt, 8, 8);
 FUN_BETWEEN(dtext, 4, 4);
 
