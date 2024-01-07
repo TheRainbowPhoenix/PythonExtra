@@ -61,6 +61,8 @@ static mp_obj_t make_color(color_t color)
 
 static mp_obj_t init(void)
 {
+    void pe_enter_graphics_mode(void);
+    pe_enter_graphics_mode();
     dclear(C_WHITE);
     return mp_const_none;
 }
