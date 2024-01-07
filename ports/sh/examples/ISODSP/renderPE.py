@@ -1,12 +1,25 @@
-from ISODSP.line import *
-from ISODSP.data2 import *
+from gint import *
 
-"""
-BLOCK_H=12
-BLOCK_W=32
-"""
-BLOCK_H=18
-BLOCK_W=18
+data1 = [
+  ["    ", "    ", "    ", "    ", "####"],
+  ["### ", "    ", "    ", "    ", "####"],
+  ["### ", " #  ", " #  ", " #  ", "####"],
+  ["### ", "    ", "    ", "    ", "####"]]
+data2 = [
+  ["    ", " ###", " ###", "    ", "####"],
+  [" ###", " ###", " ###", " # #", "####"],
+  [" ###", " ###", " ###", " # #", "####"],
+  ["    ", " ###", "    ", " # #", "####"]]
+
+def line(pos1,pos2):
+  x1=int(pos1[0])
+  y1=int(pos1[1])
+  x2=int(pos2[0])
+  y2=int(pos2[1])
+  dline(x1, y1, x2, y2, C_BLACK)
+
+BLOCK_H=24
+BLOCK_W=24
 
 BLOCK_13=BLOCK_H//3
 BLOCK_23=BLOCK_13*2
@@ -34,8 +47,8 @@ def genblock(block):
     line(i[0],i[1])
   for y in range(BLOCK_H):
     for x in range(BLOCK_W):
-      o=get_pixel(x,y)
-      if o==(0,0,0): vram[y*BLOCK_W+x]='#'
+      o=dgetpixel(x,y)
+      if o==C_BLACK: vram[y*BLOCK_W+x]='#'
       else: vram[y*BLOCK_W+x]=' '
   for y in range(BLOCK_H):
     for x in range(BLOCK_W):
@@ -57,8 +70,8 @@ def genblock(block):
 def dcube(sx,sy,cube):
   for y in range(BLOCK_H):
     for x in range(BLOCK_W):
-      if cube[y*BLOCK_W+x] == ' ': set_pixel(sx+x,sy+y,(255,255,255))
-      if cube[y*BLOCK_W+x] == '#': set_pixel(sx+x,sy+y,(0,0,0))
+      if cube[y*BLOCK_W+x] == ' ': dpixel(sx+x,sy+y,C_WHITE)
+      if cube[y*BLOCK_W+x] == '#': dpixel(sx+x,sy+y,C_BLACK)
 
 cube=genblock(block)
 
@@ -79,11 +92,12 @@ def render(data,sx,sy,sz):
       dy+=1
     dz+=1
 
-clear_screen()
-#dcube(4,8,cube)
-render(data,48,16,0)
-show_screen()
+dclear(C_WHITE)
+render(data1,48,32,0)
+dupdate()
+getkey()
 
-while 1: pass
-
-#eof
+dclear(C_WHITE)
+render(data2,48,32,0)
+dupdate()
+getkey()
