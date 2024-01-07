@@ -15,6 +15,10 @@
 extern font_t font_4x4;
 extern font_t font_4x6;
 extern font_t font_5x7;
+#else
+extern font_t font_9;
+extern font_t font_13;
+extern font_t font_19;
 #endif
 
 /* TODO: casioplot: Call show_screen() when program finishes */
@@ -127,9 +131,7 @@ static mp_obj_t draw_string(size_t n, mp_obj_t const *args)
 #ifdef FX9860G
     font_t const *fonts[3] = { &font_4x4, &font_4x4, &font_5x7 };
 #else
-    /* TODO: casioplot: draw_string(): Add fonts for CG50 */
-    font_t const *fonts[3] = {
-        dfont_default(), dfont_default(), dfont_default() };
+    font_t const *fonts[3] = { &font_9, &font_13, &font_19 };
 #endif
 
     color_t color = C_BLACK;

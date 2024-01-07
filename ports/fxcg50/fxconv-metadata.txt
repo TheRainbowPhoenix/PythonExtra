@@ -2,3 +2,30 @@ img_*.png:
   type: bopti-image
   name_regex: (.*)\.png \1
   profile: p4
+
+font_9.png:
+  name: font_9
+  type: font
+  charset: print
+  grid.size: 9x10
+  grid.padding: 0
+  grid.border: 0
+  proportional: true
+
+font_13.png:
+  name: font_13
+  type: font
+  charset: print
+  grid.size: 12x17
+  grid.padding: 0
+  grid.border: 0
+  proportional: true
+
+font_19.png:
+  name: font_19
+  type: font
+  charset: print
+  grid.size: 18x23
+  grid.padding: 0
+  grid.border: 0
+  proportional: true
