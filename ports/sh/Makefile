@@ -45,4 +45,16 @@ $(BUILD)/sh_assets/%.o: % $(SH_METADATA)
 	$(Q)mkdir -p $(dir $@)
 	$(Q)fxconv --toolchain=$(CROSS_COMPILE:%-=%) $(SH_CONVFLAGS) $< -o $@
 
+ARCHIVE := PythonExtra-$(shell git describe).zip
+
+# Weird rules calling back to fxcg50 and fx9860g3, both of whic include this
+release:
+	$(MAKE) -C ../fx9860g3
+	$(MAKE) -C ../fxcg50
+	cd ../sh && zip "$(ARCHIVE)" -j ../fx9860g3/PythonEx.g1a ../fxcg50/PythonExtra.g3a
+	cd ../sh && zip "$(ARCHIVE)" -r examples modules
+
+.PHONY: release
+.PRECIOUS: $(ARCHIVE)
+
 include $(TOP)/py/mkrules.mk
