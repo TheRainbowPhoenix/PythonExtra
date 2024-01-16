@@ -311,6 +311,13 @@ int main(int argc, char **argv)
 
     keydev_set_async_filter(keydev_std(), async_filter);
 
+    /* Make delayed shift/alpha permanent so the stay between calls to
+       jscene_run() and can be used for delayed key combos */
+    keydev_transform_t tr = keydev_transform(keydev_std());
+    tr.enabled |= KEYDEV_TR_DELAYED_SHIFT;
+    tr.enabled |= KEYDEV_TR_DELAYED_ALPHA;
+    keydev_set_transform(keydev_std(), tr);
+
     PE.console = console_create(8192, 200);
 
     /* Set up standard streams */
