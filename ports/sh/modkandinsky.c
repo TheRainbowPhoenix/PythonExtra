@@ -1,0 +1,239 @@
+//---------------------------------------------------------------------------//
+//    ____        PythonExtra                                                //
+//.-'`_ o `;__,   A community port of MicroPython for CASIO calculators.     //
+//.-'` `---`  '   License: MIT (except some files; see LICENSE)              //
+//---------------------------------------------------------------------------//
+// pe.modkandinsky: Compatibility module for NumWorks Kandinsky library
+
+#include "py/obj.h"
+#include "py/runtime.h"
+#include <gint/display.h>
+#include <gint/drivers/r61524.h>
+#include <gint/timer.h>
+
+#include <stdlib.h>
+#include <string.h>
+
+extern font_t numworks;
+
+static int callback(void) {
+  dupdate();
+  return TIMER_CONTINUE;
+}
+
+static mp_obj_t Kandinsky_make_color(color_t color) {
+  int r, g, b;
+  r = (color >> 8) & 0xf8;
+  g = (color >> 3) & 0xfc;
+  b = (color << 3) & 0xfc;
+
+  mp_obj_t items[3] = {
+      MP_OBJ_NEW_SMALL_INT(r),
+      MP_OBJ_NEW_SMALL_INT(g),
+      MP_OBJ_NEW_SMALL_INT(b),
+  };
+  return mp_obj_new_tuple(3, items);
+}
+
+static mp_obj_t Kandinsky_init(void) {
+  void pe_enter_graphics_mode(void);
+  pe_enter_graphics_mode();
+
+  dclear(C_WHITE);
+
+  int t = timer_configure(TIMER_TMU, 33333, GINT_CALL(callback));
+  if (t >= 0)
+    timer_start(t);
+
+  return mp_const_none;
+}
+
+static mp_obj_t Kandinsky_color(size_t n, mp_obj_t const *args) {
+  int r = mp_obj_get_int(args[0]);
+  int g = mp_obj_get_int(args[1]);
+  int b = mp_obj_get_int(args[2]);
+  int color = C_RGB(r >> 3, g >> 3, b >> 3);
+
+  return mp_obj_new_int(color);
+}
+
+int Internal_Get_Color_From_String(const char *str) {
+
+  if (strcmp(str, "red") == 0)
+    return C_RGB(31, 0, 0);
+  else if (strcmp(str, "r") == 0)
+    return C_RGB(31, 0, 0);
+
+  else if (strcmp(str, "green") == 0)
+    return C_RGB(0, 31, 0);
+  else if (strcmp(str, "g") == 0)
+    return C_RGB(0, 31, 0);
+
+  else if (strcmp(str, "blue") == 0)
+    return C_RGB(0, 0, 31);
+  else if (strcmp(str, "b") == 0)
+    return C_RGB(0, 0, 31);
+
+  else if (strcmp(str, "black") == 0)
+    return C_RGB(0, 0, 0);
+  else if (strcmp(str, "k") == 0)
+    return C_RGB(0, 0, 0);
+
+  else if (strcmp(str, "white") == 0)
+    return C_RGB(31, 31, 31);
+  else if (strcmp(str, "w") == 0)
+    return C_RGB(31, 31, 31);
+
+  else if (strcmp(str, "yellow") == 0)
+    return C_RGB(31, 31, 0);
+  else if (strcmp(str, "y") == 0)
+    return C_RGB(31, 31, 0);
+
+  // Data can be found here
+  // https://github.com/numworks/epsilon/blob/master/escher/include/escher/palette.h
+  // and here
+  // https://github.com/numworks/epsilon/blob/master/python/port/port.cpp#L221
+
+  else if (strcmp(str, "pink") == 0)
+    return C_RGB(0xFF >> 3, 0xAB >> 3, 0xB6 >> 3);
+  else if (strcmp(str, "magenta") == 0)
+    return C_RGB(31, 0, 31);
+  else if (strcmp(str, "grey") == 0)
+    return C_RGB(0xA7 >> 3, 0xA7 >> 3, 0xA7 >> 3);
+  else if (strcmp(str, "gray") == 0)
+    return C_RGB(0xA7 >> 3, 0xA7 >> 3, 0xA7 >> 3);
+  else if (strcmp(str, "purple") == 0)
+    return C_RGB(15, 0, 31);
+  else if (strcmp(str, "orange") == 0)
+    return C_RGB(31, 15, 0);
+  else if (strcmp(str, "cyan") == 0)
+    return C_RGB(31, 15, 0);
+  else
+    return C_RGB(0, 0, 0);
+}
+
+int Internal_Treat_Color(mp_obj_t color) {
+  const mp_obj_type_t *type = mp_obj_get_type(color);
+
+  if (type == &mp_type_str) {
+    size_t text_len;
+    char const *text = mp_obj_str_get_data(color, &text_len);
+    return Internal_Get_Color_From_String(text);
+  }
+
+  else if (type == &mp_type_int)
+    return mp_obj_get_int(color);
+
+  else if (type == &mp_type_tuple) {
+    size_t tuple_len;
+    mp_obj_t *items;
+    mp_obj_tuple_get(color, &tuple_len, &items);
+    int r = mp_obj_get_int(items[0]) >> 3;
+    int g = mp_obj_get_int(items[1]) >> 3;
+    int b = mp_obj_get_int(items[2]) >> 3;
+    return C_RGB(r, g, b);
+  } else
+    return C_BLACK;
+}
+
+static mp_obj_t Kandinsky_fill_rect(size_t n, mp_obj_t const *args) {
+  int x = mp_obj_get_int(args[0]);
+  int y = mp_obj_get_int(args[1]);
+  int w = mp_obj_get_int(args[2]);
+  int h = mp_obj_get_int(args[3]);
+
+  int color = Internal_Treat_Color(args[4]);
+
+  drect(x, y, x + w, y + h, color);
+
+  return mp_const_none;
+}
+
+static mp_obj_t Kandinsky_set_pixel(size_t n, mp_obj_t const *args) {
+  int x = mp_obj_get_int(args[0]);
+  int y = mp_obj_get_int(args[1]);
+
+  int color;
+  if (n == 3)
+    color = Internal_Treat_Color(args[2]);
+  else
+    color = C_BLACK;
+
+  dpixel(x, y, color);
+  return mp_const_none;
+}
+
+static mp_obj_t Kandinsky_get_pixel(mp_obj_t _x, mp_obj_t _y) {
+  int x = mp_obj_get_int(_x);
+  int y = mp_obj_get_int(_y);
+
+  if (x >= 0 && x < DWIDTH && y >= 0 && y < DHEIGHT) {
+    color_t color = gint_vram[DWIDTH * y + x];
+    return Kandinsky_make_color(color);
+  }
+  return mp_const_none;
+}
+
+static mp_obj_t Kandinsky_draw_string(size_t n, mp_obj_t const *args) {
+  int x = mp_obj_get_int(args[1]);
+  int y = mp_obj_get_int(args[2]);
+  size_t text_len;
+  char const *text = mp_obj_str_get_data(args[0], &text_len);
+  char *text_free = NULL;
+
+  /* If there are \n in the text, turn them into spaces */
+  if (strchr(text, '\n')) {
+    text_free = strdup(text);
+    if (text_free) {
+      for (size_t i = 0; i < text_len; i++)
+        text_free[i] = (text_free[i] == '\n') ? ' ' : text_free[i];
+    }
+  }
+
+  color_t colortext = C_BLACK;
+  if (n >= 4) {
+    colortext = Internal_Treat_Color(args[3]);
+  }
+
+  color_t colorback = C_NONE;
+  if (n >= 5) {
+    colorback = Internal_Treat_Color(args[4]);
+  }
+
+  font_t const *old_font = dfont(&numworks);
+  dtext_opt(x, y, colortext, colorback, DTEXT_LEFT, DTEXT_TOP,
+            text_free ? text_free : text, text_len);
+  dfont(old_font);
+
+  free(text_free);
+  return mp_const_none;
+}
+
+MP_DEFINE_CONST_FUN_OBJ_0(Kandinsky_init_obj, Kandinsky_init);
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(Kandinsky_set_pixel_obj, 3, 3,
+                                    Kandinsky_set_pixel);
+MP_DEFINE_CONST_FUN_OBJ_2(Kandinsky_get_pixel_obj, Kandinsky_get_pixel);
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(Kandinsky_draw_string_obj, 3, 5,
+                                    Kandinsky_draw_string);
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(Kandinsky_fill_rect_obj, 5, 5,
+                                    Kandinsky_fill_rect);
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(Kandinsky_color_obj, 3, 3, Kandinsky_color);
+
+STATIC const mp_rom_map_elem_t kandinsky_module_globals_table[] = {
+    {MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR_kandinsky)},
+    {MP_ROM_QSTR(MP_QSTR___init__), MP_ROM_PTR(&Kandinsky_init_obj)},
+    {MP_ROM_QSTR(MP_QSTR_fill_rect), MP_ROM_PTR(&Kandinsky_fill_rect_obj)},
+    {MP_ROM_QSTR(MP_QSTR_color), MP_ROM_PTR(&Kandinsky_color_obj)},
+    {MP_ROM_QSTR(MP_QSTR_set_pixel), MP_ROM_PTR(&Kandinsky_set_pixel_obj)},
+    {MP_ROM_QSTR(MP_QSTR_get_pixel), MP_ROM_PTR(&Kandinsky_get_pixel_obj)},
+    {MP_ROM_QSTR(MP_QSTR_draw_string), MP_ROM_PTR(&Kandinsky_draw_string_obj)},
+};
+STATIC MP_DEFINE_CONST_DICT(kandinsky_module_globals,
+                            kandinsky_module_globals_table);
+
+const mp_obj_module_t kandinsky_module = {
+    .base = {&mp_type_module},
+    .globals = (mp_obj_dict_t *)&kandinsky_module_globals,
+};
+
+MP_REGISTER_MODULE(MP_QSTR_kandinsky, kandinsky_module);

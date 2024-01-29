@@ -31,3 +31,12 @@ font_4x6.png:
   grid.padding: 1
   grid.border: 0
   proportional: true
+
+PoliceNW.png:
+  name: numworks
+  type: font
+  charset: print
+  grid.size: 10x16
+  grid.padding: 0
+  grid.border: 0
+  proportional: false

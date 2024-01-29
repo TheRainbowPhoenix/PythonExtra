@@ -5,7 +5,7 @@ SH_LDFLAGS := -T fx9860g.ld -ljustui-fx -lm -lgint-fx -lc -lgint-fx -lgcc
 
 SH_ASSETS := \
   img_fkeys_main.png img_modifier_states.png \
-  font_5x7.png font_4x4.png font_4x6.png
+  font_5x7.png font_4x4.png font_4x6.png PoliceNW.png
 SH_METADATA := fxconv-metadata.txt
 SH_CONVFLAGS := --fx
 
