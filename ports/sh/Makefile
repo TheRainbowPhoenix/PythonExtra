@@ -15,7 +15,9 @@ SRC_C = \
     ports/sh/debug.c \
     ports/sh/keymap.c \
     ports/sh/modcasioplot.c \
-    ports/sh/modkandinsky.c \
+    ports/sh/numworks/modkandinsky.c \
+    ports/sh/numworks/ion.c \
+    ports/sh/numworks/time.c \
     ports/sh/modgint.c \
     ports/sh/mphalport.c \
     ports/sh/pyexec.c \
@@ -27,7 +29,9 @@ SRC_C = \
 SRC_QSTR += \
     ports/sh/main.c \
     ports/sh/modcasioplot.c \
-    ports/sh/modkandinsky.c \
+    ports/sh/numworks/modkandinsky.c \
+    ports/sh/numworks/ion.c \
+    ports/sh/numworks/time.c \
     ports/sh/modgint.c \
     ports/sh/pyexec.c \
 
