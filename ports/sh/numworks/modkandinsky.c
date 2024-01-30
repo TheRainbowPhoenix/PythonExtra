@@ -31,12 +31,12 @@ extern unsigned int timer_altered[9];
 // and here
 // https://github.com/numworks/epsilon/blob/master/python/port/port.cpp#L221
 
-#define NW_RGB(r, g, b) (((r >> 3) << 11) | ((g >> 2) << 6) | (b >> 3))
+#define NW_RGB(r, g, b) (((r >> 3) << 11) | ((g >> 2) << 5) | (b >> 3))
 
 #define NW_BLUE NW_RGB(0x50, 0x75, 0xF2)
 #define NW_RED NW_RGB(0xFF, 0x00, 0x0C)
 #define NW_GREEN NW_RGB(0x50, 0xC1, 0x02)
-#define NW_WHITE NW_RGB(0xF7, 0xF9, 0xFA)
+#define NW_WHITE NW_RGB(0xFF, 0xFF, 0xFF)
 #define NW_BLACK NW_RGB(0x00, 0x00, 0x00)
 
 #define NW_YELLOW NW_RGB(0xFF, 0xCC, 0x7B)
@@ -72,6 +72,7 @@ static mp_obj_t Kandinsky_make_color(color_t color) {
 static mp_obj_t Kandinsky_init(void) {
   void pe_enter_graphics_mode(void);
   pe_enter_graphics_mode();
+
   dclear(NW_WHITE);
 
   struct dwindow nw;
@@ -95,7 +96,7 @@ static mp_obj_t Kandinsky_color(size_t n, mp_obj_t const *args) {
   int r = mp_obj_get_int(args[0]);
   int g = mp_obj_get_int(args[1]);
   int b = mp_obj_get_int(args[2]);
-  int color = C_RGB(r >> 3, g >> 3, b >> 3);
+  int color = NW_RGB(r, g, b);
 
   return mp_obj_new_int(color);
 }
@@ -149,9 +150,9 @@ int Internal_Treat_Color(mp_obj_t color) {
     size_t tuple_len;
     mp_obj_t *items;
     mp_obj_tuple_get(color, &tuple_len, &items);
-    int r = mp_obj_get_int(items[0]) >> 3;
-    int g = mp_obj_get_int(items[1]) >> 3;
-    int b = mp_obj_get_int(items[2]) >> 3;
+    int r = mp_obj_get_int(items[0]);
+    int g = mp_obj_get_int(items[1]);
+    int b = mp_obj_get_int(items[2]);
     return NW_RGB(r, g, b);
   } else
     return NW_BLACK;
@@ -200,16 +201,6 @@ static mp_obj_t Kandinsky_draw_string(size_t n, mp_obj_t const *args) {
   int y = mp_obj_get_int(args[2]) + DELTAYNW;
   size_t text_len;
   char const *text = mp_obj_str_get_data(args[0], &text_len);
-  char *text_free = NULL;
-
-  /* If there are \n in the text, turn them into spaces */
-  //  if (strchr(text, '\n')) {
-  //    text_free = strdup(text);
-  //    if (text_free) {
-  //      for (size_t i = 0; i < text_len; i++)
-  //        text_free[i] = (text_free[i] == '\n') ? ' ' : text_free[i];
-  //    }
-  //  }
 
   color_t colortext = NW_BLACK;
   if (n >= 4) {
@@ -222,11 +213,6 @@ static mp_obj_t Kandinsky_draw_string(size_t n, mp_obj_t const *args) {
   }
 
   font_t const *old_font = dfont(&numworks);
-  // dtext_opt(x, y, colortext, colorback, DTEXT_LEFT, DTEXT_TOP,
-  //           text_free ? text_free : text, text_len);
-
-  //  dtext_opt(x, y, colortext, C_NONE, DTEXT_LEFT, DTEXT_TOP,
-  //            text_free ? text_free : text, text_len);
 
   int u = 0;
   int v = 0;
@@ -235,6 +221,7 @@ static mp_obj_t Kandinsky_draw_string(size_t n, mp_obj_t const *args) {
       u = 0;
       v += 16;
     } else {
+      drect(x + u - 1, y + v - 1, x + u + 9, y + v + 15, colorback);
       dtext_opt(x + u, y + v, colortext, C_NONE, DTEXT_LEFT, DTEXT_TOP,
                 &text[l], 1);
       u += 10;
@@ -243,7 +230,6 @@ static mp_obj_t Kandinsky_draw_string(size_t n, mp_obj_t const *args) {
 
   dfont(old_font);
 
-  free(text_free);
   return mp_const_none;
 }
 
