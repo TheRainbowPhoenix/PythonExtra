@@ -14,13 +14,41 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "colorsNW.h"
-
 extern font_t numworks;
 
 extern bool is_dwindowed;
 extern bool is_timered;
 extern unsigned int timer_altered[9];
+
+#define DELTAXNW                                                               \
+  ((DWIDTH - 320) / 2) // we center the NW screen on Casio's screen
+#define DELTAYNW 0     // NW screen will be cut in the bottom
+
+/* Definition of color on Numworks */
+
+// Data can be found here
+// https://github.com/numworks/epsilon/blob/master/escher/include/escher/palette.h
+// and here
+// https://github.com/numworks/epsilon/blob/master/python/port/port.cpp#L221
+
+#define NW_RGB(r, g, b) (((r >> 3) << 11) | ((g >> 2) << 6) | (b >> 3))
+
+#define NW_BLUE NW_RGB(0x50, 0x75, 0xF2)
+#define NW_RED NW_RGB(0xFF, 0x00, 0x0C)
+#define NW_GREEN NW_RGB(0x50, 0xC1, 0x02)
+#define NW_WHITE NW_RGB(0xF7, 0xF9, 0xFA)
+#define NW_BLACK NW_RGB(0x00, 0x00, 0x00)
+
+#define NW_YELLOW NW_RGB(0xFF, 0xCC, 0x7B)
+#define NW_PURPLE NW_RGB(0x6E, 0x2D, 0x79)
+#define NW_BROWN NW_RGB(0x8D, 0x73, 0x50)
+#define NW_CYAN NW_RGB(0x00, 0xFF, 0xFF)
+#define NW_ORANGE NW_RGB(0xFE, 0x87, 0x1F)
+#define NW_PINK NW_RGB(0xFF, 0xAB, 0xB6)
+#define NW_MAGENTA NW_RGB(0xFF, 0x05, 0x88)
+#define NW_GRAY NW_RGB(0xA7, 0xA7, 0xA7)
+
+// There are possibly some others to be listed correctly
 
 static int callback(void) {
   dupdate();
@@ -47,10 +75,10 @@ static mp_obj_t Kandinsky_init(void) {
   dclear(NW_WHITE);
 
   struct dwindow nw;
-  nw.left = 0;
-  nw.top = 0;
-  nw.right = 320;
-  nw.bottom = 240;
+  nw.left = DELTAXNW;
+  nw.top = DELTAYNW;
+  nw.right = 320 + DELTAXNW;
+  nw.bottom = 240 + DELTAYNW;
   dwindow_set(nw);
   is_dwindowed = true; // we mark as windowed
 
@@ -102,7 +130,7 @@ int Internal_Get_Color_From_String(const char *str) {
   else if (strcmp(str, "brown") == 0)
     return NW_BROWN;
   else
-    return NW_BLACK;
+    return C_NONE;
 }
 
 int Internal_Treat_Color(mp_obj_t color) {
@@ -130,8 +158,8 @@ int Internal_Treat_Color(mp_obj_t color) {
 }
 
 static mp_obj_t Kandinsky_fill_rect(size_t n, mp_obj_t const *args) {
-  int x = mp_obj_get_int(args[0]);
-  int y = mp_obj_get_int(args[1]);
+  int x = mp_obj_get_int(args[0]) + DELTAXNW;
+  int y = mp_obj_get_int(args[1]) + DELTAYNW;
   int w = mp_obj_get_int(args[2]);
   int h = mp_obj_get_int(args[3]);
 
@@ -143,8 +171,8 @@ static mp_obj_t Kandinsky_fill_rect(size_t n, mp_obj_t const *args) {
 }
 
 static mp_obj_t Kandinsky_set_pixel(size_t n, mp_obj_t const *args) {
-  int x = mp_obj_get_int(args[0]);
-  int y = mp_obj_get_int(args[1]);
+  int x = mp_obj_get_int(args[0]) + DELTAXNW;
+  int y = mp_obj_get_int(args[1]) + DELTAYNW;
 
   int color;
   if (n == 3)
@@ -157,8 +185,8 @@ static mp_obj_t Kandinsky_set_pixel(size_t n, mp_obj_t const *args) {
 }
 
 static mp_obj_t Kandinsky_get_pixel(mp_obj_t _x, mp_obj_t _y) {
-  int x = mp_obj_get_int(_x);
-  int y = mp_obj_get_int(_y);
+  int x = mp_obj_get_int(_x) + DELTAXNW;
+  int y = mp_obj_get_int(_y) + DELTAYNW;
 
   if (x >= 0 && x < DWIDTH && y >= 0 && y < DHEIGHT) {
     color_t color = gint_vram[DWIDTH * y + x];
@@ -168,20 +196,20 @@ static mp_obj_t Kandinsky_get_pixel(mp_obj_t _x, mp_obj_t _y) {
 }
 
 static mp_obj_t Kandinsky_draw_string(size_t n, mp_obj_t const *args) {
-  int x = mp_obj_get_int(args[1]);
-  int y = mp_obj_get_int(args[2]);
+  int x = mp_obj_get_int(args[1]) + DELTAXNW;
+  int y = mp_obj_get_int(args[2]) + DELTAYNW;
   size_t text_len;
   char const *text = mp_obj_str_get_data(args[0], &text_len);
   char *text_free = NULL;
 
   /* If there are \n in the text, turn them into spaces */
-  if (strchr(text, '\n')) {
-    text_free = strdup(text);
-    if (text_free) {
-      for (size_t i = 0; i < text_len; i++)
-        text_free[i] = (text_free[i] == '\n') ? ' ' : text_free[i];
-    }
-  }
+  //  if (strchr(text, '\n')) {
+  //    text_free = strdup(text);
+  //    if (text_free) {
+  //      for (size_t i = 0; i < text_len; i++)
+  //        text_free[i] = (text_free[i] == '\n') ? ' ' : text_free[i];
+  //    }
+  //  }
 
   color_t colortext = NW_BLACK;
   if (n >= 4) {
@@ -194,8 +222,25 @@ static mp_obj_t Kandinsky_draw_string(size_t n, mp_obj_t const *args) {
   }
 
   font_t const *old_font = dfont(&numworks);
-  dtext_opt(x, y, colortext, colorback, DTEXT_LEFT, DTEXT_TOP,
-            text_free ? text_free : text, text_len);
+  // dtext_opt(x, y, colortext, colorback, DTEXT_LEFT, DTEXT_TOP,
+  //           text_free ? text_free : text, text_len);
+
+  //  dtext_opt(x, y, colortext, C_NONE, DTEXT_LEFT, DTEXT_TOP,
+  //            text_free ? text_free : text, text_len);
+
+  int u = 0;
+  int v = 0;
+  for (int l = 0; l < (int)text_len; l++) {
+    if (text[l] == '\n') {
+      u = 0;
+      v += 16;
+    } else {
+      dtext_opt(x + u, y + v, colortext, C_NONE, DTEXT_LEFT, DTEXT_TOP,
+                &text[l], 1);
+      u += 10;
+    }
+  }
+
   dfont(old_font);
 
   free(text_free);

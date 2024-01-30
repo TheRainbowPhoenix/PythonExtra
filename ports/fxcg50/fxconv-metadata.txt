@@ -37,4 +37,4 @@ PoliceNW.png:
   grid.size: 10x16
   grid.padding: 0
   grid.border: 0
-  proportional: false
+  proportional: true
