@@ -14,7 +14,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "colorsNW.h"
+
 extern font_t numworks;
+
+extern bool is_dwindowed;
+extern bool is_timered;
+extern unsigned int timer_altered[9];
 
 static int callback(void) {
   dupdate();
@@ -38,13 +44,22 @@ static mp_obj_t Kandinsky_make_color(color_t color) {
 static mp_obj_t Kandinsky_init(void) {
   void pe_enter_graphics_mode(void);
   pe_enter_graphics_mode();
+  dclear(NW_WHITE);
 
-  dclear(C_WHITE);
+  struct dwindow nw;
+  nw.left = 0;
+  nw.top = 0;
+  nw.right = 320;
+  nw.bottom = 240;
+  dwindow_set(nw);
+  is_dwindowed = true; // we mark as windowed
 
   int t = timer_configure(TIMER_TMU, 33333, GINT_CALL(callback));
-  if (t >= 0)
+  if (t >= 0) {
     timer_start(t);
-
+    is_timered = true;    // there is a timer altered from this module
+    timer_altered[t] = 1; // we put the corresponding timer at 1 to identify it
+  }
   return mp_const_none;
 }
 
@@ -59,57 +74,35 @@ static mp_obj_t Kandinsky_color(size_t n, mp_obj_t const *args) {
 
 int Internal_Get_Color_From_String(const char *str) {
 
-  if (strcmp(str, "red") == 0)
-    return C_RGB(31, 0, 0);
-  else if (strcmp(str, "r") == 0)
-    return C_RGB(31, 0, 0);
+  if (strcmp(str, "red") == 0 || strcmp(str, "r") == 0)
+    return NW_RED;
+  else if (strcmp(str, "green") == 0 || strcmp(str, "g") == 0)
+    return NW_GREEN;
+  else if (strcmp(str, "blue") == 0 || strcmp(str, "b") == 0)
+    return NW_BLUE;
+  else if (strcmp(str, "black") == 0 || strcmp(str, "k") == 0)
+    return NW_BLACK;
+  else if (strcmp(str, "white") == 0 || strcmp(str, "w") == 0)
+    return NW_WHITE;
 
-  else if (strcmp(str, "green") == 0)
-    return C_RGB(0, 31, 0);
-  else if (strcmp(str, "g") == 0)
-    return C_RGB(0, 31, 0);
-
-  else if (strcmp(str, "blue") == 0)
-    return C_RGB(0, 0, 31);
-  else if (strcmp(str, "b") == 0)
-    return C_RGB(0, 0, 31);
-
-  else if (strcmp(str, "black") == 0)
-    return C_RGB(0, 0, 0);
-  else if (strcmp(str, "k") == 0)
-    return C_RGB(0, 0, 0);
-
-  else if (strcmp(str, "white") == 0)
-    return C_RGB(31, 31, 31);
-  else if (strcmp(str, "w") == 0)
-    return C_RGB(31, 31, 31);
-
-  else if (strcmp(str, "yellow") == 0)
-    return C_RGB(31, 31, 0);
-  else if (strcmp(str, "y") == 0)
-    return C_RGB(31, 31, 0);
-
-  // Data can be found here
-  // https://github.com/numworks/epsilon/blob/master/escher/include/escher/palette.h
-  // and here
-  // https://github.com/numworks/epsilon/blob/master/python/port/port.cpp#L221
-
+  else if (strcmp(str, "yellow") == 0 || strcmp(str, "y") == 0)
+    return NW_YELLOW;
   else if (strcmp(str, "pink") == 0)
-    return C_RGB(0xFF >> 3, 0xAB >> 3, 0xB6 >> 3);
+    return NW_PINK;
   else if (strcmp(str, "magenta") == 0)
-    return C_RGB(31, 0, 31);
-  else if (strcmp(str, "grey") == 0)
-    return C_RGB(0xA7 >> 3, 0xA7 >> 3, 0xA7 >> 3);
-  else if (strcmp(str, "gray") == 0)
-    return C_RGB(0xA7 >> 3, 0xA7 >> 3, 0xA7 >> 3);
+    return NW_MAGENTA;
+  else if (strcmp(str, "grey") == 0 || strcmp(str, "gray") == 0)
+    return NW_GRAY;
   else if (strcmp(str, "purple") == 0)
-    return C_RGB(15, 0, 31);
+    return NW_PURPLE;
   else if (strcmp(str, "orange") == 0)
-    return C_RGB(31, 15, 0);
+    return NW_ORANGE;
   else if (strcmp(str, "cyan") == 0)
-    return C_RGB(31, 15, 0);
+    return NW_CYAN;
+  else if (strcmp(str, "brown") == 0)
+    return NW_BROWN;
   else
-    return C_RGB(0, 0, 0);
+    return NW_BLACK;
 }
 
 int Internal_Treat_Color(mp_obj_t color) {
@@ -131,9 +124,9 @@ int Internal_Treat_Color(mp_obj_t color) {
     int r = mp_obj_get_int(items[0]) >> 3;
     int g = mp_obj_get_int(items[1]) >> 3;
     int b = mp_obj_get_int(items[2]) >> 3;
-    return C_RGB(r, g, b);
+    return NW_RGB(r, g, b);
   } else
-    return C_BLACK;
+    return NW_BLACK;
 }
 
 static mp_obj_t Kandinsky_fill_rect(size_t n, mp_obj_t const *args) {
@@ -157,7 +150,7 @@ static mp_obj_t Kandinsky_set_pixel(size_t n, mp_obj_t const *args) {
   if (n == 3)
     color = Internal_Treat_Color(args[2]);
   else
-    color = C_BLACK;
+    color = NW_BLACK;
 
   dpixel(x, y, color);
   return mp_const_none;
@@ -190,7 +183,7 @@ static mp_obj_t Kandinsky_draw_string(size_t n, mp_obj_t const *args) {
     }
   }
 
-  color_t colortext = C_BLACK;
+  color_t colortext = NW_BLACK;
   if (n >= 4) {
     colortext = Internal_Treat_Color(args[3]);
   }
