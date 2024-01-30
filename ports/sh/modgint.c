@@ -11,6 +11,7 @@
 
 #include "py/runtime.h"
 #include "py/objtuple.h"
+#include "objgintimage.h"
 #include <gint/display.h>
 #include <gint/keyboard.h>
 
@@ -300,6 +301,35 @@ STATIC mp_obj_t modgint_dtext(size_t n, mp_obj_t const *args)
     return mp_const_none;
 }
 
+STATIC mp_obj_t modgint_dimage(mp_obj_t arg1, mp_obj_t arg2, mp_obj_t arg3)
+{
+    mp_int_t x = mp_obj_get_int(arg1);
+    mp_int_t y = mp_obj_get_int(arg2);
+
+    bopti_image_t img;
+    objgintimage_get(arg3, &img);
+
+    dimage(x, y, &img);
+    return mp_const_none;
+}
+
+STATIC mp_obj_t modgint_dsubimage(size_t n_args, const mp_obj_t *args)
+{
+    mp_int_t x      = mp_obj_get_int(args[0]);
+    mp_int_t y      = mp_obj_get_int(args[1]);
+    // args[2] is the image
+    mp_int_t left   = mp_obj_get_int(args[3]);
+    mp_int_t top    = mp_obj_get_int(args[4]);
+    mp_int_t width  = mp_obj_get_int(args[5]);
+    mp_int_t height = mp_obj_get_int(args[5]);
+
+    bopti_image_t img;
+    objgintimage_get(args[2], &img);
+
+    dsubimage(x, y, &img, left, top, width, height, DIMAGE_NONE);
+    return mp_const_none;
+}
+
 FUN_0(__init__);
 
 #ifdef FXCG50
@@ -318,6 +348,8 @@ FUN_BETWEEN(dcircle, 5, 5);
 FUN_BETWEEN(dellipse, 6, 6);
 FUN_BETWEEN(dtext_opt, 8, 8);
 FUN_BETWEEN(dtext, 4, 4);
+FUN_3(dimage);
+FUN_BETWEEN(dsubimage, 7, 7);
 
 /* Module definition */
 
@@ -473,6 +505,25 @@ STATIC const mp_rom_map_elem_t modgint_module_globals_table[] = {
     OBJ(dellipse),
     OBJ(dtext_opt),
     OBJ(dtext),
+
+    { MP_ROM_QSTR(MP_QSTR_image), MP_ROM_PTR(&mp_type_gintimage) },
+    OBJ(dimage),
+    OBJ(dsubimage),
+
+    /* <gint/image.h> */
+
+#ifdef FXCG50
+    INT(IMAGE_RGB565),
+    INT(IMAGE_RGB565A),
+    INT(IMAGE_P8_RGB565),
+    INT(IMAGE_P8_RGB565A),
+    INT(IMAGE_P4_RGB565),
+    INT(IMAGE_P4_RGB565A),
+    INT(IMAGE_FLAGS_DATA_RO),
+    INT(IMAGE_FLAGS_PALETTE_RO),
+    INT(IMAGE_FLAGS_DATA_ALLOC),
+    INT(IMAGE_FLAGS_PALETTE_ALLOC),
+#endif
 };
 STATIC MP_DEFINE_CONST_DICT(
   modgint_module_globals, modgint_module_globals_table);
