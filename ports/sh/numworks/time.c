@@ -13,6 +13,7 @@
 #include "py/objtuple.h"
 #include "py/runtime.h"
 #include <gint/clock.h>
+#include <gint/timer.h>
 
 #include <stdint.h>
 #include <stdio.h>
@@ -27,24 +28,59 @@
 #define FUN_BETWEEN(NAME, MIN, MAX)                                            \
   MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(time_##NAME##_obj, MIN, MAX, time_##NAME)
 
-STATIC mp_obj_t time___init__(void) { return mp_const_none; }
+
+
+extern bool is_timered;
+extern unsigned int timer_altered[9];
+
+static uint64_t tickmono = 0;
+
+
+static int monotonic_callback(void) {
+  tickmono++;
+  return TIMER_CONTINUE;
+}
+
+
+STATIC mp_obj_t time___init__(void)
+{ 
+    int t = timer_configure(TIMER_TMU, 1000, GINT_CALL(monotonic_callback));
+    if (t >= 0)
+    {
+      timer_start(t);
+      is_timered = true;    // there is a timer altered from this module
+      timer_altered[t] = 1; // we put the corresponding timer at 1 to identify it
+    }
+
+    return mp_const_none;
+}
 
 /* <gint/keyboard.h> */
 
-STATIC mp_obj_t time_sleep(mp_obj_t arg1) {
-  mp_float_t duration = mp_obj_get_float(arg1);
+STATIC mp_obj_t time_sleep(mp_obj_t arg1)
+{
+    mp_float_t duration = mp_obj_get_float(arg1);
 
-  uint64_t length =
-      (uint64_t)(duration *
-                 1000000.0f); // duration is in seconds and length in µs
+    uint64_t length = (uint64_t)(duration * 1000000.0f); // duration is in seconds and length in µs
 
-  sleep_us(length);
+    sleep_us(length);
 
-  return mp_const_none;
+    return mp_const_none;
 }
 
+STATIC mp_obj_t time_monotonic(void)
+{
+  float value = (float) ((uint64_t) (tickmono * 1000 +0.5 )) / 1000000.0f;
+
+  return mp_obj_new_float( value );
+}
+
+
+
 FUN_1(sleep);
+FUN_0(monotonic);
 FUN_0(__init__);
+
 
 /* Module definittime */
 
@@ -60,7 +96,9 @@ STATIC const mp_rom_map_elem_t time_module_globals_table[] = {
     {MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR_time)},
     OBJ(__init__),
     OBJ(sleep),
+    OBJ(monotonic),
 };
+
 STATIC MP_DEFINE_CONST_DICT(time_module_globals, time_module_globals_table);
 
 const mp_obj_module_t time_module = {
