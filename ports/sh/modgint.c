@@ -321,7 +321,7 @@ STATIC mp_obj_t modgint_dsubimage(size_t n_args, const mp_obj_t *args)
     mp_int_t left   = mp_obj_get_int(args[3]);
     mp_int_t top    = mp_obj_get_int(args[4]);
     mp_int_t width  = mp_obj_get_int(args[5]);
-    mp_int_t height = mp_obj_get_int(args[5]);
+    mp_int_t height = mp_obj_get_int(args[6]);
 
     bopti_image_t img;
     objgintimage_get(args[2], &img);
@@ -512,6 +512,12 @@ STATIC const mp_rom_map_elem_t modgint_module_globals_table[] = {
 
     /* <gint/image.h> */
 
+#ifdef FX9860G
+    INT(IMAGE_MONO),
+    INT(IMAGE_MONO_ALPHA),
+    INT(IMAGE_GRAY),
+    INT(IMAGE_GRAY_ALPHA),
+#endif
 #ifdef FXCG50
     INT(IMAGE_RGB565),
     INT(IMAGE_RGB565A),
