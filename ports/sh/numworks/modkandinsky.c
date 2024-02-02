@@ -166,7 +166,7 @@ static mp_obj_t Kandinsky_fill_rect(size_t n, mp_obj_t const *args) {
 
   int color = Internal_Treat_Color(args[4]);
 
-  drect(x, y, x + w, y + h, color);
+  drect(x, y, x + w - 1, y + h - 1, color);
 
   return mp_const_none;
 }
@@ -197,8 +197,8 @@ static mp_obj_t Kandinsky_get_pixel(mp_obj_t _x, mp_obj_t _y) {
 }
 
 static mp_obj_t Kandinsky_draw_string(size_t n, mp_obj_t const *args) {
-  int x = mp_obj_get_int(args[1]) + DELTAXNW;
-  int y = mp_obj_get_int(args[2]) + DELTAYNW;
+  int x = mp_obj_get_int(args[1]) + DELTAXNW + 1; // values used to adjust the visual result as per actual NW
+  int y = mp_obj_get_int(args[2]) + DELTAYNW + 2; // values used to adjust the visual result as per actual NW
   size_t text_len;
   char const *text = mp_obj_str_get_data(args[0], &text_len);
 
