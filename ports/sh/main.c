@@ -403,6 +403,36 @@ int main(int argc, char **argv)
        - The OS' extra VRAM
        - Memory past the 2 MB boundary on tested OSes */
     // gc_add(start, end)...
+
+    /* TODO : test to check if we can definitely maintain this addition of RAM */    
+    
+    if (gint[HWCALC] == HWCALC_FXCG50)
+    {
+        char const *osv = (char*) 0x80020020;
+        if((!strncmp(osv, "03.", 3) && osv[3] <= '8')) // CG-50
+        {
+            void *py_ram_start = (void *)0x8c200000;
+            void *py_ram_end = (void *)0x8c4e0000;
+            gc_add(py_ram_start, py_ram_end);
+        }
+    }
+
+/*
+    // TODO : Add more RAM for the PRIZM
+
+    else if (gint[HWCALC] == HWCALC_PRIZM)  // CG-10/20
+    {
+
+    }
+*/
+    else if (gint[HWCALC] == HWCALC_FXCG_MANAGER) // CG-50 EMULATOR
+    {
+        void *py_ram_start = (void *)0x88200000;
+        void *py_ram_end = (void *)0x884e0000;
+        gc_add(py_ram_start, py_ram_end);
+    }
+
+
 #endif
 
     mp_init();
