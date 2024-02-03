@@ -59,6 +59,12 @@ STATIC mp_obj_t image_make_new(const mp_obj_type_t *type, size_t n_args,
     int height    = vals[ARG_height].u_int;
     mp_obj_t data = vals[ARG_data].u_obj;
 
+    return objgintimage_make(type, profile, width, height, data);
+}
+
+mp_obj_t objgintimage_make(const mp_obj_type_t *type, int profile, int width,
+    int height, mp_obj_t data)
+{
     /* The supplied object must implement the buffer protocol */
     mp_buffer_info_t buf;
     if(!mp_get_buffer(data, &buf, MP_BUFFER_READ))
@@ -88,7 +94,7 @@ STATIC mp_obj_t image_make_new(const mp_obj_type_t *type, size_t n_args,
     return MP_OBJ_FROM_PTR(self);
 }
 
-STATIC mp_obj_t image_make_from_gint_image(bopti_image_t const *img)
+mp_obj_t objgintimage_make_from_gint_image(bopti_image_t const *img)
 {
     /* The original image is assumed to be valid. */
     mp_obj_gintimage_t *self = mp_obj_malloc(mp_obj_gintimage_t,
@@ -182,6 +188,15 @@ STATIC mp_obj_t image_make_new(const mp_obj_type_t *type, size_t n_args,
     int stride       = vals[ARG_stride].u_int;
     mp_obj_t data    = vals[ARG_data].u_obj;
     mp_obj_t palette = vals[ARG_palette].u_obj;
+
+    return objgintimage_make(type, format, color_count, width, height, stride,
+        data, palette);
+}
+
+mp_obj_t objgintimage_make(const mp_obj_type_t *type, int format,
+    int color_count, int width, int height, int stride, mp_obj_t data,
+    mp_obj_t palette)
+{
     bool has_palette = palette != mp_const_none;
 
     /* Type checks */
@@ -202,7 +217,7 @@ STATIC mp_obj_t image_make_new(const mp_obj_type_t *type, size_t n_args,
 
     if(format < 0 || format >= 7 || format == IMAGE_DEPRECATED_P8)
         mp_raise_ValueError("invalid image format");
-    if(data_len < vals[ARG_stride].u_int * vals[ARG_height].u_int)
+    if(data_len < stride * height)
         mp_raise_ValueError("data len() should be >= stride * height");
 
     if(IMAGE_IS_RGB16(format) && (color_count > 0 || has_palette))
@@ -210,7 +225,7 @@ STATIC mp_obj_t image_make_new(const mp_obj_type_t *type, size_t n_args,
     if(IMAGE_IS_P8(format) &&
             (color_count < 1 || color_count > 256 || !has_palette))
         mp_raise_ValueError("P8 format should have palette and 1..256 colors");
-    if(IMAGE_IS_INDEXED(format) && (color_count != 16 || !has_palette))
+    if(IMAGE_IS_P4(format) && (color_count != 16 || !has_palette))
         mp_raise_ValueError("P4 format should have palette and 16 colors");
 
     if(has_palette && palette_len < 2 * color_count)
@@ -231,7 +246,7 @@ STATIC mp_obj_t image_make_new(const mp_obj_type_t *type, size_t n_args,
     return MP_OBJ_FROM_PTR(self);
 }
 
-STATIC mp_obj_t image_make_from_gint_image(bopti_image_t const *img)
+mp_obj_t objgintimage_make_from_gint_image(bopti_image_t const *img)
 {
     /* The original image is assumed to be valid. */
     mp_obj_gintimage_t *self = mp_obj_malloc(mp_obj_gintimage_t,
@@ -277,16 +292,18 @@ STATIC void image_print(mp_print_t const *print, mp_obj_t self_in,
         flag_string(f & IMAGE_FLAGS_PALETTE_RO, f & IMAGE_FLAGS_PALETTE_ALLOC);
 
     static char const * const fmt_names[] = {
-        "RGB565", "RGB565A",
-        "P8_RGB565", "P8_RGB565A",
-        "P4_RGB565", "P4_RGB565A",
+        "RGB565", "RGB565A", "LEGACY_P8",
+        "P4_RGB565A", "P8_RGB565", "P8_RGB565A", "P4_RGB565",
     };
     char const *format_str =
-        (self->img.format < 6) ? fmt_names[self->img.format] : "?";
+        (self->img.format < 7) ? fmt_names[self->img.format] : "?";
 
-    mp_printf(print, "<%s image, %dx%d (%s), %d colors (%s)>",
-        format_str, self->img.width, self->img.height, data_str,
-        self->img.color_count, palette_str);
+    mp_printf(print, "<%s image, %dx%d (%s)",
+        format_str, self->img.width, self->img.height, data_str);
+    if(IMAGE_IS_INDEXED(self->img.format))
+        mp_printf(print, ", %d colors (%s)",
+            self->img.color_count, palette_str);
+    mp_printf(print, ">");
 }
 
 STATIC void image_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest)
@@ -334,13 +351,14 @@ void objgintimage_get(mp_obj_t self_in, bopti_image_t *img)
         img->data = buf.buf;
     }
 
-#ifdef FCG50
+#ifdef FXCG50
     img->palette = NULL;
-    if(self->palette != mp_const_none)
+    if(self->palette != mp_const_none) {
         mp_buffer_info_t buf;
         if(!mp_get_buffer(self->palette, &buf, MP_BUFFER_READ))
             mp_raise_TypeError("palette not a buffer object?!");
         img->palette = buf.buf;
+    }
 #endif
 }
 

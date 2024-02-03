@@ -301,6 +301,79 @@ STATIC mp_obj_t modgint_dtext(size_t n, mp_obj_t const *args)
     return mp_const_none;
 }
 
+/* fx-CG-specific image constructors */
+#ifdef FXCG50
+
+STATIC mp_obj_t modgint_image_rgb565(mp_obj_t arg1, mp_obj_t arg2,
+    mp_obj_t arg3)
+{
+    int width = mp_obj_get_int(arg1);
+    int height = mp_obj_get_int(arg2);
+    return objgintimage_make(&mp_type_gintimage, IMAGE_RGB565, 0, width,
+        height, width * 2, arg3, mp_const_none);
+}
+
+STATIC mp_obj_t modgint_image_rgb565a(mp_obj_t arg1, mp_obj_t arg2,
+    mp_obj_t arg3)
+{
+    int width = mp_obj_get_int(arg1);
+    int height = mp_obj_get_int(arg2);
+    return objgintimage_make(&mp_type_gintimage, IMAGE_RGB565A, 0, width,
+        height, width * 2, arg3, mp_const_none);
+}
+
+STATIC mp_obj_t modgint_image_p8_rgb565(size_t n, mp_obj_t const *args)
+{
+    int width = mp_obj_get_int(args[0]);
+    int height = mp_obj_get_int(args[1]);
+    mp_obj_t data = args[2];
+    mp_obj_t palette = args[3];
+
+    int color_count = mp_obj_get_int(mp_obj_len(palette)) / 2;
+    int stride = width;
+    return objgintimage_make(&mp_type_gintimage, IMAGE_P8_RGB565,
+        color_count, width, height, stride, data, palette);
+}
+
+STATIC mp_obj_t modgint_image_p8_rgb565a(size_t n, mp_obj_t const *args)
+{
+    int width = mp_obj_get_int(args[0]);
+    int height = mp_obj_get_int(args[1]);
+    mp_obj_t data = args[2];
+    mp_obj_t palette = args[3];
+
+    int color_count = mp_obj_get_int(mp_obj_len(palette)) / 2;
+    int stride = width;
+    return objgintimage_make(&mp_type_gintimage, IMAGE_P8_RGB565A,
+        color_count, width, height, stride, data, palette);
+}
+
+STATIC mp_obj_t modgint_image_p4_rgb565(size_t n, mp_obj_t const *args)
+{
+    int width = mp_obj_get_int(args[0]);
+    int height = mp_obj_get_int(args[1]);
+    mp_obj_t data = args[2];
+    mp_obj_t palette = args[3];
+
+    int stride = (width + 1) / 2;
+    return objgintimage_make(&mp_type_gintimage, IMAGE_P4_RGB565, 16,
+        width, height, stride, data, palette);
+}
+
+STATIC mp_obj_t modgint_image_p4_rgb565a(size_t n, mp_obj_t const *args)
+{
+    int width = mp_obj_get_int(args[0]);
+    int height = mp_obj_get_int(args[1]);
+    mp_obj_t data = args[2];
+    mp_obj_t palette = args[3];
+
+    int stride = (width + 1) / 2;
+    return objgintimage_make(&mp_type_gintimage, IMAGE_P4_RGB565A, 16,
+        width, height, stride, data, palette);
+}
+
+#endif /* FXCG50 */
+
 STATIC mp_obj_t modgint_dimage(mp_obj_t arg1, mp_obj_t arg2, mp_obj_t arg3)
 {
     mp_int_t x = mp_obj_get_int(arg1);
@@ -348,6 +421,14 @@ FUN_BETWEEN(dcircle, 5, 5);
 FUN_BETWEEN(dellipse, 6, 6);
 FUN_BETWEEN(dtext_opt, 8, 8);
 FUN_BETWEEN(dtext, 4, 4);
+#ifdef FXCG50
+FUN_3(image_rgb565);
+FUN_3(image_rgb565a);
+FUN_BETWEEN(image_p8_rgb565, 4, 4);
+FUN_BETWEEN(image_p8_rgb565a, 4, 4);
+FUN_BETWEEN(image_p4_rgb565, 4, 4);
+FUN_BETWEEN(image_p4_rgb565a, 4, 4);
+#endif
 FUN_3(dimage);
 FUN_BETWEEN(dsubimage, 7, 7);
 
@@ -507,6 +588,14 @@ STATIC const mp_rom_map_elem_t modgint_module_globals_table[] = {
     OBJ(dtext),
 
     { MP_ROM_QSTR(MP_QSTR_image), MP_ROM_PTR(&mp_type_gintimage) },
+    #ifdef FXCG50
+    OBJ(image_rgb565),
+    OBJ(image_rgb565a),
+    OBJ(image_p8_rgb565),
+    OBJ(image_p8_rgb565a),
+    OBJ(image_p4_rgb565),
+    OBJ(image_p4_rgb565a),
+    #endif
     OBJ(dimage),
     OBJ(dsubimage),
 

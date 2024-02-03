@@ -35,6 +35,21 @@ typedef struct _mp_obj_gintimage_t {
 #endif
 } mp_obj_gintimage_t;
 
+/* Project a gint image object into a standard bopti image structure for use in
+   C-API image functions. */
 void objgintimage_get(mp_obj_t self_in, bopti_image_t *img);
+
+/* Build a gint image object from a valid bopti image structure. */
+mp_obj_t objgintimage_make_from_gint_image(bopti_image_t const *img);
+
+/* Lower-level image object constructor. */
+#if defined(FX9860G)
+mp_obj_t objgintimage_make(const mp_obj_type_t *type, int profile, int width,
+    int height, mp_obj_t data);
+#elif defined(FXCG50)
+mp_obj_t objgintimage_make(const mp_obj_type_t *type, int format,
+    int color_count, int width, int height, int stride, mp_obj_t data,
+    mp_obj_t palette);
+#endif
 
 #endif /* __PYTHONEXTRA_OBJGINTIMAGE_H */
