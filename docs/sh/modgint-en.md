@@ -18,6 +18,8 @@ Reference headers: [`<gint/keyboard.h>`](https://gitea.planet-casio.com/Lephenix
 
 The module provides integer constants to refer to keyboard keys, with the following names:
 
+|            |            |            |            |            |             |
+|------------|------------|------------|------------|------------|-------------|
 |`KEY_F1`    |`KEY_F2`    |`KEY_F3`    |`KEY_F4`    |`KEY_F5`    |`KEY_F6`     |
 |`KEY_SHIFT` |`KEY_OPTN`  |`KEY_VARS`  |`KEY_MENU`  |`KEY_LEFT`  |`KEY_UP`     |
 |`KEY_ALPHA` |`KEY_SQUARE`|`KEY_POWER` |`KEY_EXIT`  |`KEY_DOWN`  |`KEY_RIGHT`  |
@@ -27,18 +29,6 @@ The module provides integer constants to refer to keyboard keys, with the follow
 |`KEY_4`     |`KEY_5`     |`KEY_6`     |`KEY_MUL`   |`KEY_DIV`   |             |
 |`KEY_1`     |`KEY_2`     |`KEY_3`     |`KEY_ADD`   |`KEY_SUB`   |             |
 |`KEY_0`     |`KEY_DOT`   |`KEY_EXP`   |`KEY_NEG`   |`KEY_EXE`   |             |
-
-There are also a few aliases:
-
-- `KEY_X2` is an alias for `KEY_SQUARE` ;
-- `KEY_CARET` is an alias for `KEY_POWER` ;
-- `KEY_SWITCH` is an alias for `KEY_FD` ;
-- `KEY_LEFTPAR` is an alias for `KEY_LEFTP` ;
-- `KEY_RIGHTPAR` is an alias for `KEY_RIGHTP` ;
-- `KEY_STORE` is an alias for `KEY_ARROW` ;
-- `KEY_TIMES` is an alias for `KEY_MUL` ;
-- `KEY_PLUS` is an alias for `KEY_ADD` ;
-- `KEY_MINUS` is an alias for `KEY_SUB`.
 
 ### Keyboard events
 

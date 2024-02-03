@@ -20,6 +20,8 @@ Les en-têtes de référence sont [`<gint/keyboard.h>`](https://gitea.planet-cas
 
 Le module fournit des constantes entières désignant toutes les touches du clavier. Les noms sont les suivants :
 
+|            |            |            |            |            |             |
+|------------|------------|------------|------------|------------|-------------|
 |`KEY_F1`    |`KEY_F2`    |`KEY_F3`    |`KEY_F4`    |`KEY_F5`    |`KEY_F6`     |
 |`KEY_SHIFT` |`KEY_OPTN`  |`KEY_VARS`  |`KEY_MENU`  |`KEY_LEFT`  |`KEY_UP`     |
 |`KEY_ALPHA` |`KEY_SQUARE`|`KEY_POWER` |`KEY_EXIT`  |`KEY_DOWN`  |`KEY_RIGHT`  |
@@ -29,18 +31,6 @@ Le module fournit des constantes entières désignant toutes les touches du clav
 |`KEY_4`     |`KEY_5`     |`KEY_6`     |`KEY_MUL`   |`KEY_DIV`   |             |
 |`KEY_1`     |`KEY_2`     |`KEY_3`     |`KEY_ADD`   |`KEY_SUB`   |             |
 |`KEY_0`     |`KEY_DOT`   |`KEY_EXP`   |`KEY_NEG`   |`KEY_EXE`   |             |
-
-Il y a également quelques alias:
-
-- `KEY_X2` est un alias de `KEY_SQUARE` ;
-- `KEY_CARET` est un alias de `KEY_POWER` ;
-- `KEY_SWITCH` est un alias de `KEY_FD` ;
-- `KEY_LEFTPAR` est un alias de `KEY_LEFTP` ;
-- `KEY_RIGHTPAR` est un alias de `KEY_RIGHTP` ;
-- `KEY_STORE` est un alias de `KEY_ARROW` ;
-- `KEY_TIMES` est un alias de `KEY_MUL` ;
-- `KEY_PLUS` est un alias de `KEY_ADD` ;
-- `KEY_MINUS` est un alias de `KEY_SUB`.
 
 ### Événements clavier
 
