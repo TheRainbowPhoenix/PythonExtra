@@ -44,6 +44,8 @@ static int monotonic_callback(void) {
 
 STATIC mp_obj_t time___init__(void)
 { 
+    tickmono = 0;
+
     int t = timer_configure(TIMER_TMU, 1000, GINT_CALL(monotonic_callback));
     if (t >= 0)
     {
