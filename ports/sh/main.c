@@ -246,6 +246,7 @@ static char *pe_handle_event(jevent e, bool shell_bound)
             jwidget_set_visible(PE.title, PE.show_title_in_shell);
 
             pe_reset_micropython();
+            pe_draw();
 
             char *str = malloc(8 + strlen(module) + 1);
             if(str) {

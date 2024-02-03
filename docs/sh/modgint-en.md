@@ -185,5 +185,6 @@ TODO
 
 - `dsubimage()` doesn't have its final parameter `int flags`. The flags are only minor optimizations and could be removed in future gint versions.
 - Image constructors`image()` and `image_<format>()` don't exist in the C API.
+- Asynchronous volatile-flag-based timeouts are replaced with synchronous millisecond delays (integer value or `None`).
 
 TODO: There are more.

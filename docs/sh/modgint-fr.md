@@ -187,5 +187,6 @@ TODO
 
 - `dsubimage()` n'a pas de paramètre `int flags`. Les flags en question ne ont que des optimisations mineures et pourraient disparaître dans une version future de gint.
 - Les constructeurs d'image `image()` et `image_<format>()` n'existent pas dans l'API C.
+- Les timeouts asynchrones à base d'entiers volatiles sont remplacés par des timeouts synchrones avec des durées optionnelles en millisecondes (entier ou `None`).
 
 TODO : Il y en a d'autres.

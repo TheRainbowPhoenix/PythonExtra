@@ -14,6 +14,8 @@
 #include "objgintimage.h"
 #include <gint/display.h>
 #include <gint/keyboard.h>
+#include <gint/timer.h>
+#include <gint/drivers/keydev.h>
 
 void pe_enter_graphics_mode(void);
 
@@ -118,17 +120,64 @@ STATIC mp_obj_t modgint_keyreleased(mp_obj_t arg1)
     return mp_obj_new_bool(keyreleased(key) != 0);
 }
 
+/* Version of getkey_opt() that includes a VM hook */
+STATIC key_event_t getkey_opt_internal(int opt, int timeout_ms)
+{
+    /* Preset keydev transforms so they stay between calls */
+    keydev_t *d = keydev_std();
+    keydev_transform_t tr = keydev_transform(d);
+    key_event_t ev;
+
+    int o = KEYDEV_TR_REPEATS +
+        KEYDEV_TR_DELETE_MODIFIERS +
+        KEYDEV_TR_DELETE_RELEASES +
+        (opt & (GETKEY_MOD_SHIFT + GETKEY_MOD_ALPHA));
+    keydev_set_transform(d, (keydev_transform_t){ o, tr.repeater });
+
+    bool has_timeout = (timeout_ms >= 0);
+
+    while(!has_timeout || timeout_ms > 0) {
+        /* Program a delay of whatever's left or 20 ms, whichever is smaller.
+           It's not easy to reload a timer currently so just reconfigure. */
+        volatile int flag = 0;
+        int round_ms = has_timeout ? min(timeout_ms, 20) : 20;
+        int t = timer_configure(TIMER_ETMU, round_ms * 1000,
+            GINT_CALL_SET(&flag));
+        timer_start(t);
+
+        /* Run getkey_opt() for that short period */
+        ev = getkey_opt(opt, &flag);
+
+        timer_stop(t);
+        if(ev.type != KEYEV_NONE)
+            break;
+
+        /* The whole reason this function exists -- run the VM hook */
+        MICROPY_VM_HOOK_LOOP;
+
+        if(has_timeout)
+            timeout_ms -= round_ms;
+    }
+
+    keydev_set_transform(d, tr);
+    return ev;
+}
+
 STATIC mp_obj_t modgint_getkey(void)
 {
-    key_event_t ev = getkey();
+    key_event_t ev = getkey_opt_internal(GETKEY_DEFAULT, -1);
     return mk_key_event(ev);
 }
 
-// TODO: getkey_opt: timeout parameter?
-STATIC mp_obj_t modgint_getkey_opt(mp_obj_t arg1)
+STATIC mp_obj_t modgint_getkey_opt(mp_obj_t arg1, mp_obj_t arg2)
 {
     int options = mp_obj_get_int(arg1);
-    key_event_t ev = getkey_opt(options, NULL);
+
+    int timeout_ms = -1;
+    if(arg2 != mp_const_none)
+        timeout_ms = mp_obj_get_int(arg2);
+
+    key_event_t ev = getkey_opt_internal(options, timeout_ms);
     return mk_key_event(ev);
 }
 
@@ -153,7 +202,7 @@ FUN_VAR(keydown_any, 0);
 FUN_1(keypressed);
 FUN_1(keyreleased);
 FUN_0(getkey);
-FUN_1/*2*/(getkey_opt);
+FUN_2(getkey_opt);
 FUN_1(keycode_function);
 FUN_1(keycode_digit);
 
