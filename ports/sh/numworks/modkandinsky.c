@@ -233,6 +233,41 @@ static mp_obj_t Kandinsky_draw_string(size_t n, mp_obj_t const *args) {
   return mp_const_none;
 }
 
+static mp_obj_t Kandinsky_CGEXT_Enable_Wide_Screen( void ) {
+
+  struct dwindow nw;
+  nw.left = 0;
+  nw.top = 0;
+  nw.right = DWIDTH;
+  nw.bottom = DHEIGHT;
+  dwindow_set(nw);
+  is_dwindowed = false; // we mark as not windowed
+
+  return mp_const_none;
+}
+
+static mp_obj_t Kandinsky_CGEXT_Disable_Wide_Screen( void ) {
+  
+  struct dwindow nw;
+  nw.left = DELTAXNW;
+  nw.top = DELTAYNW;
+  nw.right = 320 + DELTAXNW;
+  nw.bottom = 240 + DELTAYNW;
+  dwindow_set(nw);
+  is_dwindowed = true; // we mark as windowed
+
+  return mp_const_none;
+}
+
+static mp_obj_t Kandinsky_CGEXT_Is_Wide_Screen_Enabled( void ) {
+
+  return mp_obj_new_bool( is_dwindowed );
+}
+
+MP_DEFINE_CONST_FUN_OBJ_0(Kandinsky_CGEXT_Enable_Wide_Screen_obj, Kandinsky_CGEXT_Enable_Wide_Screen);
+MP_DEFINE_CONST_FUN_OBJ_0(Kandinsky_CGEXT_Disable_Wide_Screen_obj, Kandinsky_CGEXT_Disable_Wide_Screen);
+MP_DEFINE_CONST_FUN_OBJ_0(Kandinsky_CGEXT_Is_Wide_Screen_Enabled_obj, Kandinsky_CGEXT_Is_Wide_Screen_Enabled);
+
 MP_DEFINE_CONST_FUN_OBJ_0(Kandinsky_init_obj, Kandinsky_init);
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(Kandinsky_set_pixel_obj, 3, 3,
                                     Kandinsky_set_pixel);
@@ -251,6 +286,9 @@ STATIC const mp_rom_map_elem_t kandinsky_module_globals_table[] = {
     {MP_ROM_QSTR(MP_QSTR_set_pixel), MP_ROM_PTR(&Kandinsky_set_pixel_obj)},
     {MP_ROM_QSTR(MP_QSTR_get_pixel), MP_ROM_PTR(&Kandinsky_get_pixel_obj)},
     {MP_ROM_QSTR(MP_QSTR_draw_string), MP_ROM_PTR(&Kandinsky_draw_string_obj)},
+    {MP_ROM_QSTR(MP_QSTR_CGEXT_Enable_Wide_Screen), MP_ROM_PTR(&Kandinsky_CGEXT_Enable_Wide_Screen_obj)},
+    {MP_ROM_QSTR(MP_QSTR_CGEXT_Disable_Wide_Screen), MP_ROM_PTR(&Kandinsky_CGEXT_Disable_Wide_Screen_obj)},
+    {MP_ROM_QSTR(MP_QSTR_CGEXT_Is_Wide_Screen_Enabled), MP_ROM_PTR(&Kandinsky_CGEXT_Is_Wide_Screen_Enabled_obj)},
 };
 STATIC MP_DEFINE_CONST_DICT(kandinsky_module_globals,
                             kandinsky_module_globals_table);

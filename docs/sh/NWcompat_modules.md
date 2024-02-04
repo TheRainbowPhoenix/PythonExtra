@@ -33,6 +33,18 @@ Le module offre de plus un certain nombre de couleurs explicitement nommées et 
 - "cyan"
 - "brown"
 
+Les fonctions suivantes sont des ajouts pour tirer partie de l'écran large de la fxCG et qui sont donc une extension du module `Kandinsky`. Elles ne sont donc par définition pas compatible avec le Python Numwork. Ces fonctions sont reconnaisables à leurs appellations qui commencent toutes par `CGEXT_` :
+
+- `CGEXT_Enable_Wide_Screen()` : Active l'écran étendu de la fxCG, aucun paramètre n'est nécessaire. Les coordonnées x de l'écran physique peuvent être négatives pour empiéter sur la bande blanche de gauche et supérieures à 319 pixels pour empièter sur la bande blanche de droite;
+
+- `CGEXT_Disable_Wide_Screen()` : Annule l'activation de l'écran étendu de la fxCG, aucun paramètre n'est nécessaire. Les coordonnées x de l'écran physique seront contraintes entre 0 et 320 pixels. Au-delà, le tracé ne sera pas effectué. 
+
+- `CGEXT_Is_Wide_Screen_Enabled()` : Retourne `True` si l'écran étendu est actif et `False` dans le cas contraire.
+
+Note 1 : après avoir réalisé un tracé dans la zone étendue, il faut que celle-ci soit active pour permettre son effacement (typiquement via un appel à la fonction `fill_rect()` avec les paramètres adéquats).
+
+Note 2 : En mode non étendu (par défaut à l'initialisation du module `Kandinsky`) les coordonnées de l'écran vont de (0,0) à (319,239) (avec une partie visible allant de (0,0) à (319,223) du fait de la hauteur réduite de l'écran de la fxCG). En mode étendu, les coordonnées de l'écran vont de (-38,0) à (358,239) (avec une partie visible allant de (-38,0) à (358,223) du fait de la hauteur réduite de l'écran de la fxCG)
+
 
 ## `ion`
 
