@@ -43,7 +43,7 @@ Les fonctions suivantes sont des ajouts pour tirer partie de l'écran large de l
 
 Note 1 : après avoir réalisé un tracé dans la zone étendue, il faut que celle-ci soit active pour permettre son effacement (typiquement via un appel à la fonction `fill_rect()` avec les paramètres adéquats).
 
-Note 2 : En mode non étendu (par défaut à l'initialisation du module `Kandinsky`) les coordonnées de l'écran vont de (0,0) à (319,239) (avec une partie visible allant de (0,0) à (319,223) du fait de la hauteur réduite de l'écran de la fxCG). En mode étendu, les coordonnées de l'écran vont de (-38,0) à (358,239) (avec une partie visible allant de (-38,0) à (358,223) du fait de la hauteur réduite de l'écran de la fxCG)
+Note 2 : En mode non étendu (par défaut à l'initialisation du module `Kandinsky`) les coordonnées de l'écran vont de (0,0) à (319,221) centré sur l'écran de la fxCG. En mode étendu, les coordonnées de l'écran vont de (-38,-1) à (358,223).
 
 
 ## `ion`

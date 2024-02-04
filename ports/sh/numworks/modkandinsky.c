@@ -22,7 +22,7 @@ extern unsigned int timer_altered[9];
 
 #define DELTAXNW                                                               \
   ((DWIDTH - 320) / 2) // we center the NW screen on Casio's screen
-#define DELTAYNW 0     // NW screen will be cut in the bottom
+#define DELTAYNW 1     // NW screen will be cut in the bottom
 
 /* Definition of color on Numworks */
 
@@ -79,7 +79,7 @@ static mp_obj_t Kandinsky_init(void) {
   nw.left = DELTAXNW;
   nw.top = DELTAYNW;
   nw.right = 320 + DELTAXNW;
-  nw.bottom = 240 + DELTAYNW;
+  nw.bottom = 222 + DELTAYNW;
   dwindow_set(nw);
   is_dwindowed = true; // we mark as windowed
 
@@ -252,7 +252,7 @@ static mp_obj_t Kandinsky_CGEXT_Disable_Wide_Screen( void ) {
   nw.left = DELTAXNW;
   nw.top = DELTAYNW;
   nw.right = 320 + DELTAXNW;
-  nw.bottom = 240 + DELTAYNW;
+  nw.bottom = 222 + DELTAYNW;
   dwindow_set(nw);
   is_dwindowed = true; // we mark as windowed
 
