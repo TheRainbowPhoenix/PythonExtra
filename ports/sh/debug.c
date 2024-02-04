@@ -84,16 +84,23 @@ mp_print_t const mp_debug_print = { NULL, print_strn };
 
 void pe_debug_kmalloc(char const *prefix)
 {
-    kmalloc_gint_stats_t *s;
+    kmalloc_gint_stats_t *s1, *s2;
+    s1 = kmalloc_get_gint_stats(kmalloc_get_arena("_uram"));
 
-    s = kmalloc_get_gint_stats(kmalloc_get_arena("_uram"));
-    pe_debug_printf("%s: [_uram] used=%d free=%d\n",
-        prefix, s->used_memory, s->free_memory);
+#ifdef FX9860G
+    s2 = kmalloc_get_gint_stats(kmalloc_get_arena("pram0"));
+    pe_debug_printf("%s: _uram[used=%d free=%d] pram0[used=%d free=%d]\n",
+        prefix,
+        s1->used_memory, s1->free_memory,
+        s2->used_memory, s2->free_memory);
+#endif
 
 #ifdef FXCG50
-    s = kmalloc_get_gint_stats(kmalloc_get_arena("_ostk"));
-    pe_debug_printf("%s: [_ostk] used=%d free=%d\n",
-        prefix, s->used_memory, s->free_memory);
+    s2 = kmalloc_get_gint_stats(kmalloc_get_arena("_ostk"));
+    pe_debug_printf("%s: _uram[used=%d free=%d] _ostk[used=%d free=%d]\n",
+        prefix,
+        s1->used_memory, s1->free_memory,
+        s2->used_memory, s2->free_memory);
 #endif
 }
 

@@ -6,6 +6,7 @@
 
 #include <gint/keyboard.h>
 #include <gint/display.h>
+#include <gint/kmalloc.h>
 #include <gint/defs/util.h>
 #include <stdlib.h>
 #include <string.h>
@@ -59,7 +60,12 @@ bool console_line_init(console_line_t *line, int prealloc_size)
 void console_line_deinit(console_line_t *line)
 {
     free(line->data);
-    memset(line, 0, sizeof *line);
+    /* Manual memset to allow for PRAM0 storage */
+    line->data = NULL;
+    line->size = 0;
+    line->alloc_size = 0;
+    line->render_lines = 0;
+    line->prefix = 0;
 }
 
 bool console_line_alloc(console_line_t *line, int n)
@@ -86,7 +92,7 @@ int console_line_capacity(console_line_t *line)
 
 void console_line_set_prefix(console_line_t *line, int prefix_size)
 {
-    line->prefix = min(max(0, prefix_size), line->size);
+    line->prefix = min(max(0, prefix_size), (int)line->size);
 }
 
 bool console_line_insert(console_line_t *line, int p, char const *str, int n)
@@ -175,7 +181,7 @@ bool linebuf_init(linebuf_t *buf, int capacity, int backlog_size)
     if(capacity <= 0)
         return false;
 
-    buf->lines = malloc(capacity * sizeof *buf->lines);
+    buf->lines = kmalloc(capacity * sizeof *buf->lines, PE_CONSOLE_LINE_ALLOC);
     if(!buf->lines)
         return false;
 
@@ -192,7 +198,7 @@ bool linebuf_init(linebuf_t *buf, int capacity, int backlog_size)
 
 void linebuf_deinit(linebuf_t *buf)
 {
-    free(buf->lines);
+    kfree((void *)buf->lines);
     memset(buf, 0, sizeof *buf);
 }
 

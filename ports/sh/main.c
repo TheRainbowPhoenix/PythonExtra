@@ -333,6 +333,17 @@ int pe_readline(vstr_t *line, char const *prompt)
 
 int main(int argc, char **argv)
 {
+#ifdef FX9860G
+    /* Use PRAM0 as an arena for special allocs to save memory elsewhere */
+    kmalloc_arena_t arena_pram0 = { 0 };
+    arena_pram0.name = "pram0";
+    arena_pram0.is_default = false;
+    arena_pram0.start = (void *)0xfe200000;
+    arena_pram0.end = (void *)0xfe228000; /* 160 kB! */
+    kmalloc_init_arena(&arena_pram0, true);
+    kmalloc_add_arena(&arena_pram0);
+#endif
+
     pe_debug_init();
     pe_debug_printf("---\n");
     pe_debug_kmalloc("main");
