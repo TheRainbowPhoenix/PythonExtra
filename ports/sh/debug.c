@@ -82,17 +82,19 @@ static void print_strn(void *env, const char *str, size_t len) {
 
 mp_print_t const mp_debug_print = { NULL, print_strn };
 
-void pe_debug_kmalloc(void)
+void pe_debug_kmalloc(char const *prefix)
 {
     kmalloc_gint_stats_t *s;
 
     s = kmalloc_get_gint_stats(kmalloc_get_arena("_uram"));
-    pe_debug_printf("[_uram] used=%d free=%d\n",
-        s->used_memory, s->free_memory);
+    pe_debug_printf("%s: [_uram] used=%d free=%d\n",
+        prefix, s->used_memory, s->free_memory);
 
+#ifdef FXCG50
     s = kmalloc_get_gint_stats(kmalloc_get_arena("_ostk"));
-    pe_debug_printf("[_ostk] used=%d free=%d\n",
-        s->used_memory, s->free_memory);
+    pe_debug_printf("%s: [_ostk] used=%d free=%d\n",
+        prefix, s->used_memory, s->free_memory);
+#endif
 }
 
 void pe_debug_screenshot(void)

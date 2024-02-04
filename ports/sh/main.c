@@ -291,10 +291,12 @@ static char *pe_handle_event(jevent e, bool shell_bound)
         return NULL;
     int key = e.key.key;
 
+    pe_debug_kmalloc("key");
+
     if(key == KEY_SQUARE && !e.key.shift && e.key.alpha)
         pe_debug_screenshot();
     if(key == KEY_TAN)
-        pe_debug_kmalloc();
+        pe_debug_kmalloc("tan");
 
     if(!shell_bound && key == KEY_F1) {
         jscene_show_and_focus(PE.scene, PE.fileselect);
@@ -332,7 +334,8 @@ int pe_readline(vstr_t *line, char const *prompt)
 int main(int argc, char **argv)
 {
     pe_debug_init();
-    pe_debug_kmalloc();
+    pe_debug_printf("---\n");
+    pe_debug_kmalloc("main");
 
     //=== Init sequence ===//
 
@@ -346,6 +349,8 @@ int main(int argc, char **argv)
     keydev_set_transform(keydev_std(), tr);
 
     PE.console = console_create(8192, 200);
+
+    pe_debug_kmalloc("console");
 
     /* Set up standard streams */
     close(STDOUT_FILENO);
@@ -406,8 +411,12 @@ int main(int argc, char **argv)
         MP_OBJ_NEW_QSTR(qstr_from_str("."));
 #endif
 
+    pe_debug_kmalloc("upy");
+
     pyexec_event_repl_init();
     pe_print_prompt(1);
+
+    pe_debug_kmalloc("prompt");
 
     //=== GUI setup ===//
 
@@ -445,6 +454,8 @@ int main(int argc, char **argv)
     jwidget_set_padding(PE.title, 3, 6, 3, 6);
     jwidget_set_padding(stack, 0, 6, 0, 6);
 #endif
+
+    pe_debug_kmalloc("ui");
 
     /* Initial state */
     jfileselect_browse(PE.fileselect, "/");

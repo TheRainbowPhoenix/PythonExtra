@@ -28,7 +28,7 @@ __attribute__((noreturn));
 int pe_debug_printf(char const *fmt, ...);
 
 /* Print information about allocation status. */
-void pe_debug_kmalloc(void);
+void pe_debug_kmalloc(char const *prefix);
 
 /* Take a screenshot. */
 void pe_debug_screenshot(void);
