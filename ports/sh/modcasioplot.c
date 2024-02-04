@@ -7,6 +7,7 @@
 
 #include "py/runtime.h"
 #include "py/obj.h"
+#include "debug.h"
 #include <gint/display.h>
 #include <stdlib.h>
 #include <string.h>
@@ -72,6 +73,7 @@ static mp_obj_t show_screen(void)
     void pe_enter_graphics_mode(void);
     pe_enter_graphics_mode();
     dupdate();
+    pe_debug_run_videocapture();
     return mp_const_none;
 }
 

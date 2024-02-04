@@ -9,6 +9,7 @@
 // considered relevant for high-level Python development).
 //---
 
+#include "debug.h"
 #include "py/runtime.h"
 #include "py/objtuple.h"
 #include "objgintimage.h"
@@ -229,6 +230,7 @@ STATIC mp_obj_t modgint_dupdate(void)
 {
     pe_enter_graphics_mode();
     dupdate();
+    pe_debug_run_videocapture();
     return mp_const_none;
 }
 

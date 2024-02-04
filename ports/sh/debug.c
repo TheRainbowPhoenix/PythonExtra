@@ -49,6 +49,8 @@ static bool timeout_popup(void)
 }
 #endif
 
+static bool videocapture = false;
+
 void pe_debug_init(void)
 {
     usb_interface_t const *intf[] = { &usb_ff_bulk, NULL };
@@ -108,6 +110,19 @@ void pe_debug_screenshot(void)
 {
     usb_open_wait();
     usb_fxlink_screenshot(true);
+}
+
+void pe_debug_toggle_videocapture(void)
+{
+    videocapture = !videocapture;
+}
+
+void pe_debug_run_videocapture(void)
+{
+    if(videocapture) {
+        usb_open_wait();
+        usb_fxlink_videocapture(true);
+    }
 }
 
 #endif /* PE_DEBUG */

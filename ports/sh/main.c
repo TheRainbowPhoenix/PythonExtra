@@ -130,6 +130,14 @@ static bool async_filter(key_event_t ev)
         return false;
     }
 
+#if PE_DEBUG
+    if(ev.key == KEY_SQUARE) {
+        if(ev.type == KEYEV_DOWN)
+            pe_debug_toggle_videocapture();
+        return false;
+    }
+#endif
+
     return true;
 }
 
@@ -181,6 +189,7 @@ void pe_draw(void)
         DIMAGE_NONE);
 #endif
     dupdate();
+    pe_debug_run_videocapture();
 }
 
 //=== Application control functions ===//

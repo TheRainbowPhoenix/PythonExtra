@@ -33,12 +33,20 @@ void pe_debug_kmalloc(char const *prefix);
 /* Take a screenshot. */
 void pe_debug_screenshot(void);
 
+/* Toggle video capture. */
+void pe_debug_toggle_videocapture(void);
+
+/* Send a video capture frame if video capture is enabled. */
+void pe_debug_run_videocapture(void);
+
 #if !PE_DEBUG
 #define PE_DEBUG_NOOP do {} while(0)
-#define pe_debug_init(...)          PE_DEBUG_NOOP
-#define pe_debug_printf(...)        PE_DEBUG_NOOP
-#define pe_debug_kmalloc(...)       PE_DEBUG_NOOP
-#define pe_debug_screenshot(...)    PE_DEBUG_NOOP
+#define pe_debug_init(...)                 PE_DEBUG_NOOP
+#define pe_debug_printf(...)               PE_DEBUG_NOOP
+#define pe_debug_kmalloc(...)              PE_DEBUG_NOOP
+#define pe_debug_screenshot(...)           PE_DEBUG_NOOP
+#define pe_debug_toggle_videocapture(...)  PE_DEBUG_NOOP
+#define pe_debug_run_videocapture(...)     PE_DEBUG_NOOP
 #endif
 
 #endif /* __PYTHONEXTRA_DEBUG_H */
