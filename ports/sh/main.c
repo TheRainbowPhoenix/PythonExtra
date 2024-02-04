@@ -353,9 +353,9 @@ int main(int argc, char **argv)
 #if PE_DEBUG
     /* Add some Python ram */
     // https://www.planet-casio.com/Fr/forums/topic15269-10-khicas-add-in-calcul-formel-pour-graph-90e-et-35eii.html#189284
-    void *py_ram_start = (void*)0x88053800;
+    /* void *py_ram_start = (void*)0x88053800;
     void *py_ram_end = (void*)0x8807f000;
-    gc_add(py_ram_start, py_ram_end);
+    gc_add(py_ram_start, py_ram_end); */
 #endif
 #else
     /* Get everything from the OS stack (~ 350 ko) */
