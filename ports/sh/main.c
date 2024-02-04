@@ -214,6 +214,30 @@ static void pe_print_prompt(int which)
     console_lock_prefix(PE.console);
 }
 
+static void pe_update_title(void)
+{
+    char const *folder = jfileselect_current_folder(PE.fileselect);
+
+#ifdef FX9860G
+    /* Use a static variable to ensure the title shows even if OoM */
+    static char title[22];
+
+    if(!folder)
+        jlabel_set_text(PE.title, "Python");
+    else {
+        sprintf(title, "Python[%-13.13s]", folder);
+        jlabel_set_text(PE.title, title);
+    }
+#endif
+
+#ifdef FXCG50
+    if(!folder)
+        jlabel_set_text(PE.title, "PythonExtra");
+    else
+        jlabel_asprintf(PE.title, "PythonExtra (%s)", folder);
+#endif
+}
+
 /* Handle a GUI event. If `shell_bound` is true, only actions that have an
    effect on the shell are allowed and the return value is any full line that
    is entered in the shell. Otherwise, the full GUI is available and the return
@@ -260,6 +284,8 @@ static char *pe_handle_event(jevent e, bool shell_bound)
             pe_print_prompt(1);
         }
     }
+    if(!shell_bound && e.type == JFILESELECT_LOADED)
+        pe_update_title();
 
     if(e.type != JWIDGET_KEY || e.key.type == KEYEV_UP)
         return NULL;
@@ -386,7 +412,7 @@ int main(int argc, char **argv)
     //=== GUI setup ===//
 
     PE.scene = jscene_create_fullscreen(NULL);
-    PE.title = jlabel_create("PythonExtra", PE.scene);
+    PE.title = jlabel_create("<temp>", PE.scene);
     jwidget *stack = jwidget_create(PE.scene);
     jfkeys *fkeys = jfkeys_create2(&img_fkeys_main, "/FILES;/SHELL", PE.scene);
     (void)fkeys;
