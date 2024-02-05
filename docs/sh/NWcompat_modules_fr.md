@@ -1,8 +1,11 @@
-# utilisation des modules `kandinsky`, `ion` et `time` de l'implémentation Python sur `NumWorks`
+# Utilisation des modules `kandinsky`, `ion` et `time` de l'implémentation Python `Numworks`
 
-PythonExtra offre la possibilité d'utiliser certains modules de la Numworks afin de rendre les scripts de cette machine compatible en l'état sur la fxCG50 (pas de support sur la fx9860G pour cause de mémoire insuffisante).
+PythonExtra offre la possibilité d'utiliser certains modules de la Numworks afin de rendre les scripts de cette machine compatible en l'état sur Casio fx-CG50 (pas de support sur la fx9860G pour cause de mémoire insuffisante et d'abence d'écran couleur).
 
-Il s'agit d'un Work in Progress (WIP) et le support est à ce stade partiel, néanmoins les modules `kandinsky`, `ion` et `time` de la NumWorks sont supportés.
+Il s'agit d'un Work in Progress (WIP) et le support est sujet à tests approfondis à ce stade. Le port concerne les modules `kandinsky`, `ion` et `time` de la Numworks qui sont spécifiques à la machine et sont désormais supportés via cette implémentation. Les modules `math`, `cmath`, `random` étant identiques entre la version `Numworks` et les modules `builtins` de MicroPython, ils ne font donc pas partie de cette implémentation mais sont parfaitement utilisables sans modification dans les scripts.
+
+Note : les modules `turtle` et `matplotlib.pyplot` ne sont pas repris dans cette implémentation. Il est possible d'utiliser les modules `turtle`, `matplotlib` et `casioplot` de Casio Education qui sont parfaitement fonctionnels et fournis en example dans `ports/sh/examples`.
+
 
 ## `kandinsky`
 
@@ -50,9 +53,9 @@ Note 2 : En mode non étendu (par défaut à l'initialisation du module `Kandins
 
 Le module `ion` donne accès à la fonction `keydown(k)` qui renvoie True si la touche k placée en argument est appuyée et False sinon.
 
-La "conversion" des touches entre la machine NumWorks et Casio fxCG50 se fait selon le mapping suivant :
+La "conversion" des touches entre la machine Numworks et Casio fxCG50 se fait selon le mapping suivant :
 
-| NumWorks | Casio fxCG50 |
+| Numworks | Casio fxCG50 |
 |----------|--------------|
 | KEY_LEFT     | KEY_LEFT |
 | KEY_UP     | KEY_UP |
@@ -101,6 +104,8 @@ La "conversion" des touches entre la machine NumWorks et Casio fxCG50 se fait se
 | KEY_ANS     | KEY_NEG |
 | KEY_EXE     | KEY_EXE |
 
+Note : la fonction `keydown(k)` peut théoriquement être appelée sur `Numworks` avec le numéro de la touche correspondante (par exemple 12 pour la touche `KEY_ONOFF`), mais ceci n'est pas supporté par PythonExtra. Il convient donc de nommer explicitement les touches via leur code `KEY_xxx`.
+
 
 ## `time`
 
@@ -109,5 +114,3 @@ Le module `time` donne accès à deux fonctions :
 - `monotonic()` : Renvoie la valeur de lʼhorloge au moment où la fonction est appelée.
 
 - `sleep(t)` : Suspend lʼexécution pendant t secondes.
-
-
