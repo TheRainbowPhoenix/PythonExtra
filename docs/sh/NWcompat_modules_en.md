@@ -44,6 +44,8 @@ The following functions are additions to take advantage of the wide screen of th
 
 - `CGEXT_Is_Wide_Screen_Enabled()`: Returns `True` if the extended screen is active and `False` otherwise.
 
+- `CGEXT_Set_Margin_Color( color )` : Paints the margin of the `Numworks` screen on fxCG with the specified color.
+
 Note 1: after having made a plot in the extended area, it must be active to allow its deletion (typically via a call to the `fill_rect()` function with the appropriate parameters).
 
 Note 2: In non-extended mode (by default when initializing the `Kandinsky` module) the screen coordinates go from (0,0) to (319,221) centered on the fxCG screen. In extended mode, the screen coordinates range from (-38,-1) to (358,223).

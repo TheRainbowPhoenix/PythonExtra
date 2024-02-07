@@ -22,9 +22,13 @@ extern bool is_dwindowed;
 extern bool is_timered;
 extern unsigned int timer_altered[9];
 
+/* Parameters used in windowed mode to center the screen of the NW in the fxCG screen*/
 #define DELTAXNW                                                               \
   ((DWIDTH - 320) / 2) // we center the NW screen on Casio's screen
 #define DELTAYNW 1     // NW screen will be cut in the bottom
+
+/* refresh rate of the screen */
+#define TARGET_FPS 30
 
 /* Definition of color on Numworks */
 
@@ -85,7 +89,7 @@ static mp_obj_t Kandinsky_init(void) {
   dwindow_set(nw);
   is_dwindowed = true; // we mark as windowed
 
-  int t = timer_configure(TIMER_TMU, 33333, GINT_CALL(callback));
+  int t = timer_configure(TIMER_TMU, (1000000/TARGET_FPS), GINT_CALL(callback));
   if (t >= 0) {
     timer_start(t);
     is_timered = true;    // there is a timer altered from this module
@@ -266,18 +270,29 @@ static mp_obj_t Kandinsky_CGEXT_Is_Wide_Screen_Enabled( void ) {
   return mp_obj_new_bool( is_dwindowed );
 }
 
+static mp_obj_t Kandinsky_CGEXT_Set_Margin_Color( mp_obj_t color ) {
+  
+  color_t colorside = NW_BLACK;
+  colorside = Internal_Treat_Color(color);
+  
+  Kandinsky_CGEXT_Enable_Wide_Screen();
+  dclear(colorside);
+  Kandinsky_CGEXT_Disable_Wide_Screen();
+  
+  return mp_obj_new_bool( is_dwindowed );
+}
+
+/* Extension of Kandinsky for fxCG - all names starting with "CGEXT_" */
 MP_DEFINE_CONST_FUN_OBJ_0(Kandinsky_CGEXT_Enable_Wide_Screen_obj, Kandinsky_CGEXT_Enable_Wide_Screen);
 MP_DEFINE_CONST_FUN_OBJ_0(Kandinsky_CGEXT_Disable_Wide_Screen_obj, Kandinsky_CGEXT_Disable_Wide_Screen);
 MP_DEFINE_CONST_FUN_OBJ_0(Kandinsky_CGEXT_Is_Wide_Screen_Enabled_obj, Kandinsky_CGEXT_Is_Wide_Screen_Enabled);
-
+MP_DEFINE_CONST_FUN_OBJ_1(Kandinsky_CGEXT_Set_Margin_Color_obj, Kandinsky_CGEXT_Set_Margin_Color);
+/* Standard Kandinsky function as per Numworks specification */
 MP_DEFINE_CONST_FUN_OBJ_0(Kandinsky_init_obj, Kandinsky_init);
-MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(Kandinsky_set_pixel_obj, 3, 3,
-                                    Kandinsky_set_pixel);
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(Kandinsky_set_pixel_obj, 3, 3, Kandinsky_set_pixel);
 MP_DEFINE_CONST_FUN_OBJ_2(Kandinsky_get_pixel_obj, Kandinsky_get_pixel);
-MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(Kandinsky_draw_string_obj, 3, 5,
-                                    Kandinsky_draw_string);
-MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(Kandinsky_fill_rect_obj, 5, 5,
-                                    Kandinsky_fill_rect);
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(Kandinsky_draw_string_obj, 3, 5, Kandinsky_draw_string);
+MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(Kandinsky_fill_rect_obj, 5, 5, Kandinsky_fill_rect);
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(Kandinsky_color_obj, 3, 3, Kandinsky_color);
 
 STATIC const mp_rom_map_elem_t kandinsky_module_globals_table[] = {
@@ -291,6 +306,7 @@ STATIC const mp_rom_map_elem_t kandinsky_module_globals_table[] = {
     {MP_ROM_QSTR(MP_QSTR_CGEXT_Enable_Wide_Screen), MP_ROM_PTR(&Kandinsky_CGEXT_Enable_Wide_Screen_obj)},
     {MP_ROM_QSTR(MP_QSTR_CGEXT_Disable_Wide_Screen), MP_ROM_PTR(&Kandinsky_CGEXT_Disable_Wide_Screen_obj)},
     {MP_ROM_QSTR(MP_QSTR_CGEXT_Is_Wide_Screen_Enabled), MP_ROM_PTR(&Kandinsky_CGEXT_Is_Wide_Screen_Enabled_obj)},
+    {MP_ROM_QSTR(MP_QSTR_CGEXT_Set_Margin_Color), MP_ROM_PTR(&Kandinsky_CGEXT_Set_Margin_Color_obj)},
 };
 STATIC MP_DEFINE_CONST_DICT(kandinsky_module_globals,
                             kandinsky_module_globals_table);

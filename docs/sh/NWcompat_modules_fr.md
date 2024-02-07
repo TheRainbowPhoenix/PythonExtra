@@ -44,6 +44,8 @@ Les fonctions suivantes sont des ajouts pour tirer partie de l'écran large de l
 
 - `CGEXT_Is_Wide_Screen_Enabled()` : Retourne `True` si l'écran étendu est actif et `False` dans le cas contraire.
 
+- `CGEXT_Set_Margin_Color( color )` : Trace les marge de la fxCG50 (pourtours de l'écran `Numworks`) de la couleur passée en argument.
+
 Note 1 : après avoir réalisé un tracé dans la zone étendue, il faut que celle-ci soit active pour permettre son effacement (typiquement via un appel à la fonction `fill_rect()` avec les paramètres adéquats).
 
 Note 2 : En mode non étendu (par défaut à l'initialisation du module `Kandinsky`) les coordonnées de l'écran vont de (0,0) à (319,221) centré sur l'écran de la fxCG. En mode étendu, les coordonnées de l'écran vont de (-38,-1) à (358,223).
