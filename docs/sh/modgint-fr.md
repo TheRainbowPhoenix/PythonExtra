@@ -76,6 +76,8 @@ elif ev.key == KEY_DOWN and pos < N-1:
     pos += 1   # Descendre d'une position
 ```
 
+TODO: Parler de `getkey_opt()`
+
 ### Lecture des événements en temps réel
 
 ```py
@@ -121,7 +123,6 @@ def clearevents():
 
 ```py
 keydown(key: int) -> bool
-keyup(key: int) -> bool
 keydown_all(*keys: [int]) -> bool
 keydown_any(*keys: [int]) -> bool
 ```
@@ -141,7 +142,7 @@ if keydown(KEY_RIGHT):
     player_x += 1
 ```
 
-La fonction `keyup()` renvoie l'opposé de `keydown()`. La fonction `keydown_all()` prent une série de touches en paramètre et renvoie `True` si elles sout toutes pressées. `keydown_any()` est similaire et renvoie `True` si au moins une des touches listées est pressée.
+La fonction `keydown_all()` prent une série de touches en paramètre et renvoie `True` si elles sout toutes pressées. `keydown_any()` est similaire et renvoie `True` si au moins une des touches listées est pressée.
 
 ### Lecture rapide des changements de position des touches
 
@@ -173,13 +174,100 @@ if keydown(KEY_RIGHT):
 # Simuler le jeu...
 ```
 
-## Fonctions de dessin basiques
+### Fonctions diverses concernant le clavier
+
+```py
+keycode_function(key: int) -> int
+keycode_digit(key: int) -> int
+```
+
+`keycode_function(k)` renvoie le numéro de F-touche de `k` (i.e. 1 pour `KEY_F1`, 2 pour `KEY_F2`, etc.) et -1 pour les autres touches.
+
+`keycode_digit(k)` renvoie le chiffre associé à `k` (i.e. 0 pour `KEY_0`, 1 pour `KEY_1`, etc.) et -1 pour les autres touches.
+
+## Dessin à l'écran
 
 Les en-têtes de référence sont [`<gint/display.h>`](https://gitea.planet-casio.com/Lephenixnoir/gint/src/branch/master/include/gint/display.h), et pour certains détails techniques [`<gint/display-fx.h>`](https://gitea.planet-casio.com/Lephenixnoir/gint/src/branch/master/include/gint/display-fx.h) et [`<gint/display-cg.h>`](https://gitea.planet-casio.com/Lephenixnoir/gint/src/branch/master/include/gint/display-cg.h).
 
+### Manipulation de couleurs
+
+```py
+C_WHITE: int    # Blanc
+C_BLACK: int    # Noir
+C_LIGHT: int    # Gris clair (sur mono: moteur de gris)
+C_DARK: int     # Gris foncé (sur mono: moteur de gris)
+C_NONE: int     # Transparent
+C_INVERT: int   # Inverseur de couleur
+
+# Graph mono uniquement :
+C_LIGHTEN: int  # Éclaircisseur de couleur (moteur de gris)
+C_DARKEN: int   # Assombrisseur de couleur (moteur de gris)
+
+# Graph 90+E uniquement :
+C_RED: int      # Rouge pur
+C_GREEN: int    # Vert pur
+C_BLUE: int     # Bleu pur
+C_RGB(r: int, g: int, b: int) -> int
+```
+
+Les couleurs sont toutes des nombres entiers (manipuler des tuples `(r,g,b)` est atrocement lent par comparaison et requiert des allocations mémoire dans tous les sens). Une poignée de couleurs est fournie par défaut.
+
+Sur Graph 90+E, la fonction `C_RGB()` peut être utilisée pour créer des couleurs à partir de trois composantes de valeur 0 à 31.
+
+TODO: Expliquer le moteur de gris.
+
+### Fonctions de dessin basiques
+
+```py
+DWIDTH: int
+DHEIGHT: int
+dupdate() -> None
+dclear(color: int) -> None
+dpixel(x: int, y: int, color: int) -> None
+dgetpixel(x: int, y: int) -> int
+```
+
+Les entiers `DWIDTH` et `DHEIGHT` indiquent la taille de l'écran. C'est 128x64 sur les Graph mono (type Graph 35+E II), 396x224 sur la Prizm et Graph 90+E (le plein écran est disponible).
+
+Toutes les fonctions de dessin opèrent sur une image interne appellée "VRAM" ; l'effet du dessin n'est donc pas visible immédiatement à l'écran. Pour que le dessin se voie il faut appeler la fonction `dupdate()` qui transfère les contenus de la VRAM à l'écran réel. Généralement, on fait ça après avoir affiché tout ce dont on a besoin et surtout pas après chaque appel de fonction de dessin.
+
+Dans PythonExtra, la fonction `dupdate()` indique aussi implicitement qu'on « passe en mode graphique ». À cause de certaines optimisations tout appel à `print()` est considéré comme un « passage en mode texte » et pendant qu'on est en mode texte le shell peut redessiner à tout moment. Si on veut dessiner après avoir utilisé le mode texte, il faut appeler `dupdate()` pour forcer un passage en mode graphique avant de commencer à dessiner. Sinon le dessin du shell pourrait interférer avec le dessin du programme.
+
+La fonction `dclear()` remplit l'écran d'une couleur unie.
+
+La fonction `dpixel()` modifie la couleur d'un pixel. Les coordonnées sont universellement (x,y) où `x` varie entre 0 et DWIDTH-1 inclus (0 étant à gauche), et `y` varie entre 0 et DHEIGHT-1 inclus (0 étant en haut).
+
+La fonction `dgetpixel()` renvoie la couleur d'un pixel. Attention, `dgetpixel()` lit dans la VRAM, pas sur l'écran.
+
+_Exemple ([`ex_draw1.py`](../../sh/examples/ex_draw1.py))._
+
+```py
+from gint import *
+dclear(C_WHITE)
+for y in range(10):
+    for x in range(10):
+        if (x^y) & 1:
+            dpixel(x, y, C_BLACK)
+dupdate()
+```
+
+### Fonctions de dessin de formes géométriques
+
+```py
+drect(x1: int, y1: int, x2: int, y2: int, color: int) -> None
+drect_border(x1: int, y1: int, x2: int, y2: int, fill_color: int,
+             border_width: int, border_color: int) -> None
+dline(x1: int, y1: int, x2: int, y2: int, color: int) -> None
+dhline(y: int, color: int) -> None
+dvline(x: int, color: int) -> None
+dcircle(x: int, y: int, radius: int, fill_color: int,
+        border_color: int) -> None
+dellipse(x1: int, y1: int, x2: int, y2: int, fill_color: int,
+        border_color: int) -> None
+```
 TODO
 
-## Fonctions de dessin d'images
+### Fonctions de dessin d'images
 
 TODO
 

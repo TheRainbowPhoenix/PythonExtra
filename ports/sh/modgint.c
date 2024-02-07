@@ -616,7 +616,12 @@ STATIC const mp_rom_map_elem_t modgint_module_globals_table[] = {
     INT(C_LIGHT),
     INT(C_DARK),
     INT(C_BLACK),
+    INT(C_INVERT),
     INT(C_NONE),
+#ifdef FX9860G
+    INT(C_LIGHTEN),
+    INT(C_DARKEN),
+#endif
 #ifdef FXCG50
     INT(C_RED),
     INT(C_GREEN),

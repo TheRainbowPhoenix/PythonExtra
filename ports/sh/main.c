@@ -66,7 +66,7 @@ static ssize_t stdouterr_write(void *data, void const *buf, size_t size)
     return size;
 }
 
-fs_descriptor_type_t stdouterr_type = {
+static fs_descriptor_type_t const stdouterr_type = {
     .read = NULL,
     .write = stdouterr_write,
     .lseek = NULL,
@@ -218,6 +218,12 @@ static void pe_print_prompt(int which)
         prompt = mp_repl_get_ps2();
     else
         prompt = mp_repl_get_ps1();
+
+    char str[32];
+    kmalloc_gint_stats_t *s;
+    s = kmalloc_get_gint_stats(kmalloc_get_arena("_uram"));
+    sprintf(str, "%lu", s->free_memory);
+    console_write(PE.console, str, -1);
 
     console_write(PE.console, prompt, -1);
     console_lock_prefix(PE.console);

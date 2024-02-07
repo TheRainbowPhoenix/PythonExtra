@@ -74,6 +74,8 @@ elif ev.key == KEY_DOWN and pos < N-1:
     pos += 1   # Move one place down
 ```
 
+TODO: Mention `getkey_opt()`
+
 ### Reading keyboard events in real time
 
 ```py
@@ -119,7 +121,6 @@ def clearevents():
 
 ```py
 keydown(key: int) -> bool
-keyup(key: int) -> bool
 keydown_all(*keys: [int]) -> bool
 keydown_any(*keys: [int]) -> bool
 ```
@@ -139,7 +140,7 @@ if keydown(KEY_RIGHT):
     player_x += 1
 ```
 
-`keyup()` returns the opposite of `keydown()`. `keydown_all()` takes a series of keys as parameters and returns `True` if they are all pressed. `keydown_any()` is similar and returns `True` if at least one of the listed keys is pressed.
+`keydown_all()` takes a series of keys as parameters and returns `True` if they are all pressed. `keydown_any()` is similar and returns `True` if at least one of the listed keys is pressed.
 
 ### Quickly querying key state changes
 
@@ -171,13 +172,77 @@ if keydown(KEY_RIGHT):
 # Simulate game...
 ```
 
-## Basic rendering functions
+### Miscellaneous keyboard functions
+
+```py
+keycode_function(key: int) -> int
+keycode_digit(key: int) -> int
+```
+
+`keycode_function(k)` returns the F-key number if `k` (i.e. 1 for `KEY_F1`, 2 for `KEY_F2`, etc.) and -1 for other keys.
+
+`keycode_digit(k)` returns the digit associated with `k` (i.e. 0 for `KEY_0`, 1 for `KEY_1`, etc.) and -1 for other keys.
+
+## Drawing and rendering
 
 Reference headers: [`<gint/display.h>`](https://gitea.planet-casio.com/Lephenixnoir/gint/src/branch/master/include/gint/display.h), and for some details [`<gint/display-fx.h>`](https://gitea.planet-casio.com/Lephenixnoir/gint/src/branch/master/include/gint/display-fx.h) and [`<gint/display-cg.h>`](https://gitea.planet-casio.com/Lephenixnoir/gint/src/branch/master/include/gint/display-cg.h).
 
+### Color manipulation
+
+```py
+C_WHITE: int    # White
+C_BLACK: int    # Black
+C_LIGHT: int    # Light gray (on B&W: gray engine)
+C_DARK: int     # Dark gray (on B&W: gray engine)
+C_NONE: int     # Transparent
+C_INVERT: int   # Function: inverse
+
+# Black-and-white (B&W) models only:
+C_LIGHTEN: int  # Function: lighten (gray engine)
+C_DARKEN: int   # Function: darken (gray engine)
+
+# fx-CG models only:
+C_RED: int      # Pure red
+C_GREEN: int    # Pure green
+C_BLUE: int     # Pure blue
+C_RGB(r: int, g: int, b: int) -> int
+```
+
+Colors are all integers (manipulating `(r,g,b)` tuples is excruciatingly slow and requires memory allocations all over the place). A few default colors are provided.
+
+On the fx-CG series, the `C_RGB()` function can be used to create colors from three components ranging from 0 to 31.
+
+TODO: Explain the gray engine.
+
+### Basic rendering functions
+
+
+```py
+DWIDTH: int
+DHEIGHT: int
+dupdate() -> None
+dclear(color: int) -> None
+dpixel(x: int, y: int, color: int) -> None
+dgetpixel(x: int, y: int) -> int
+```
+
+The integers `DWIDTH` and `DHEIGHT` indicate the screen's dimensions. The screen is 128x64 on black-and-white models (like the G-III) and 396x224 on the fx-CG series (the full screen is available).
+
+All rendering functions draw to an internal image called the "VRAM"; rendering calls are thus not immediate visible on the screen. For the result to be visible one must call the `dupdate()` function, which transfers the contents of the VRAM to the real display. Usually, this is done after rendering everything we need on one frame instead of after each drawing function call.
+
+In PythonExtra, `dupdate()` also indicates a "switch to graphics mode". Due to certain optimizations any call to `print()` is considered a "switch to text mode", and while in text mode the shell might redraw at any time. In order to draw after using text mode, one must call `dupdate()` to force a switch to graphics mode before starting rendering. Otherwise the shell and program might render at the same time and produce incoherent results.
+
+`dclear()` fills the screen with a uniform color.
+
+`dpixel()` changes a pixel's color. Coordinates are universally (x,y) where `x` is in the range 0 to DWIDTH-1 inclusive (0 being left) and `y` is in the range 0 to DHEIGHT-1 inclusive (0 being top).
+
+`dgetpixel()` returns the color of a pixel. Note that `dgetpixel()` reads from VRAM, not from the display.
+
+### Geometric shape rendering functions
+
 TODO
 
-## Image rendering functions
+### Image rendering functions
 
 TODO
 
