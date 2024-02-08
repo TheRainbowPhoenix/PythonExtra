@@ -49,6 +49,8 @@ static bool timeout_popup(void)
 }
 #endif
 
+static bool videocapture = false;
+
 void pe_debug_init(void)
 {
     usb_interface_t const *intf[] = { &usb_ff_bulk, NULL };
@@ -82,23 +84,45 @@ static void print_strn(void *env, const char *str, size_t len) {
 
 mp_print_t const mp_debug_print = { NULL, print_strn };
 
-void pe_debug_kmalloc(void)
+void pe_debug_kmalloc(char const *prefix)
 {
-    kmalloc_gint_stats_t *s;
+    kmalloc_gint_stats_t *s1, *s2;
+    s1 = kmalloc_get_gint_stats(kmalloc_get_arena("_uram"));
 
-    s = kmalloc_get_gint_stats(kmalloc_get_arena("_uram"));
-    pe_debug_printf("[_uram] used=%d free=%d\n",
-        s->used_memory, s->free_memory);
+#ifdef FX9860G
+    s2 = kmalloc_get_gint_stats(kmalloc_get_arena("pram0"));
+    pe_debug_printf("%s: _uram[used=%d free=%d] pram0[used=%d free=%d]\n",
+        prefix,
+        s1->used_memory, s1->free_memory,
+        s2->used_memory, s2->free_memory);
+#endif
 
-    s = kmalloc_get_gint_stats(kmalloc_get_arena("_ostk"));
-    pe_debug_printf("[_ostk] used=%d free=%d\n",
-        s->used_memory, s->free_memory);
+#ifdef FXCG50
+    s2 = kmalloc_get_gint_stats(kmalloc_get_arena("_ostk"));
+    pe_debug_printf("%s: _uram[used=%d free=%d] _ostk[used=%d free=%d]\n",
+        prefix,
+        s1->used_memory, s1->free_memory,
+        s2->used_memory, s2->free_memory);
+#endif
 }
 
 void pe_debug_screenshot(void)
 {
     usb_open_wait();
     usb_fxlink_screenshot(true);
+}
+
+void pe_debug_toggle_videocapture(void)
+{
+    videocapture = !videocapture;
+}
+
+void pe_debug_run_videocapture(void)
+{
+    if(videocapture) {
+        usb_open_wait();
+        usb_fxlink_videocapture(true);
+    }
 }
 
 #endif /* PE_DEBUG */

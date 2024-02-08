@@ -75,7 +75,7 @@ static ssize_t stdouterr_write(void *data, void const *buf, size_t size)
     return size;
 }
 
-fs_descriptor_type_t stdouterr_type = {
+static fs_descriptor_type_t const stdouterr_type = {
     .read = NULL,
     .write = stdouterr_write,
     .lseek = NULL,
@@ -139,6 +139,14 @@ static bool async_filter(key_event_t ev)
         return false;
     }
 
+#if PE_DEBUG
+    if(ev.key == KEY_SQUARE) {
+        if(ev.type == KEYEV_DOWN)
+            pe_debug_toggle_videocapture();
+        return false;
+    }
+#endif
+
     return true;
 }
 
@@ -190,6 +198,7 @@ void pe_draw(void)
         DIMAGE_NONE);
 #endif
     dupdate();
+    pe_debug_run_videocapture();
 }
 
 //=== Application control functions ===//
@@ -244,8 +253,38 @@ static void pe_print_prompt(int which)
     else
         prompt = mp_repl_get_ps1();
 
+    char str[32];
+    kmalloc_gint_stats_t *s;
+    s = kmalloc_get_gint_stats(kmalloc_get_arena("_uram"));
+    sprintf(str, "%lu", s->free_memory);
+    console_write(PE.console, str, -1);
+
     console_write(PE.console, prompt, -1);
     console_lock_prefix(PE.console);
+}
+
+static void pe_update_title(void)
+{
+    char const *folder = jfileselect_current_folder(PE.fileselect);
+
+#ifdef FX9860G
+    /* Use a static variable to ensure the title shows even if OoM */
+    static char title[22];
+
+    if(!folder)
+        jlabel_set_text(PE.title, "Python");
+    else {
+        sprintf(title, "Python[%-13.13s]", folder);
+        jlabel_set_text(PE.title, title);
+    }
+#endif
+
+#ifdef FXCG50
+    if(!folder)
+        jlabel_set_text(PE.title, "PythonExtra");
+    else
+        jlabel_asprintf(PE.title, "PythonExtra (%s)", folder);
+#endif
 }
 
 /* Handle a GUI event. If `shell_bound` is true, only actions that have an
@@ -280,6 +319,7 @@ static char *pe_handle_event(jevent e, bool shell_bound)
             jwidget_set_visible(PE.title, PE.show_title_in_shell);
 
             pe_reset_micropython();
+            pe_draw();
 
             char *str = malloc(8 + strlen(module) + 1);
             if(str) {
@@ -295,15 +335,19 @@ static char *pe_handle_event(jevent e, bool shell_bound)
             pe_print_prompt(1);
         }
     }
+    if(!shell_bound && e.type == JFILESELECT_LOADED)
+        pe_update_title();
 
     if(e.type != JWIDGET_KEY || e.key.type == KEYEV_UP)
         return NULL;
     int key = e.key.key;
 
+    pe_debug_kmalloc("key");
+
     if(key == KEY_SQUARE && !e.key.shift && e.key.alpha)
         pe_debug_screenshot();
     if(key == KEY_TAN)
-        pe_debug_kmalloc();
+        pe_debug_kmalloc("tan");
 
     if(!shell_bound && key == KEY_F1) {
         jscene_show_and_focus(PE.scene, PE.fileselect);
@@ -340,8 +384,20 @@ int pe_readline(vstr_t *line, char const *prompt)
 
 int main(int argc, char **argv)
 {
+#ifdef FX9860G
+    /* Use PRAM0 as an arena for special allocs to save memory elsewhere */
+    kmalloc_arena_t arena_pram0 = { 0 };
+    arena_pram0.name = "pram0";
+    arena_pram0.is_default = false;
+    arena_pram0.start = (void *)0xfe200000;
+    arena_pram0.end = (void *)0xfe228000; /* 160 kB! */
+    kmalloc_init_arena(&arena_pram0, true);
+    kmalloc_add_arena(&arena_pram0);
+#endif
+
     pe_debug_init();
-    pe_debug_kmalloc();
+    pe_debug_printf("---\n");
+    pe_debug_kmalloc("main");
 
     //=== Init sequence ===//
 
@@ -355,6 +411,8 @@ int main(int argc, char **argv)
     keydev_set_transform(keydev_std(), tr);
 
     PE.console = console_create(8192, 200);
+
+    pe_debug_kmalloc("console");
 
     /* Set up standard streams */
     close(STDOUT_FILENO);
@@ -388,9 +446,9 @@ int main(int argc, char **argv)
 #if PE_DEBUG
     /* Add some Python ram */
     // https://www.planet-casio.com/Fr/forums/topic15269-10-khicas-add-in-calcul-formel-pour-graph-90e-et-35eii.html#189284
-    void *py_ram_start = (void*)0x88053800;
+    /* void *py_ram_start = (void*)0x88053800;
     void *py_ram_end = (void*)0x8807f000;
-    gc_add(py_ram_start, py_ram_end);
+    gc_add(py_ram_start, py_ram_end); */
 #endif
 #else
     /* Get everything from the OS stack (~ 350 ko) */
@@ -422,13 +480,17 @@ int main(int argc, char **argv)
         MP_OBJ_NEW_QSTR(qstr_from_str("."));
 #endif
 
+    pe_debug_kmalloc("upy");
+
     pyexec_event_repl_init();
     pe_print_prompt(1);
+
+    pe_debug_kmalloc("prompt");
 
     //=== GUI setup ===//
 
     PE.scene = jscene_create_fullscreen(NULL);
-    PE.title = jlabel_create("PythonExtra", PE.scene);
+    PE.title = jlabel_create("<temp>", PE.scene);
     jwidget *stack = jwidget_create(PE.scene);
     jfkeys *fkeys = jfkeys_create2(&img_fkeys_main, "/FILES;/SHELL", PE.scene);
     (void)fkeys;
@@ -461,6 +523,8 @@ int main(int argc, char **argv)
     jwidget_set_padding(PE.title, 3, 6, 3, 6);
     jwidget_set_padding(stack, 0, 6, 0, 6);
 #endif
+
+    pe_debug_kmalloc("ui");
 
     /* Initial state */
     jfileselect_browse(PE.fileselect, "/");

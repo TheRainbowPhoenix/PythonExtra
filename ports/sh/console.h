@@ -24,26 +24,34 @@
 
 #include <gint/keyboard.h>
 #include <gint/display.h>
+#include <gint/defs/attributes.h>
 #include <stdbool.h>
 
 /* Maximum line length, to ensure the console can threshold its memory usage
    while cleaning only entire lines. Lines longer than this get split. */
 #define PE_CONSOLE_LINE_MAX_LENGTH 1024
 
+/* Allocation arena for arrays of lines. */
+#ifdef FX9860G
+#define PE_CONSOLE_LINE_ALLOC "pram0"
+#else
+#define PE_CONSOLE_LINE_ALLOC NULL
+#endif
+
 //=== Dynamic console lines ===//
 
-typedef struct
+typedef volatile struct
 {
     /* Line contents, NUL-terminated. The buffer might be larger. */
     char *data;
     /* Size of contents (not counting the NUL). */
-    int16_t size;
+    int32_t size :16;
     /* Allocated size (always ≥ size+1). */
-    int16_t alloc_size;
+    int32_t alloc_size :16;
     /* Number or render lines used (updated on-demand). */
-    int16_t render_lines;
+    int32_t render_lines :16;
     /* Number of initial characters that can't be edited. */
-    int16_t prefix;
+    int32_t prefix :16;
 
 } console_line_t;
 
@@ -93,7 +101,10 @@ typedef struct
        - 0 <= size <= capacity
        - 0 <= start < capacity
        - When size is 0, start is undefined. */
-    int capacity, start, size;
+    int16_t capacity, start, size;
+
+    /* Total number of rendered lines for the buffer. */
+    int16_t total_rendered;
 
     /* To keep track of lines' identity, the rotating array includes an extra
        numbering system. Each line is assigned an *absolute* line number which
@@ -117,8 +128,6 @@ typedef struct
        for edition (ie. followed by another line). Lazy rendering can always
        start at `absolute_rendered+1`. */
     int absolute_rendered;
-    /* Total number of rendered lines for the buffer. */
-    int total_rendered;
 
 } linebuf_t;
 
@@ -167,15 +176,15 @@ typedef struct
     linebuf_t lines;
 
     /* Cursor position within the last line. */
-    int cursor;
+    int16_t cursor;
 
     /* Whether new data has been added and a frame should be rendered. */
     bool render_needed;
 
     /* View geometry parameters from last console_compute_view(). */
     font_t const *render_font;
-    int render_width;
-    int render_lines;
+    int16_t render_width;
+    int16_t render_lines;
 
 } console_t;
 

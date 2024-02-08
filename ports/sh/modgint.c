@@ -9,10 +9,14 @@
 // considered relevant for high-level Python development).
 //---
 
+#include "debug.h"
 #include "py/runtime.h"
 #include "py/objtuple.h"
+#include "objgintimage.h"
 #include <gint/display.h>
 #include <gint/keyboard.h>
+#include <gint/timer.h>
+#include <gint/drivers/keydev.h>
 
 void pe_enter_graphics_mode(void);
 
@@ -117,17 +121,64 @@ STATIC mp_obj_t modgint_keyreleased(mp_obj_t arg1)
     return mp_obj_new_bool(keyreleased(key) != 0);
 }
 
+/* Version of getkey_opt() that includes a VM hook */
+STATIC key_event_t getkey_opt_internal(int opt, int timeout_ms)
+{
+    /* Preset keydev transforms so they stay between calls */
+    keydev_t *d = keydev_std();
+    keydev_transform_t tr = keydev_transform(d);
+    key_event_t ev;
+
+    int o = KEYDEV_TR_REPEATS +
+        KEYDEV_TR_DELETE_MODIFIERS +
+        KEYDEV_TR_DELETE_RELEASES +
+        (opt & (GETKEY_MOD_SHIFT + GETKEY_MOD_ALPHA));
+    keydev_set_transform(d, (keydev_transform_t){ o, tr.repeater });
+
+    bool has_timeout = (timeout_ms >= 0);
+
+    while(!has_timeout || timeout_ms > 0) {
+        /* Program a delay of whatever's left or 20 ms, whichever is smaller.
+           It's not easy to reload a timer currently so just reconfigure. */
+        volatile int flag = 0;
+        int round_ms = has_timeout ? min(timeout_ms, 20) : 20;
+        int t = timer_configure(TIMER_ETMU, round_ms * 1000,
+            GINT_CALL_SET(&flag));
+        timer_start(t);
+
+        /* Run getkey_opt() for that short period */
+        ev = getkey_opt(opt, &flag);
+
+        timer_stop(t);
+        if(ev.type != KEYEV_NONE)
+            break;
+
+        /* The whole reason this function exists -- run the VM hook */
+        MICROPY_VM_HOOK_LOOP;
+
+        if(has_timeout)
+            timeout_ms -= round_ms;
+    }
+
+    keydev_set_transform(d, tr);
+    return ev;
+}
+
 STATIC mp_obj_t modgint_getkey(void)
 {
-    key_event_t ev = getkey();
+    key_event_t ev = getkey_opt_internal(GETKEY_DEFAULT, -1);
     return mk_key_event(ev);
 }
 
-// TODO: getkey_opt: timeout parameter?
-STATIC mp_obj_t modgint_getkey_opt(mp_obj_t arg1)
+STATIC mp_obj_t modgint_getkey_opt(mp_obj_t arg1, mp_obj_t arg2)
 {
     int options = mp_obj_get_int(arg1);
-    key_event_t ev = getkey_opt(options, NULL);
+
+    int timeout_ms = -1;
+    if(arg2 != mp_const_none)
+        timeout_ms = mp_obj_get_int(arg2);
+
+    key_event_t ev = getkey_opt_internal(options, timeout_ms);
     return mk_key_event(ev);
 }
 
@@ -152,7 +203,7 @@ FUN_VAR(keydown_any, 0);
 FUN_1(keypressed);
 FUN_1(keyreleased);
 FUN_0(getkey);
-FUN_1/*2*/(getkey_opt);
+FUN_2(getkey_opt);
 FUN_1(keycode_function);
 FUN_1(keycode_digit);
 
@@ -179,6 +230,7 @@ STATIC mp_obj_t modgint_dupdate(void)
 {
     pe_enter_graphics_mode();
     dupdate();
+    pe_debug_run_videocapture();
     return mp_const_none;
 }
 
@@ -300,6 +352,108 @@ STATIC mp_obj_t modgint_dtext(size_t n, mp_obj_t const *args)
     return mp_const_none;
 }
 
+/* fx-CG-specific image constructors */
+#ifdef FXCG50
+
+STATIC mp_obj_t modgint_image_rgb565(mp_obj_t arg1, mp_obj_t arg2,
+    mp_obj_t arg3)
+{
+    int width = mp_obj_get_int(arg1);
+    int height = mp_obj_get_int(arg2);
+    return objgintimage_make(&mp_type_gintimage, IMAGE_RGB565, 0, width,
+        height, width * 2, arg3, mp_const_none);
+}
+
+STATIC mp_obj_t modgint_image_rgb565a(mp_obj_t arg1, mp_obj_t arg2,
+    mp_obj_t arg3)
+{
+    int width = mp_obj_get_int(arg1);
+    int height = mp_obj_get_int(arg2);
+    return objgintimage_make(&mp_type_gintimage, IMAGE_RGB565A, 0, width,
+        height, width * 2, arg3, mp_const_none);
+}
+
+STATIC mp_obj_t modgint_image_p8_rgb565(size_t n, mp_obj_t const *args)
+{
+    int width = mp_obj_get_int(args[0]);
+    int height = mp_obj_get_int(args[1]);
+    mp_obj_t data = args[2];
+    mp_obj_t palette = args[3];
+
+    int color_count = mp_obj_get_int(mp_obj_len(palette)) / 2;
+    int stride = width;
+    return objgintimage_make(&mp_type_gintimage, IMAGE_P8_RGB565,
+        color_count, width, height, stride, data, palette);
+}
+
+STATIC mp_obj_t modgint_image_p8_rgb565a(size_t n, mp_obj_t const *args)
+{
+    int width = mp_obj_get_int(args[0]);
+    int height = mp_obj_get_int(args[1]);
+    mp_obj_t data = args[2];
+    mp_obj_t palette = args[3];
+
+    int color_count = mp_obj_get_int(mp_obj_len(palette)) / 2;
+    int stride = width;
+    return objgintimage_make(&mp_type_gintimage, IMAGE_P8_RGB565A,
+        color_count, width, height, stride, data, palette);
+}
+
+STATIC mp_obj_t modgint_image_p4_rgb565(size_t n, mp_obj_t const *args)
+{
+    int width = mp_obj_get_int(args[0]);
+    int height = mp_obj_get_int(args[1]);
+    mp_obj_t data = args[2];
+    mp_obj_t palette = args[3];
+
+    int stride = (width + 1) / 2;
+    return objgintimage_make(&mp_type_gintimage, IMAGE_P4_RGB565, 16,
+        width, height, stride, data, palette);
+}
+
+STATIC mp_obj_t modgint_image_p4_rgb565a(size_t n, mp_obj_t const *args)
+{
+    int width = mp_obj_get_int(args[0]);
+    int height = mp_obj_get_int(args[1]);
+    mp_obj_t data = args[2];
+    mp_obj_t palette = args[3];
+
+    int stride = (width + 1) / 2;
+    return objgintimage_make(&mp_type_gintimage, IMAGE_P4_RGB565A, 16,
+        width, height, stride, data, palette);
+}
+
+#endif /* FXCG50 */
+
+STATIC mp_obj_t modgint_dimage(mp_obj_t arg1, mp_obj_t arg2, mp_obj_t arg3)
+{
+    mp_int_t x = mp_obj_get_int(arg1);
+    mp_int_t y = mp_obj_get_int(arg2);
+
+    bopti_image_t img;
+    objgintimage_get(arg3, &img);
+
+    dimage(x, y, &img);
+    return mp_const_none;
+}
+
+STATIC mp_obj_t modgint_dsubimage(size_t n_args, const mp_obj_t *args)
+{
+    mp_int_t x      = mp_obj_get_int(args[0]);
+    mp_int_t y      = mp_obj_get_int(args[1]);
+    // args[2] is the image
+    mp_int_t left   = mp_obj_get_int(args[3]);
+    mp_int_t top    = mp_obj_get_int(args[4]);
+    mp_int_t width  = mp_obj_get_int(args[5]);
+    mp_int_t height = mp_obj_get_int(args[6]);
+
+    bopti_image_t img;
+    objgintimage_get(args[2], &img);
+
+    dsubimage(x, y, &img, left, top, width, height, DIMAGE_NONE);
+    return mp_const_none;
+}
+
 FUN_0(__init__);
 
 #ifdef FXCG50
@@ -318,6 +472,16 @@ FUN_BETWEEN(dcircle, 5, 5);
 FUN_BETWEEN(dellipse, 6, 6);
 FUN_BETWEEN(dtext_opt, 8, 8);
 FUN_BETWEEN(dtext, 4, 4);
+#ifdef FXCG50
+FUN_3(image_rgb565);
+FUN_3(image_rgb565a);
+FUN_BETWEEN(image_p8_rgb565, 4, 4);
+FUN_BETWEEN(image_p8_rgb565a, 4, 4);
+FUN_BETWEEN(image_p4_rgb565, 4, 4);
+FUN_BETWEEN(image_p4_rgb565a, 4, 4);
+#endif
+FUN_3(dimage);
+FUN_BETWEEN(dsubimage, 7, 7);
 
 /* Module definition */
 
@@ -452,7 +616,12 @@ STATIC const mp_rom_map_elem_t modgint_module_globals_table[] = {
     INT(C_LIGHT),
     INT(C_DARK),
     INT(C_BLACK),
+    INT(C_INVERT),
     INT(C_NONE),
+#ifdef FX9860G
+    INT(C_LIGHTEN),
+    INT(C_DARKEN),
+#endif
 #ifdef FXCG50
     INT(C_RED),
     INT(C_GREEN),
@@ -473,6 +642,39 @@ STATIC const mp_rom_map_elem_t modgint_module_globals_table[] = {
     OBJ(dellipse),
     OBJ(dtext_opt),
     OBJ(dtext),
+
+    { MP_ROM_QSTR(MP_QSTR_image), MP_ROM_PTR(&mp_type_gintimage) },
+    #ifdef FXCG50
+    OBJ(image_rgb565),
+    OBJ(image_rgb565a),
+    OBJ(image_p8_rgb565),
+    OBJ(image_p8_rgb565a),
+    OBJ(image_p4_rgb565),
+    OBJ(image_p4_rgb565a),
+    #endif
+    OBJ(dimage),
+    OBJ(dsubimage),
+
+    /* <gint/image.h> */
+
+#ifdef FX9860G
+    INT(IMAGE_MONO),
+    INT(IMAGE_MONO_ALPHA),
+    INT(IMAGE_GRAY),
+    INT(IMAGE_GRAY_ALPHA),
+#endif
+#ifdef FXCG50
+    INT(IMAGE_RGB565),
+    INT(IMAGE_RGB565A),
+    INT(IMAGE_P8_RGB565),
+    INT(IMAGE_P8_RGB565A),
+    INT(IMAGE_P4_RGB565),
+    INT(IMAGE_P4_RGB565A),
+    INT(IMAGE_FLAGS_DATA_RO),
+    INT(IMAGE_FLAGS_PALETTE_RO),
+    INT(IMAGE_FLAGS_DATA_ALLOC),
+    INT(IMAGE_FLAGS_PALETTE_ALLOC),
+#endif
 };
 STATIC MP_DEFINE_CONST_DICT(
   modgint_module_globals, modgint_module_globals_table);
