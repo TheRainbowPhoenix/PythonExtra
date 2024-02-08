@@ -21,6 +21,7 @@ extern font_t numworks;
 extern bool is_dwindowed;
 extern bool is_timered;
 extern unsigned int timer_altered[9];
+extern bool is_refreshed_required;
 
 /* Parameters used in windowed mode to center the screen of the NW in the fxCG screen*/
 #define DELTAXNW                                                               \
@@ -28,7 +29,7 @@ extern unsigned int timer_altered[9];
 #define DELTAYNW 1     // NW screen will be cut in the bottom
 
 /* refresh rate of the screen */
-#define TARGET_FPS 30
+#define TARGET_FPS 20
 
 /* Definition of color on Numworks */
 
@@ -57,7 +58,7 @@ extern unsigned int timer_altered[9];
 // There are possibly some others to be listed correctly
 
 static int callback(void) {
-  dupdate();
+  is_refreshed_required = true;
   return TIMER_CONTINUE;
 }
 

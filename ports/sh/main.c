@@ -64,7 +64,7 @@ struct pe_globals PE = { 0 };
 bool is_dwindowed = false;
 bool is_timered = false;
 unsigned int timer_altered[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
-
+bool is_refreshed_required = false;
 
 //=== Hook for redirecting stdout/stderr to the shell ===//
 
@@ -177,6 +177,15 @@ void pe_enter_graphics_mode(void)
     /* Cancel any pending update of the shell */
     PE.console->render_needed = false;
     PE.shell->widget.update = 0;
+}
+
+void pe_refresh_graphics(void)
+{
+    /* refresh graphical output on request by setting
+    is_refresh_graphics to true */
+    dupdate();
+    pe_debug_run_videocapture();
+    is_refreshed_required = false;
 }
 
 void pe_draw(void)
@@ -539,6 +548,8 @@ int main(int argc, char **argv)
 
     //=== Deinitialization ===//
 
+    pe_debug_close();
+    
     gc_sweep_all();
     mp_deinit();
     console_destroy(PE.console);
