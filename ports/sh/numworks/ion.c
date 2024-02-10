@@ -25,52 +25,68 @@
 // line that are commented correspond to keys that are similar (with exact same
 // name) between NW and Casio
 
-//#define KEY_LEFT
-//#define KEY_UP
-//#define KEY_DOWN
-//#define KEY_RIGHT
-#define KEY_OK KEY_F1
-#define KEY_BACK KEY_EXIT
-#define KEY_HOME KEY_MENU
-#define KEY_ONOFF KEY_ACON
-//#define KEY_SHIFT
-//#define KEY_ALPHA
-#define KEY_XNT KEY_XOT
-#define KEY_VAR KEY_VARS
-#define KEY_TOOLBOX KEY_OPTN
-#define KEY_BACKSPACE KEY_DEL
-//#define KEY_EXP               // Note this one may be challenging
-//#define KEY_LN
-//#define KEY_LOG
-#define KEY_IMAGINARY KEY_F2
-//#define KEY_COMMA
-//#define KEY_POWER
-#define KEY_SINE KEY_SIN
-#define KEY_COSINE KEY_COS
-#define KEY_TANGENT KEY_TAN
-#define KEY_PI KEY_F3
-#define KEY_SQRT KEY_F4
-//#define KEY_SQUARE
-#define KEY_SEVEN KEY_7
-#define KEY_EIGHT KEY_8
-#define KEY_NINE KEY_9
-#define KEY_LEFTPARENTHESIS KEY_LEFTP
-#define KEY_RIGHTPARENTHESIS KEY_RIGHTP
-#define KEY_FOUR KEY_4
-#define KEY_FIVE KEY_5
-#define KEY_SIX KEY_6
-#define KEY_MULTIPLICATION KEY_MUL
-#define KEY_DIVISION KEY_DIV
-#define KEY_ONE KEY_1
-#define KEY_TWO KEY_2
-#define KEY_THREE KEY_3
-#define KEY_PLUS KEY_ADD
-#define KEY_MINUS KEY_SUB
-#define KEY_ZERO KEY_0
-//#define KEY_DOT
-#define KEY_EE KEY_F5
-#define KEY_ANS KEY_NEG
-//#define KEY_EXE
+#define KEY_LEFT                  0
+#define KEY_UP                    1
+#define KEY_DOWN                  2
+#define KEY_RIGHT                 3
+#define KEY_OK                    4
+#define KEY_BACK                  5
+#define KEY_HOME                  6
+#define KEY_ONOFF                 7
+/* -- */
+#define KEY_SHIFT                 12
+#define KEY_ALPHA                 13
+#define KEY_XNT                   14
+#define KEY_VAR                   15
+#define KEY_TOOLBOX               16
+#define KEY_BACKSPACE             17
+#define KEY_EXP                   18
+#define KEY_LN                    19
+#define KEY_LOG                   20
+#define KEY_IMAGINARY             21
+#define KEY_COMMA                 22
+#define KEY_POWER                 23
+#define KEY_SINE                  24
+#define KEY_COSINE                25
+#define KEY_TANGENT               26
+#define KEY_PI                    27
+#define KEY_SQRT                  28
+#define KEY_SQUARE                29
+#define KEY_SEVEN                 30
+#define KEY_EIGHT                 31
+#define KEY_NINE                  32
+#define KEY_LEFTPARENTHESIS       33
+#define KEY_RIGHTPARENTHESIS      34
+/* -- */
+#define KEY_FOUR                  36
+#define KEY_FIVE                  37
+#define KEY_SIX                   38
+#define KEY_MULTIPLICATION        39
+#define KEY_DIVISION              40
+/* -- */
+#define KEY_ONE                   42
+#define KEY_TWO                   43
+#define KEY_THREE                 44
+#define KEY_PLUS                  45
+#define KEY_MINUS                 46
+/* -- */
+#define KEY_ZERO                  48
+#define KEY_DOT                   49
+#define KEY_EE                    50
+#define KEY_ANS                   51
+#define KEY_EXE                   52
+
+int KeyTranslationMap[ 53 ] = { 0x85, 0x86, 0x75, 0x76, 0x91, // gint LEFT, UP, DOWN, RIGHT, F1
+                                0x74, 0x84, 0x07,   -1,   -1, // gint EXIT, MENU, ACON, __, __
+                                  -1,   -1, 0x81, 0x71, 0x61, // gint __, __, SHIFT, ALPHA, XOT
+                                0x83, 0x82, 0x44, 0x13, 0x63, // gint VARS, OPTN, DEL, EXP, LN
+                                0x62, 0x92, 0x55, 0x73, 0x64, // gint LOG, F2, COMMA, POWER, SIN
+                                0x65, 0x66, 0x93, 0x94, 0x72, // gint COS, TAN, F3, F4, SQUARE
+                                0x41, 0x42, 0x43, 0x53, 0x54, // gint 7, 8, 9, LEFP, RIGHTP
+                                  -1, 0x31, 0x32, 0x33, 0x34, // gint __, 4, 5, 6, MUL
+                                0x35,   -1, 0x21, 0x22, 0x23, // gint DIV, __, 1, 2, 3
+                                0x24, 0x25,   -1, 0x11, 0x12, // gint ADD, SUB, __, 0, DOT
+                                0x95, 0x14, 0x15 };           // gint F5, NEG, EXE
 
 
 /* END OF KEY TRANSLATION */
@@ -92,8 +108,18 @@ STATIC mp_obj_t ion___init__(void) { return mp_const_none; }
 
 STATIC mp_obj_t ion_keydown(mp_obj_t arg1) {
   mp_int_t key = mp_obj_get_int(arg1);
+
+  if (key < KEY_LEFT || key > KEY_EXE )
+    return mp_obj_new_bool(false);
+
+  int translatedKey = KeyTranslationMap[ key ];
+
+  if (translatedKey==-1)
+    return mp_obj_new_bool(false);
+
   clearevents();
-  bool down = keydown(key) != 0;
+
+  bool down = keydown(translatedKey) != 0;
   return mp_obj_new_bool(down);
 }
 
@@ -115,7 +141,8 @@ STATIC const mp_rom_map_elem_t ion_module_globals_table[] = {
     OBJ(__init__),
 
     /*Numworks keycodes */
-
+    /* BE CAREFUL THERE ARE MISSING SLOTS */
+    
     INT(KEY_LEFT), // value 0
     INT(KEY_UP),
     INT(KEY_DOWN),
@@ -124,7 +151,7 @@ STATIC const mp_rom_map_elem_t ion_module_globals_table[] = {
     INT(KEY_BACK),
     INT(KEY_HOME),
     INT(KEY_ONOFF), // value 7
-
+    
     INT(KEY_SHIFT), // value 12
     INT(KEY_ALPHA),
     INT(KEY_XNT),
@@ -147,18 +174,21 @@ STATIC const mp_rom_map_elem_t ion_module_globals_table[] = {
     INT(KEY_EIGHT),
     INT(KEY_NINE),
     INT(KEY_LEFTPARENTHESIS),
-    INT(KEY_RIGHTPARENTHESIS),
-    INT(KEY_FOUR),
+    INT(KEY_RIGHTPARENTHESIS), // value 34
+    
+    INT(KEY_FOUR), // value 36
     INT(KEY_FIVE),
     INT(KEY_SIX),
     INT(KEY_MULTIPLICATION),
-    INT(KEY_DIVISION),
-    INT(KEY_ONE),
+    INT(KEY_DIVISION), // value 40
+
+    INT(KEY_ONE), // value 42
     INT(KEY_TWO),
     INT(KEY_THREE),
     INT(KEY_PLUS),
-    INT(KEY_MINUS),
-    INT(KEY_ZERO),
+    INT(KEY_MINUS), // value 46
+
+    INT(KEY_ZERO), // value 48
     INT(KEY_DOT),
     INT(KEY_EE),
     INT(KEY_ANS),

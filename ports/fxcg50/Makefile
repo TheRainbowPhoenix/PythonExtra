@@ -6,7 +6,7 @@ SH_LDFLAGS := -T fxcg50.ld -ljustui-cg -lm -lgint-cg -lc -lgint-cg -lgcc
 SH_ASSETS := img_modifier_states.png font_9.png font_13.png font_19.png PoliceNW.png
 SH_METADATA := fxconv-metadata.txt
 SH_CONVFLAGS := --cg
-
+ 
 all: PythonExtra.g3a
 
 PythonExtra.g3a: $(BUILD)/firmware.bin icon-uns.png icon-sel.png

@@ -57,56 +57,58 @@ The `ion` module gives access to the `keydown(k)` function which returns True if
 
 The “conversion” of the keys between the Numworks machine and Casio fxCG50 is done according to the following mapping:
 
-| Numworks | Casio fxCG50 |
-|----------|--------------|
-| KEY_LEFT     | KEY_LEFT |
-| KEY_UP     | KEY_UP |
-| KEY_DOWN     | KEY_DOWN |
-| KEY_RIGHT     | KEY_RIGHT |
-| KEY_OK      | KEY_F1 |
-| KEY_BACK        | KEY_EXIT |
-| KEY_HOME        | KEY_MENU |
-| KEY_ONOFF       | KEY_ACON |
-| KEY_SHIFT     | KEY_SHIFT |
-| KEY_ALPHA     | KEY_ALPHA |
-| KEY_XNT     | KEY_XOT |
-| KEY_VAR     | KEY_VARS |
-| KEY_TOOLBOX     | KEY_OPTN |
-| KEY_BACKSPACE       | KEY_DEL |
-| KEY_EXP     | KEY_EXP |
-| KEY_LN     | KEY_LN |
-| KEY_LOG     | KEY_LOG |
-| KEY_IMAGINARY       | KEY_F2 |
-| KEY_COMMA     | KEY_COMMA |
-| KEY_POWER     | KEY_POWER |
-| KEY_SINE        | KEY_SIN |
-| KEY_COSINE      | KEY_COS |
-| KEY_TANGENT     | KEY_TAN |
-| KEY_PI      | KEY_F3 |
-| KEY_SQRT        | KEY_F4 |
-| KEY_SQUARE     | KEY_SQUARE |
-| KEY_SEVEN       | KEY_7 |
-| KEY_EIGHT       | KEY_8 |
-| KEY_NINE        | KEY_9 |
-| KEY_LEFTPARENTHESIS     | KEY_LEFTP |
-| KEY_RIGHTPARENTHESIS        | KEY_RIGHTP |
-| KEY_FOUR        | KEY_4 |
-| KEY_FIVE        | KEY_5 |
-| KEY_SIX     | KEY_6 |
-| KEY_MULTIPLICATION      | KEY_MUL |
-| KEY_DIVISION        | KEY_DIV |
-| KEY_ONE     | KEY_1 |
-| KEY_TWO     | KEY_2 |
-| KEY_THREE       | KEY_3 |
-| KEY_PLUS        | KEY_ADD |
-| KEY_MINUS       | KEY_SUB |
-| KEY_ZERO        | KEY_0 |
-| KEY_DOT     | KEY_DOT |
-| KEY_EE      | KEY_F5 |
-| KEY_ANS     | KEY_NEG |
-| KEY_EXE     | KEY_EXE |
-
-Note: the `keydown(k)` function can theoretically be called on `Numworks` with the corresponding key number (for example 12 for the `KEY_ONOFF` key), but this is not supported by PythonExtra. It is therefore appropriate to explicitly name the keys via their code `KEY_xxx`.
+| Numworks | Casio fxCG50 | Numworks Key # |
+|----------|--------------|---------------------|
+| KEY_LEFT     | KEY_LEFT | 0 |
+| KEY_UP     | KEY_UP | 1 |
+| KEY_DOWN     | KEY_DOWN | 2 |
+| KEY_RIGHT     | KEY_RIGHT | 2 |
+| KEY_OK      | KEY_F1 | 4 |
+| KEY_BACK        | KEY_EXIT | 5 |
+| KEY_HOME        | KEY_MENU | 6 |
+| KEY_ONOFF       | KEY_ACON | 7 |
+| ...           | ... | ... |
+| KEY_SHIFT     | KEY_SHIFT | 12 |
+| KEY_ALPHA     | KEY_ALPHA | 13 |
+| KEY_XNT     | KEY_XOT | 14 |
+| KEY_VAR     | KEY_VARS | 15 |
+| KEY_TOOLBOX     | KEY_OPTN | 16 |
+| KEY_BACKSPACE       | KEY_DEL | 17 |
+| KEY_EXP     | KEY_EXP | 17 |
+| KEY_LN     | KEY_LN | 19 |
+| KEY_LOG     | KEY_LOG | 20 |
+| KEY_IMAGINARY       | KEY_F2 | 21 |
+| KEY_COMMA     | KEY_COMMA | 22 |
+| KEY_POWER     | KEY_POWER | 23 |
+| KEY_SINE        | KEY_SIN | 24 |
+| KEY_COSINE      | KEY_COS | 25 |
+| KEY_TANGENT     | KEY_TAN | 26 |
+| KEY_PI      | KEY_F3 | 27 |
+| KEY_SQRT        | KEY_F4 | 28 |
+| KEY_SQUARE     | KEY_SQUARE | 29 |
+| KEY_SEVEN       | KEY_7 | 30 |
+| KEY_EIGHT       | KEY_8 | 31 |
+| KEY_NINE        | KEY_9 | 32 |
+| KEY_LEFTPARENTHESIS     | KEY_LEFTP | 33 |
+| KEY_RIGHTPARENTHESIS        | KEY_RIGHTP | 34 |
+| ...           | ... | ... |
+| KEY_FOUR        | KEY_4 | 36  |
+| KEY_FIVE        | KEY_5 | 37 |
+| KEY_SIX     | KEY_6 | 38 |
+| KEY_MULTIPLICATION      | KEY_MUL | 39 |
+| KEY_DIVISION        | KEY_DIV | 40 |
+| ...           | ... | ... |
+| KEY_ONE     | KEY_1 | 42 |
+| KEY_TWO     | KEY_2 | 43 |
+| KEY_THREE       | KEY_3 | 44 |
+| KEY_PLUS        | KEY_ADD | 45 |
+| KEY_MINUS       | KEY_SUB | 46 |
+| ...           | ... | ... |
+| KEY_ZERO        | KEY_0 | 48 |
+| KEY_DOT     | KEY_DOT | 49 |
+| KEY_EE      | KEY_F5 | 50 |
+| KEY_ANS     | KEY_NEG | 51 |
+| KEY_EXE     | KEY_EXE | 52 |
 
 
 ## `time`
