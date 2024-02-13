@@ -7,6 +7,7 @@
 
 #include <stdint.h>
 #include <alloca.h>
+#include <gint/rtc.h>
 #include "widget_shell.h"
 
 /* Debugging options: PythonExtra debug tools (pretty much required for any
@@ -94,6 +95,9 @@ extern const struct _mp_print_t mp_debug_print;
 
 /* Enable alias of u-modules */
 #define MICROPY_MODULE_WEAK_LINKS         (1)
+
+/* Seed for random module */
+#define MICROPY_PY_RANDOM_SEED_INIT_FUNC (rtc_ticks())
 
 /* Command executed automatically after every shell input */
 void pe_after_python_exec(
