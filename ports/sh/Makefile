@@ -15,9 +15,6 @@ SRC_C = \
     ports/sh/debug.c \
     ports/sh/keymap.c \
     ports/sh/modcasioplot.c \
-    ports/sh/numworks/modkandinsky.c \
-    ports/sh/numworks/ion.c \
-    ports/sh/numworks/time.c \
     ports/sh/modgint.c \
     ports/sh/mphalport.c \
     ports/sh/objgintimage.c \
@@ -30,12 +27,32 @@ SRC_C = \
 SRC_QSTR += \
     ports/sh/main.c \
     ports/sh/modcasioplot.c \
-    ports/sh/numworks/modkandinsky.c \
-    ports/sh/numworks/ion.c \
-    ports/sh/numworks/time.c \
     ports/sh/modgint.c \
     ports/sh/objgintimage.c \
     ports/sh/pyexec.c \
+
+
+ifeq ($(TARGETCASIO),"FXCG50")
+    $(info ************  FXCG50 VERSION ************ )
+    $(info *********  Add Numworks modules ********* )  
+    SRC_C += \
+        ports/sh/numworks/modkandinsky.c \
+        ports/sh/numworks/ion.c \
+        ports/sh/numworks/time.c \
+
+    SRC_QSTR += \
+        ports/sh/numworks/modkandinsky.c \
+        ports/sh/numworks/ion.c \
+        ports/sh/numworks/time.c
+
+    
+endif
+
+ifeq ($(TARGETCASIO),"FX9860G")
+    $(info ***********  FX9860G  VERSION *********** )
+
+endif
+
 
 ASSETS_O := $(SH_ASSETS:%=$(BUILD)/sh_assets/%.o)
 

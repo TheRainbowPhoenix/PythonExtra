@@ -1,5 +1,3 @@
-#ifdef FXCG50
-
 //---------------------------------------------------------------------------//
 //    ____        PythonExtra                                                //
 //.-'`_ o `;__,   A community port of MicroPython for CASIO calculators.     //
@@ -204,5 +202,3 @@ const mp_obj_module_t ion_module = {
 };
 
 MP_REGISTER_MODULE(MP_QSTR_ion, ion_module);
-
-#endif // FXCG50
