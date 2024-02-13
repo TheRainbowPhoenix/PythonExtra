@@ -23,10 +23,12 @@ extern bool is_timered;
 extern unsigned int timer_altered[9];
 extern bool is_refreshed_required;
 
+#define NW_MAX_X 320
+#define NW_MAX_Y 222
+
 /* Parameters used in windowed mode to center the screen of the NW in the fxCG screen*/
-#define DELTAXNW                                                               \
-  ((DWIDTH - 320) / 2) // we center the NW screen on Casio's screen
-#define DELTAYNW 1     // NW screen will be cut in the bottom
+#define DELTAXNW ((DWIDTH - NW_MAX_X) / 2)      // we center the NW screen on Casio's screen
+#define DELTAYNW ((DHEIGHT - NW_MAX_Y) / 2)     
 
 /* refresh rate of the screen */
 #define TARGET_FPS 20
@@ -196,11 +198,11 @@ static mp_obj_t Kandinsky_get_pixel(mp_obj_t _x, mp_obj_t _y) {
   int x = mp_obj_get_int(_x) + DELTAXNW;
   int y = mp_obj_get_int(_y) + DELTAYNW;
 
-  if (x >= 0 && x < DWIDTH && y >= 0 && y < DHEIGHT) {
+  if ((!is_dwindowed && x >= 0 && x < DWIDTH && y >= 0 && y < DHEIGHT) || (is_dwindowed && x >= 0 && x < NW_MAX_X && y >= 0 && y < NW_MAX_Y)) {
     color_t color = gint_vram[DWIDTH * y + x];
     return Kandinsky_make_color(color);
   }
-  return mp_const_none;
+  return Kandinsky_make_color(0x0000);
 }
 
 static mp_obj_t Kandinsky_draw_string(size_t n, mp_obj_t const *args) {
