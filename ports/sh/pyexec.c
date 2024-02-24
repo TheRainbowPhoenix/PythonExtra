@@ -194,11 +194,20 @@ STATIC int parse_compile_execute(const void *source, mp_parse_input_kind_t input
 void pyexec_event_repl_init(void) {
     MP_STATE_VM(repl_line) = vstr_new(32);
 
+    #ifdef FX9860G
+    mp_hal_stdout_tx_str("MicroPython " MICROPY_GIT_TAG "\n");
+    #else
     mp_hal_stdout_tx_str(MICROPY_BANNER_NAME_AND_VERSION);
     mp_hal_stdout_tx_str("; " MICROPY_BANNER_MACHINE);
-    mp_hal_stdout_tx_str("\r\n");
+    mp_hal_stdout_tx_str("\n");
+    #endif
+
     #if MICROPY_PY_BUILTINS_HELP
-    mp_hal_stdout_tx_str("Type \"help()\" for more information.\r\n");
+    #ifdef FX9860G
+    mp_hal_stdout_tx_str("Type \"help()\" for info.\n");
+    #else
+    mp_hal_stdout_tx_str("Type \"help()\" for more information.\n");
+    #endif
     #endif
     vstr_reset(MP_STATE_VM(repl_line));
 }
