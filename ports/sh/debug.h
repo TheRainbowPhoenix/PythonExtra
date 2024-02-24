@@ -23,6 +23,51 @@ void pe_debug_init(void);
 void pe_debug_panic(char const *msg)
 __attribute__((noreturn));
 
+/*** Memory watch utilities (enabled even when PE_DEBUG=0) ***/
+
+#ifdef FX9860G
+struct pe_debug_meminfo {
+    uint16_t _uram_used, _uram_free;
+    uint32_t pram0_used, pram0_free;
+};
+#endif
+
+#ifdef FXCG50
+struct pe_debug_meminfo {
+    uint32_t _uram_used;
+    uint32_t _ostk_used;
+};
+#endif
+
+enum {
+   /* Just after entering main() */
+   PE_DEBUG_STARTUP_MAIN,
+   /* After allocating console */
+   PE_DEBUG_STARTUP_CONSOLE,
+   /* After initializing MicroPython */
+   PE_DEBUG_STARTUP_UPY,
+   /* After printing the first prompt */
+   PE_DEBUG_STARTUP_PROMPT,
+   /* After allocating and initializing the GUI */
+   PE_DEBUG_STARTUP_UI,
+
+   PE_DEBUG_STARTUP_N,
+};
+
+/* Fetch data about current memory statistics. */
+void pe_debug_get_meminfo(struct pe_debug_meminfo *info);
+
+/* Buffer for storing meminfo during startup. */
+extern struct pe_debug_meminfo pe_debug_startup_meminfo[PE_DEBUG_STARTUP_N];
+
+#define pe_debug_get_startup_meminfo(NAME) \
+   pe_debug_get_meminfo(&pe_debug_startup_meminfo[PE_DEBUG_STARTUP_ ## NAME])
+
+/* Browse memory info through a GUI. */
+void pe_debug_browse_meminfo(void);
+
+/*** Debugging functions enabled only when PE_DEBUG=1 ***/
+
 /* Print to the debug stream. This function is also called DEBUG_printf in
    MicroPython code. */
 int pe_debug_printf(char const *fmt, ...);

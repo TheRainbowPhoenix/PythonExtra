@@ -321,6 +321,10 @@ static char *pe_handle_event(jevent e, bool shell_bound)
         jscene_show_and_focus(PE.scene, PE.shell);
         jwidget_set_visible(PE.title, PE.show_title_in_shell);
     }
+    if(!shell_bound && key == KEY_VARS && e.key.shift) {
+        pe_debug_browse_meminfo();
+        PE.scene->widget.update = true;
+    }
 
     return NULL;
 }
@@ -361,7 +365,7 @@ int main(int argc, char **argv)
 
     pe_debug_init();
     pe_debug_printf("---\n");
-    pe_debug_kmalloc("main");
+    pe_debug_get_startup_meminfo(MAIN);
 
     //=== Init sequence ===//
 
@@ -376,7 +380,7 @@ int main(int argc, char **argv)
 
     PE.console = console_create(8192, 200);
 
-    pe_debug_kmalloc("console");
+    pe_debug_get_startup_meminfo(CONSOLE);
 
     /* Set up standard streams */
     close(STDOUT_FILENO);
@@ -437,12 +441,12 @@ int main(int argc, char **argv)
         MP_OBJ_NEW_QSTR(qstr_from_str("."));
 #endif
 
-    pe_debug_kmalloc("upy");
+    pe_debug_get_startup_meminfo(UPY);
 
     pyexec_event_repl_init();
     pe_print_prompt(1);
 
-    pe_debug_kmalloc("prompt");
+    pe_debug_get_startup_meminfo(PROMPT);
 
     //=== GUI setup ===//
 
@@ -481,7 +485,7 @@ int main(int argc, char **argv)
     jwidget_set_padding(stack, 0, 6, 0, 6);
 #endif
 
-    pe_debug_kmalloc("ui");
+    pe_debug_get_startup_meminfo(UI);
 
     /* Initial state */
     jfileselect_browse(PE.fileselect, "/");

@@ -23,6 +23,79 @@ void pe_debug_panic(char const *msg)
     exit(1);
 }
 
+struct pe_debug_meminfo pe_debug_startup_meminfo[PE_DEBUG_STARTUP_N];
+
+void pe_debug_get_meminfo(struct pe_debug_meminfo *info)
+{
+    kmalloc_gint_stats_t *s;
+
+#ifdef FX9860G
+    s = kmalloc_get_gint_stats(kmalloc_get_arena("_uram"));
+    info->_uram_used = s->used_memory;
+    info->_uram_free = s->free_memory;
+
+    s = kmalloc_get_gint_stats(kmalloc_get_arena("pram0"));
+    info->pram0_used = s->used_memory;
+    info->pram0_free = s->free_memory;
+#endif
+
+#ifdef FXCG50
+    s = kmalloc_get_gint_stats(kmalloc_get_arena("_uram"));
+    info->_uram_used = s->used_memory;
+
+    s = kmalloc_get_gint_stats(kmalloc_get_arena("_ostk"));
+    info->_ostk_used = s->used_memory;
+#endif
+}
+
+void pe_debug_browse_meminfo(void)
+{
+    dclear(C_WHITE);
+    struct pe_debug_meminfo infonow;
+    pe_debug_get_meminfo(&infonow);
+
+#ifdef FX9860G
+    static char const * const names[] = {
+        "main", "cons.", "upy", "prom.", "ui",
+        "now", /* extra element compared to original enum */
+    };
+    dprint(1, 0, C_BLACK, "Memory info");
+
+    extern font_t font_3x5, font_4x6;
+    font_t const *old_font = dfont(&font_4x6);
+    dtext(33, 9, C_BLACK, "_uram");
+    dtext(75, 9, C_BLACK, "pram0");
+    dline(2, 16, DWIDTH-3, 16, C_BLACK);
+
+    for(int i = 0; i < PE_DEBUG_STARTUP_N + 1; i++) {
+        int y = 7 * i + 18;
+        struct pe_debug_meminfo *info = &pe_debug_startup_meminfo[i];
+        if(i >= PE_DEBUG_STARTUP_N) {
+            dline(2, y, DWIDTH-3, y, C_BLACK);
+            y += 2;
+            info = &infonow;
+        }
+
+        dtext(2, y, C_BLACK, names[i]);
+        dfont(&font_3x5);
+        dprint(33, y+1, C_BLACK,
+            "%d,%d", info->_uram_used, info->_uram_free);
+        dprint(75, y+1, C_BLACK,
+            "%d,%d", info->pram0_used, info->pram0_free);
+        dfont(&font_4x6);
+    }
+
+    dfont(old_font);
+#endif
+
+#ifdef FXCG50
+    dprint(1, 1, C_BLACK, "TODO");
+#endif
+
+    dupdate();
+    while((getkey().key) != KEY_EXIT);
+}
+
 #if PE_DEBUG
 
 #if 0 // Timeout fxlink not supported yet
