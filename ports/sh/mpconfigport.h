@@ -127,7 +127,3 @@ typedef long mp_off_t;
 
 #define MP_STATE_PORT MP_STATE_VM
 
-/* Activate support of unicode string in MicroPython */
-#define MICROPY_PY_BUILTINS_STR_UNICODE (1)
-
-

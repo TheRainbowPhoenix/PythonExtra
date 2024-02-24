@@ -228,21 +228,31 @@ static mp_obj_t Kandinsky_draw_string(size_t n, mp_obj_t const *args) {
       u = 0;
       v += 16;
     } else {
-      /* The following test is for support of unicode characters that are encoded on 2 chars */
-      /* This gives text[l]<0 and we need to pass 2 chars to dtext to take care of unicode encoding */
-      if(text[l]>=0){
+      /* The following test is for support of unicode characters that are encoded on 1 char or more */
+      /* we need to pass multiple chars to dtext to take care of unicode encoding */
+      if(((unsigned char) text[l]) >= 0x00 && ((unsigned char) text[l]) <= 0x7F){
         drect(x + u - 1, y + v - 1, x + u + 9, y + v + 15, colorback);
-        dtext_opt(x + u, y + v, colortext, C_NONE, DTEXT_LEFT, DTEXT_TOP,
-                &text[l], 1);
+        dtext_opt(x + u, y + v, colortext, C_NONE, DTEXT_LEFT, DTEXT_TOP, &text[l], 1);
         u += 10;
-      } else {
-        drect(x + u - 1, y + v - 1, x + u + 9, y + v + 15, colorback);
-        dtext_opt(x + u, y + v, colortext, C_NONE, DTEXT_LEFT, DTEXT_TOP,
-                &text[l], 2);
-        u += 10;
-        l++;
       }
-      
+      else if(((unsigned char) text[l]) >= 0x80 && ((unsigned char) text[l]) <= 0xDF){
+        drect(x + u - 1, y + v - 1, x + u + 9, y + v + 15, colorback);
+        dtext_opt(x + u, y + v, colortext, C_NONE, DTEXT_LEFT, DTEXT_TOP, &text[l], 2);
+        u += 10;
+        l+=1;
+      }
+      else if(((unsigned char) text[l]) >= 0xE0 && ((unsigned char) text[l]) <= 0xEF){
+        drect(x + u - 1, y + v - 1, x + u + 9, y + v + 15, colorback);
+        dtext_opt(x + u, y + v, colortext, C_NONE, DTEXT_LEFT, DTEXT_TOP, &text[l], 3);
+        u += 10;
+        l+=2;
+      }
+      else if(((unsigned char) text[l]) >= 0xF0 && ((unsigned char) text[l]) <= 0xF7){
+        drect(x + u - 1, y + v - 1, x + u + 9, y + v + 15, colorback);
+        dtext_opt(x + u, y + v, colortext, C_NONE, DTEXT_LEFT, DTEXT_TOP, &text[l], 4);
+        u += 10;
+        l+=3;
+      }
     }
   }
 
