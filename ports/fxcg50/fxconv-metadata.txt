@@ -30,10 +30,10 @@ font_19.png:
   grid.border: 0
   proportional: true
 
-PoliceNW.png:
+PoliceNW:
   name: numworks
   type: font
-  charset: print
+  charset: unicode
   grid.size: 10x16
   grid.padding: 0
   grid.border: 0

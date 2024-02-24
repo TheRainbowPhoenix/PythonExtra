@@ -220,7 +220,7 @@ static mp_obj_t Kandinsky_draw_string(size_t n, mp_obj_t const *args) {
   }
 
   font_t const *old_font = dfont(&numworks);
-
+  
   int u = 0;
   int v = 0;
   for (int l = 0; l < (int)text_len; l++) {
@@ -228,10 +228,21 @@ static mp_obj_t Kandinsky_draw_string(size_t n, mp_obj_t const *args) {
       u = 0;
       v += 16;
     } else {
-      drect(x + u - 1, y + v - 1, x + u + 9, y + v + 15, colorback);
-      dtext_opt(x + u, y + v, colortext, C_NONE, DTEXT_LEFT, DTEXT_TOP,
+      /* The following test is for support of unicode characters that are encoded on 2 chars */
+      /* This gives text[l]<0 and we need to pass 2 chars to dtext to take care of unicode encoding */
+      if(text[l]>=0){
+        drect(x + u - 1, y + v - 1, x + u + 9, y + v + 15, colorback);
+        dtext_opt(x + u, y + v, colortext, C_NONE, DTEXT_LEFT, DTEXT_TOP,
                 &text[l], 1);
-      u += 10;
+        u += 10;
+      } else {
+        drect(x + u - 1, y + v - 1, x + u + 9, y + v + 15, colorback);
+        dtext_opt(x + u, y + v, colortext, C_NONE, DTEXT_LEFT, DTEXT_TOP,
+                &text[l], 2);
+        u += 10;
+        l++;
+      }
+      
     }
   }
 

@@ -4,7 +4,7 @@ SH_CFLAGS := -DFXCG50
 TARGETCASIO := "FXCG50"
 SH_LDFLAGS := -T fxcg50.ld -ljustui-cg -lm -lgint-cg -lc -lgint-cg -lgcc
 
-SH_ASSETS := img_modifier_states.png font_9.png font_13.png font_19.png PoliceNW.png
+SH_ASSETS := img_modifier_states.png font_9.png font_13.png font_19.png PoliceNW
 SH_METADATA := fxconv-metadata.txt
 SH_CONVFLAGS := --cg
  
