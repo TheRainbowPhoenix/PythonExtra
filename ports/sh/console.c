@@ -17,7 +17,7 @@
 #include "keymap.h"
 
 /* Compute the shell's horizontal layout as:
-   1. Text width (region where the text is renderer)
+   1. Text width (region where the text is rendered)
    2. Spacing left of the scrollbar
    3. Width of the scrollbar */
 static void view_params(int w,
@@ -383,7 +383,10 @@ void console_compute_view(console_t *cons, font_t const *font,
     cons->render_font = font;
     cons->render_width = width;
     cons->render_lines = lines;
+
+    font_t const *old_font = dfont(font);
     linebuf_update_render(&cons->lines, width, lazy);
+    dfont(old_font);
 }
 
 console_scrollpos_t console_clamp_scrollpos(console_t const *cons,
