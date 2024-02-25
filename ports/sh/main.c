@@ -219,12 +219,6 @@ static void pe_print_prompt(int which)
     else
         prompt = mp_repl_get_ps1();
 
-    char str[32];
-    kmalloc_gint_stats_t *s;
-    s = kmalloc_get_gint_stats(kmalloc_get_arena("_uram"));
-    sprintf(str, "%lu", s->free_memory);
-    console_write(PE.console, str, -1);
-
     console_write(PE.console, prompt, -1);
     console_lock_prefix(PE.console);
 }
@@ -378,7 +372,14 @@ int main(int argc, char **argv)
     tr.enabled |= KEYDEV_TR_DELAYED_ALPHA;
     keydev_set_transform(keydev_std(), tr);
 
-    PE.console = console_create(8192, 200);
+    #ifdef FX9860G
+    int console_scrollback = 50;
+    int console_max_bytes = 4096;
+    #else
+    int console_scrollback = 200;
+    int console_max_bytes = 8192;
+    #endif
+    PE.console = console_create(console_max_bytes, console_scrollback);
 
     pe_debug_get_startup_meminfo(CONSOLE);
 
