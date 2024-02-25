@@ -34,8 +34,8 @@ struct pe_debug_meminfo {
 
 #ifdef FXCG50
 struct pe_debug_meminfo {
-    uint32_t _uram_used;
-    uint32_t _ostk_used;
+    uint16_t _uram_used, _uram_free;
+    uint32_t _ostk_used, _ostk_free;
 };
 #endif
 

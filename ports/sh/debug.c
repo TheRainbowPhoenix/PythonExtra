@@ -42,9 +42,11 @@ void pe_debug_get_meminfo(struct pe_debug_meminfo *info)
 #ifdef FXCG50
     s = kmalloc_get_gint_stats(kmalloc_get_arena("_uram"));
     info->_uram_used = s->used_memory;
+    info->_uram_free = s->free_memory;
 
     s = kmalloc_get_gint_stats(kmalloc_get_arena("_ostk"));
     info->_ostk_used = s->used_memory;
+    info->_ostk_free = s->free_memory;
 #endif
 }
 
@@ -89,7 +91,31 @@ void pe_debug_browse_meminfo(void)
 #endif
 
 #ifdef FXCG50
-    dprint(1, 1, C_BLACK, "TODO");
+    static char const * const names[] = {
+        "main", "console", "upy", "prompt", "ui",
+        "now", /* extra element compared to original enum */
+    };
+
+    dtext(1, 1, C_BLACK, "Memory info");
+    dtext(83, 24, C_BLACK, "_uram");
+    dtext(170, 24, C_BLACK, "_ostk");
+    dline(10, 36, DWIDTH-11, 36, C_BLACK);
+
+    for(int i = 0; i < PE_DEBUG_STARTUP_N + 1; i++) {
+        int y = 15 * i + 39;
+        struct pe_debug_meminfo *info = &pe_debug_startup_meminfo[i];
+        if(i >= PE_DEBUG_STARTUP_N) {
+            dline(10, y, DWIDTH-11, y, C_BLACK);
+            y += 4;
+            info = &infonow;
+        }
+
+        dtext(10, y, C_BLACK, names[i]);
+        dprint(83, y+1, C_BLACK,
+            "%d,%d", info->_uram_used, info->_uram_free);
+        dprint(170, y+1, C_BLACK,
+            "%d,%d", info->_ostk_used, info->_ostk_free);
+    }
 #endif
 
     dupdate();
