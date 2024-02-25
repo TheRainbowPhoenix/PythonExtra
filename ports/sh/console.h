@@ -86,8 +86,6 @@ typedef struct
 {
     // TODO: To be simplified/replaced
     stredit_t edit;
-    /* Number or render lines used (updated on-demand). */
-    int16_t render_lines;
 
 } console_line_t;
 
@@ -97,21 +95,6 @@ bool console_line_init(console_line_t *line, int init_chars);
 
 /* Clean up a line and free its contents. */
 void console_line_deinit(console_line_t *line);
-
-/* Determine how many characters can be written before the line has to be
-   broken up. */
-int console_line_capacity(console_line_t *line);
-
-/* Set the prefix_size first characters of the line to not be editable. The
-   line must already have that many characters printed. */
-void console_line_set_prefix(console_line_t *line, int prefix_size);
-
-/* Insert n characters at position p. */
-bool console_line_insert(console_line_t *line, int p, char const *str, int n);
-
-/* Remove n characters at position p. Returns the number of characters
-   actually removed after bounds checking. */
-int console_line_delete(console_line_t *line, int p, int n);
 
 /* Update the number of render lines for the chosen width. */
 void console_line_update_render_lines(console_line_t *line, int width);

@@ -44,11 +44,8 @@ static void view_params(int w,
 
 bool console_line_init(console_line_t *line, int prealloc_size)
 {
-    if(!stredit_init(&line->edit, prealloc_size, sizeof (struct tmp),
-        PE_CONSOLE_LINE_MAX_LENGTH))
-        return false;
-    line->render_lines = 0;
-    return true;
+    return stredit_init(&line->edit, prealloc_size, sizeof (struct tmp),
+        PE_CONSOLE_LINE_MAX_LENGTH);
 }
 
 void console_line_deinit(console_line_t *line)
@@ -56,34 +53,15 @@ void console_line_deinit(console_line_t *line)
     stredit_reset(&line->edit);
 }
 
-int console_line_capacity(console_line_t *line)
-{
-    return stredit_capacity(&line->edit);
-}
-
-void console_line_set_prefix(console_line_t *line, int prefix_size)
-{
-    return stredit_set_prefix(&line->edit, prefix_size);
-}
-
-bool console_line_insert(console_line_t *line, int p, char const *str, int n)
-{
-    return stredit_insert(&line->edit, p, str, n);
-}
-
-int console_line_delete(console_line_t *line, int p, int n)
-{
-    return stredit_delete(&line->edit, p, n);
-}
-
 void console_line_update_render_lines(console_line_t *line, int width)
 {
     // TODO: Merge into normal render_lines computation for frozen lines
     char const *p = stredit_data(&line->edit);
-    line->render_lines = 0;
+    struct tmp *tmp = (void *)line->edit.raw;
+    tmp->render_lines = 0;
 
     do {
-        line->render_lines++;
+        tmp->render_lines++;
         p = drsize(p, NULL, width, NULL);
     }
     while(*p);
@@ -209,11 +187,15 @@ console_line_t *linebuf_newline(linebuf_t *buf)
     /* Make space if the buffer is full */
     linebuf_recycle_oldest_lines(buf, buf->size - buf->capacity + 1);
 
-    /* Freeze the current last line's size */
+    /* Freeze the current last line's and free the editor */
     if(buf->size > 0) {
         console_line_t *L = linebuf_get_nth_line(buf, buf->size - 1);
-        // TODO
+
+        // TODO: Reset shared editor
         buf->total_size_except_last += L->edit.size;
+        struct tmp *tmp = (void *)L->edit.raw;
+        tmp->size = L->edit.size;
+        // stredit_reset(&L->edit);
         // L->data = stredit_freeze_and_reset(&L->edit);
     }
 
@@ -231,10 +213,11 @@ void linebuf_recycle_oldest_lines(linebuf_t *buf, int count)
 
     for(int nth = 0; nth < count; nth++) {
         console_line_t *L = linebuf_get_nth_line(buf, nth);
-        buf->total_rendered -= L->render_lines;
+        struct tmp *tmp = (void *)L->edit.raw;
+        buf->total_rendered -= tmp->render_lines;
         // TODO
         if(nth != buf->size - 1)
-            buf->total_size_except_last -= L->edit.size;
+            buf->total_size_except_last -= tmp->size;
         console_line_deinit(L);
     }
 
@@ -254,7 +237,8 @@ void linebuf_clean_backlog(linebuf_t *buf)
 
     while(remove < buf->size - 1 && n > buf->backlog_size) {
         // TODO
-        n -= linebuf_get_nth_line(buf, remove)->edit.size;
+        console_line_t *L = linebuf_get_nth_line(buf, remove);
+        n -= ((struct tmp *)L->edit.raw)->size;
         remove++;
     }
 
@@ -273,9 +257,10 @@ void linebuf_update_render(linebuf_t *buf, int width, bool lazy)
 
     for(int abs = start; abs < end; abs++) {
         console_line_t *L = linebuf_get_nth_line(buf, abs - buf->absolute);
-        buf->total_rendered -= L->render_lines;
+        struct tmp *tmp = (void *)L->edit.raw;
+        buf->total_rendered -= tmp->render_lines;
         console_line_update_render_lines(L, text_w);
-        buf->total_rendered += L->render_lines;
+        buf->total_rendered += tmp->render_lines;
     }
 
     buf->absolute_rendered = max(buf->absolute_rendered, end - 2);
@@ -374,19 +359,23 @@ void console_render(int x, int y0, console_t const *cons, int dy,
     int L_end = linebuf_end(&cons->lines);
     int i = linebuf_end(&cons->lines);
 
-    while(i > L_start && line_y > 0)
-        line_y -= linebuf_get_line(&cons->lines, --i)->render_lines;
+    while(i > L_start && line_y > 0) {
+        console_line_t *L = linebuf_get_line(&cons->lines, --i);
+        struct tmp *tmp = (void *)L->edit.raw;
+        line_y -= tmp->render_lines;
+    }
 
     /* If there isn't enough content to fill the view, start at the top. */
     line_y = min(line_y, pos);
 
     while(i < L_end  && line_y < visible_lines) {
-        console_line_t *line = linebuf_get_line(&cons->lines, i);
+        console_line_t *L = linebuf_get_line(&cons->lines, i);
+        struct tmp *tmp = (void *)L->edit.raw;
         bool show_cursor = (i == L_end - 1);
 
-        y = console_line_render(x, y, line, text_w, dy, -line_y,
+        y = console_line_render(x, y, L, text_w, dy, -line_y,
             visible_lines - line_y, show_cursor ? cons->cursor : -1);
-        line_y += line->render_lines;
+        line_y += tmp->render_lines;
         i++;
     }
 
