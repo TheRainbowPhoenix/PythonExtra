@@ -150,11 +150,11 @@ keypressed(key: int) -> bool
 keyreleased(key: int) -> bool
 ```
 
-`keydown()` only tells whether keys are pressed at a given time; it cannot be used to check when keys change from the released state to the pressed state or the other way around. To do this, one must either read individual events (which can be annoying) or use the functions described below.
+`keydown()` only tells whether keys are pressed at a given time; it cannot be used to check when keys change from the released state to the pressed state or the other way around. To do this, one must either read individual events (which can be annoying), remember which keys were pressed at the previous frame, or use the functions described below.
 
-`keypressed(k)` and `keyreleased(k)` indicate whether key `k` was pressed/released since the last call to `cleareventflips()`. Be careful, here "pressed/released" should be interpreted as "indicated pressed/released by events read" not as a real-time state change.
+`keypressed(k)` and `keyreleased(k)` indicate whether key `k` was pressed/released since the last call to `cleareventflips()`. As previously, here "pressed/released" means "as indicated by keyboard events read" not as a real-time state change.
 
-_Example._ A game loop could test both the immediate state of some keys and state changes forother keys by using immediate functions after `cleareventflips()` followed by `clearevents()`.
+_Example._ A game loop could test both the immediate state of some keys and state changes for other keys by using immediate functions after `cleareventflips()` followed by `clearevents()`.
 
 ```py
 # Render game...
@@ -179,7 +179,7 @@ keycode_function(key: int) -> int
 keycode_digit(key: int) -> int
 ```
 
-`keycode_function(k)` returns the F-key number if `k` (i.e. 1 for `KEY_F1`, 2 for `KEY_F2`, etc.) and -1 for other keys.
+`keycode_function(k)` returns the F-key number of `k` (i.e. 1 for `KEY_F1`, 2 for `KEY_F2`, etc.) and -1 for other keys.
 
 `keycode_digit(k)` returns the digit associated with `k` (i.e. 0 for `KEY_0`, 1 for `KEY_1`, etc.) and -1 for other keys.
 
@@ -234,13 +234,54 @@ In PythonExtra, `dupdate()` also indicates a "switch to graphics mode". Due to c
 
 `dclear()` fills the screen with a uniform color.
 
-`dpixel()` changes a pixel's color. Coordinates are universally (x,y) where `x` is in the range 0 to DWIDTH-1 inclusive (0 being left) and `y` is in the range 0 to DHEIGHT-1 inclusive (0 being top).
+`dpixel()` changes a pixel's color. Coordinates, as in every other drawing function, are (x,y) where `x` is in the range 0 to DWIDTH-1 inclusive (0 being left) and `y` is in the range 0 to DHEIGHT-1 inclusive (0 being top).
 
 `dgetpixel()` returns the color of a pixel. Note that `dgetpixel()` reads from VRAM, not from the display.
 
+_Example ([`ex_draw1.py`](../../sh/examples/ex_draw1.py))._
+
+```py
+from gint import *
+dclear(C_WHITE)
+for y in range(10):
+    for x in range(10):
+        if (x^y) & 1:
+            dpixel(x, y, C_BLACK)
+dupdate()
+```
+
+![](images/modgint-draw1-cg.png) ![](images/modgint-draw1-fx.png)
+
 ### Geometric shape rendering functions
 
-TODO
+```py
+drect(x1: int, y1: int, x2: int, y2: int, color: int) -> None
+drect_border(x1: int, y1: int, x2: int, y2: int, fill_color: int,
+             border_width: int, border_color: int) -> None
+dline(x1: int, y1: int, x2: int, y2: int, color: int) -> None
+dhline(y: int, color: int) -> None
+dvline(x: int, color: int) -> None
+dcircle(x: int, y: int, radius: int, fill_color: int,
+        border_color: int) -> None
+dellipse(x1: int, y1: int, x2: int, y2: int, fill_color: int,
+        border_color: int) -> None
+```
+
+`drect()` draw a flat rectangle spanning from (x1, y1) to (x2, y2) (both inclusive). The order of points does not matter, i.e. x1 ≥ x2 and y1 ≥ y2 are both allowed.
+
+`drect_border()` is similar but also draws a border. The border is located _inside_ the rectangle.
+
+`dline()` draws a straight line from (x1, y1) to (x2, y2). The shortcut functions `dhline()` and `dvline()` draw a full horizontal and vertical line across the screen respectively.
+
+`dcircle()` draws a circle defined by its center and radius using the Bresenham algorithm. The colors for the cercle's interior and its edge can be specified separately, including as `C_NONE` (transparent). By construction, `dcircle()` can only draw circles of odd diameter; for even diameters, use `dellipse()`.
+
+`dellipse()` draws an ellipse defined by its bounding box. Both (x1, y1) and (x2, y2) are included in the bounding box. To render an ellipse from its center coordinates (x,y) and semi-major/minor axes a/b, use `dellipse(x-a, y-b, x+a, y+b, fill_color, border_color)`.
+
+TODO: Example for `drect()`, `drect_border()`, `dline()`.
+
+_Example ([`ex_circle.py`](../../sh/examples/ex_circle.py))._
+
+![](images/modgint-circle-cg.png) ![](images/modgint-circle-fx.png)
 
 ### Image rendering functions
 

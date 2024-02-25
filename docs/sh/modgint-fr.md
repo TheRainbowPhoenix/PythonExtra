@@ -127,7 +127,7 @@ keydown_all(*keys: [int]) -> bool
 keydown_any(*keys: [int]) -> bool
 ```
 
-Une fois les événements lus, on peut tester l'état individuellement si les touches sont pressées ou pas à l'aide de la fonction `keydown()`. `keydown(k)` renvoie `True` si la touche `k` est pressée, `False` sinon. Cette fonction ne marche **que si les événements ont été lus**, ce qu'on fait souvent soit avec `pollevent()` soit avec `clearevents()`.
+Une fois les événements lus, on peut tester individuellement si les touches sont pressées ou pas à l'aide de la fonction `keydown()`. `keydown(k)` renvoie `True` si la touche `k` est pressée, `False` sinon. Cette fonction ne marche **que si les événements ont été lus**, ce qu'on fait souvent soit avec `pollevent()` soit avec `clearevents()`.
 
 _Exemple._ Une boucle de jeu pourrait tester si les touches gauche/droite sont pressées à chaque frame pour déplacer le joueur.
 
@@ -152,7 +152,7 @@ keypressed(key: int) -> bool
 keyreleased(key: int) -> bool
 ```
 
-`keydown()` indique uniquement l'état instantané des touches. Elle ne permet pas de déterminer à quel moment une touche passe de l'état relâché à l'état pressé ou l'inverse. Pour ça, il faut soit utiliser les événements (ce qui est un peu lourd), soit utiliser les fonctions ci-dessous.
+`keydown()` indique uniquement l'état instantané des touches. Elle ne permet pas de déterminer à quel moment une touche passe de l'état relâché à l'état pressé ou l'inverse. Pour ça, il faut soit utiliser les événements (ce qui est un peu lourd), soit se souvenir de quelles touches étaient pressées à "l'instant" précédent, soit utiliser les fonctions ci-dessous.
 
 Les fonctions `keypressed(k)` et `keyreleased(k)` indiquent si la touche a été pressée/relâchée depuis le dernier appel à `cleareventflips()`. Attention la notion de "pressée/relâchée" ici n'est pas le temps réel mais la lecture des événements.
 
@@ -229,13 +229,13 @@ dgetpixel(x: int, y: int) -> int
 
 Les entiers `DWIDTH` et `DHEIGHT` indiquent la taille de l'écran. C'est 128x64 sur les Graph mono (type Graph 35+E II), 396x224 sur la Prizm et Graph 90+E (le plein écran est disponible).
 
-Toutes les fonctions de dessin opèrent sur une image interne appellée "VRAM" ; l'effet du dessin n'est donc pas visible immédiatement à l'écran. Pour que le dessin se voie il faut appeler la fonction `dupdate()` qui transfère les contenus de la VRAM à l'écran réel. Généralement, on fait ça après avoir affiché tout ce dont on a besoin et surtout pas après chaque appel de fonction de dessin.
+Toutes les fonctions de dessin opèrent sur une image interne appellée "VRAM" ; l'effet du dessin n'est donc pas visible immédiatement à l'écran. Pour que le dessin se voie il faut appeler la fonction `dupdate()` qui transfère les contenus de la VRAM à l'écran réel. Généralement, on fait ça après avoir affiché tout ce dont on a besoin et pas après chaque appel de fonction de dessin.
 
 Dans PythonExtra, la fonction `dupdate()` indique aussi implicitement qu'on « passe en mode graphique ». À cause de certaines optimisations tout appel à `print()` est considéré comme un « passage en mode texte » et pendant qu'on est en mode texte le shell peut redessiner à tout moment. Si on veut dessiner après avoir utilisé le mode texte, il faut appeler `dupdate()` pour forcer un passage en mode graphique avant de commencer à dessiner. Sinon le dessin du shell pourrait interférer avec le dessin du programme.
 
 La fonction `dclear()` remplit l'écran d'une couleur unie.
 
-La fonction `dpixel()` modifie la couleur d'un pixel. Les coordonnées sont universellement (x,y) où `x` varie entre 0 et DWIDTH-1 inclus (0 étant à gauche), et `y` varie entre 0 et DHEIGHT-1 inclus (0 étant en haut).
+La fonction `dpixel()` modifie la couleur d'un pixel. Les coordonnées, comme pour toutes les fonctions de dessin, sont (x,y) où `x` varie entre 0 et DWIDTH-1 inclus (0 étant à gauche), et `y` varie entre 0 et DHEIGHT-1 inclus (0 étant en haut).
 
 La fonction `dgetpixel()` renvoie la couleur d'un pixel. Attention, `dgetpixel()` lit dans la VRAM, pas sur l'écran.
 
@@ -251,6 +251,8 @@ for y in range(10):
 dupdate()
 ```
 
+![](images/modgint-draw1-cg.png) ![](images/modgint-draw1-fx.png)
+
 ### Fonctions de dessin de formes géométriques
 
 ```py
@@ -265,7 +267,22 @@ dcircle(x: int, y: int, radius: int, fill_color: int,
 dellipse(x1: int, y1: int, x2: int, y2: int, fill_color: int,
         border_color: int) -> None
 ```
-TODO
+
+`drect()` dessine un rectangle plein allant de (x1, y1) à (x2, y2) (tous les deux inclus). L'ordre des points ne compte pas, i.e. x1 ≥ x2 ou y1 ≥ y2 est autorisé.
+
+`drect_border()` est similaire mais dessine une bordure de largeur `border_width` et de couleur `border_color`. La bordure est dessinée _à l'intérieur_ du rectangle.
+
+`dline()` dessine une ligne droite entre les points (x1, y1) et (x2, y2). Les raccourcis `dhline()` et `dvline()` dessinent respectivement une ligne horizontale et verticale à travers tout l'écran.
+
+`dcircle()` dessine un cercle défini par son centre et rayon avec l'algorithme de Bresenham. La couleur de l'intérieur et du bord peuvent être spécifiées séparément, y compris avec `C_NONE` (transparente). Par construction, `dcircle()` ne peut construire que des cercles de diamètre impair ; pour les diamètres plus fin, utilisez `dellipse()`.
+
+`dellipse()` dessine une ellipse définie par son rectangle englobant. Les points (x1, y1) et (x2, y2) sont tous les deux inclus dans le rectangle. Pour dessiner une ellipse à partir de son centre (x, y) et de ses demi-grand/petit axes a/b, utilisez `dellipse(x-a, y-b, x+a, y+b, fill_color, border_color)`.
+
+TODO: Exemple pour `drect()`, `drect_border()`, `dline()`.
+
+_Exemple ([`ex_circle.py`](../../sh/examples/ex_circle.py))._
+
+![](images/modgint-circle-cg.png) ![](images/modgint-circle-fx.png)
 
 ### Fonctions de dessin d'images
 
