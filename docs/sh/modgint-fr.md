@@ -12,6 +12,11 @@ import gint
 from gint import *
 ```
 
+**Sommaire**
+- [Saisie au clavier](#saisie-au-clavier)
+- [Dessin à l'écran](#dessin-à-lécran)
+- [Différences avec l'API C de gint](#différences-avec-lapi-c-de-gint)
+
 ## Saisie au clavier
 
 Les en-têtes de référence sont [`<gint/keyboard.h>`](https://gitea.planet-casio.com/Lephenixnoir/gint/src/branch/master/include/gint/keyboard.h) et [`<gint/keycodes.h>`](https://gitea.planet-casio.com/Lephenixnoir/gint/src/branch/master/include/gint/keycodes.h).
@@ -315,9 +320,9 @@ Les quatre formats disponibles sont les suivants.
 | `IMAGE_GRAY`       | Niveaux de gris (4)              | 2       | `gray`          |
 | `IMAGE_GRAY_ALPHA` | Niveaux de gris, transparent (5) | 3       | `gray_alpha`    |
 
-Le format des données brutes est un peu compliqué. Il y a un ou plusieurs calques, chacun stocké ligne par ligne de haut en bas ; chaque ligne est représentée de gauche à droite avec un bit par pixel, arrondi au multiple supérieur de 32 bits (4 octets).
+Le format des données brutes est un peu compliqué. L'image est stockée ligne par ligne de haut en bas ; chaque ligne est représentée de gauche à droite par une série de mots représentant chacun 32 pixels. Chaque mot contient un bit par pixel (sous la forme d'un entier de 4 octets) pour chaque calque.
 
-Le plus simple pour obtenir une image est de générer le code associé avec l'outil fxconv du [fxSDK](https://gitea.planet-casio.com/Lephenixnoir/fxsdk). Les options `--bopti-image-fx --fx` spécifient qu'on convertit une image pour Graph mono et la métadonnée `profile:mono` choisit le format de l'image produite. Le tableau ci-dessus list la valeur de `profile:` à spécifier pour chaque format. Exemple pourl'image [`fx_image_7seg.py`](../../ports/sh/examples/fx_image_7seg.png) :
+Le plus simple pour obtenir une image est de générer le code associé avec l'outil fxconv du [fxSDK](https://gitea.planet-casio.com/Lephenixnoir/fxsdk). Les options `--bopti-image-fx --fx` spécifient qu'on convertit une image pour Graph mono et la métadonnée `profile:mono` choisit le format de l'image produite. Le tableau ci-dessus liste la valeur de `profile:` à spécifier pour chaque format. Par exemple pour l'image [`fx_image_7seg.py`](../../ports/sh/examples/fx_image_7seg.png) :
 
 ![](../../ports/sh/examples/fx_image_7seg.png)
 
@@ -328,9 +333,13 @@ Le plus simple pour obtenir une image est de générer le code associé avec l'o
 import gint
 seg = gint.image(0, 79, 12, b'|\x00||\x00|||||\x00\x00\xba\x02::\x82\xb8\xb8:\xba\xba\x00\x00\xc6\x06\x06\x06\xc6\xc0\xc0\x06\xc6\xc6\x00\x00\xc6\x06\x06\x06\xc6\xc0\xc0\x06\xc6\xc6\x00\x00\x82\x02\x02\x02\x82\x80\x80\x02\x82\x82\x00\x00\x00\x00|||||\x00||\x00\x00\x82\x02\xb8:::\xba\x02\xba:\x00\x00\xc6\x06\xc0\x06\x06\x06\xc6\x06\xc6\x06\x00\x00\xc6\x06\xc0\x06\x06\x06\xc6\x06\xc6\x06\x00\x00\xc6\x06\xc0\x06\x06\x06\xc6\x06\xc6\x06\x00\x00\xba\x02\xb8:\x02:\xba\x02\xba:\x00\x00|\x00||\x00||\x00||\x00\x00')
 ```
-L'option `--py-compact` permet de générer du code beaucoup plus compact (avec moins de `\x`), par contre le fichier obtenu ne peut pas être lu par un éditeur de texte. La seule option simple pour l'utiliser est de l'envoyer sur la calculatrice et l'installer inchangé (on peut aussi le manipuler avec un programme).
+L'option `--py-compact` permet de générer du code beaucoup plus compact (avec moins de `\x`), par contre le fichier obtenu ne peut pas être lu par un éditeur de texte. La seule option simple pour l'utiliser est de l'envoyer sur la calculatrice et l'importer tel quel (on peut aussi le manipuler avec un programme).
 
-_Exemple ([`fx_image.py`](../../sh/ports/examples/fx_image.py))._
+La fonction `dimage()` dessine une image à l'écran en positionnant le coin haut gauche de l'image à la position (x, y).
+
+La fonction `dsubimage()` permet de dessiner un sous-rectangle d'une image. Le sous-rectangle commence à la position (left, top) de l'image et s'étend sur une largeur `width` et une hauteur `height`. Le sous-rectangle est dessiné de façon à ce que le pixel (left, top) arrive à la position (x, y) de l'écran.
+
+_Exemple ([`fx_image.py`](../../ports/sh/examples/fx_image.py))._
 
 ![](images/modgint-image-fx.png)
 
@@ -346,6 +355,17 @@ image:
   .stride      -> int
   .data        -> buffer-like
   .palette     -> buffer-like
+
+# Constructeur
+image(format: IMAGE_*, color_count: int, width: int, height: int, stride: int, data: buffer-like, palette: buffer-like) -> image
+
+# Constructeurs spécialisés par format
+image_rgb565(width: int, height: int, data: buffer-like) -> image
+image_rgb565a(width: int, height: int, data: buffer-like) -> image
+image_p8_rgb565(width: int, height: int, data: buffer-like, palette: buffer-like) -> image
+image_p8_rgb565a(width: int, height: int, data: buffer-like, palette: buffer-like) -> image
+image_p4_rgb565(width: int, height: int, data: buffer-like, palette: buffer-like) -> image
+image_p4_rgb565a(width: int, height: int, data: buffer-like, palette: buffer-like) -> image
 ```
 
 Les images sur Graph couleur sont déclinées en différents formats indiqués par le champ `.format`, dont les valeurs possibles sont listées ci-dessous. Les différences sont dans le nombre de couleurs, la présence ou pas de transparence, et la présence ou pas d'une palette de couleurs. Bien sûr, moins il y a de couleurs moins l'image prend de place en mémoire, donc de façon générale il est très bénéfique d'utiliser le plus petit format possible pour chaque image.
@@ -359,13 +379,28 @@ Les images sur Graph couleur sont déclinées en différents formats indiqués p
 | `IMAGE_P4_RGB565`  | 16                  | Oui (16)    | `p4_rgb565`     |
 | `IMAGE_P4_RGB565A` | 15 + transparent    | Oui (16)    | `p4_rgb565a`    |
 
-Le champ `.color_count` indique le nombre de couleurs dans la palette quand il y en a une. Pour les formats P8 ce nombre varie entre 1 et 256, pour les formats P4 il est toujours égal à 16. Les deux champs `.width` et `.height` indiquent la taille de l'image. Enifn, les champs `.data` et `.palette` permettent d'accéder aux données brutes des pixels ainsi que de la palette.
+Le champ `.color_count` indique le nombre de couleurs dans la palette quand il y en a une. Pour les formats P8 ce nombre varie entre 1 et 256, pour les formats P4 il est toujours égal à 16. Les deux champs `.width` et `.height` indiquent la taille de l'image. Enfin, les champs `.data` et `.palette` permettent d'accéder aux données brutes des pixels ainsi que de la palette.
 
 (Le champ `.flags` est un détail de gestion de mémoire qui ne devrait pas importer aux scripts Python. Le champ `.stride` indique combien d'octets séparent chaque ligne de pixels dans `.data` et sera de même rarement utilisé.)
 
-TODO
+Les fonctions `dimage()` et `dsubimage()` ont le même fonctionnement que pour les Graph mono ; voir ci-dessus.
 
-_Exemple ([`cg_image.py`](../../sh/ports/examples/cg_image.py))._
+Comme pour Graph mono les images peuvent être converties avec fxconv. Par exemple pour l'image [`cg_image_puzzle.png`](../../ports/sh/examples/cg_image_puzzle.png)
+
+![](../../ports/sh/examples/cg_image_puzzle.png)
+
+```bash
+% fxconv --bopti-image cg_image_puzzle.png -o puzzle.py --cg profile:p4_rgb565 name:puzzle --py
+```
+```py
+import gint
+puzzle = gint.image(6, 16, 64, 32, 32,
+    b'\xbb\xbb\xbb\xbb\xbb ... \xdd\xdd\xdd\xdd\xdd\xdd\xdd',
+    b'\xff\xff\xcfW\x86\xd8\xbe|\xceP\xe5\x8a\x963f9u\x9c}\xa8\x9dxD\xfa\x83\xceLNZ\xcci\xa7')
+```
+L'option `--py-compact` est recommandée pour réduire la taille du code ; voir les détails dans la section Graph mono.
+
+_Exemple ([`cg_image.py`](../../ports/sh/examples/cg_image.py))._
 
 ![](images/modgint-image-cg.png)
 

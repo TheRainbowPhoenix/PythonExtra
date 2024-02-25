@@ -12,6 +12,11 @@ import gint
 from gint import *
 ```
 
+**Contents**
+- [Keyboard input](#keyboard-input)
+- [Drawing and rendering](#drawing-and-rendering)
+- [Differences with gint's C API](#differences-with-gints-c-api)
+
 ## Keyboard input
 
 Reference headers: [`<gint/keyboard.h>`](https://gitea.planet-casio.com/Lephenixnoir/gint/src/branch/master/include/gint/keyboard.h) and [`<gint/keycodes.h>`](https://gitea.planet-casio.com/Lephenixnoir/gint/src/branch/master/include/gint/keycodes.h).
@@ -238,7 +243,7 @@ In PythonExtra, `dupdate()` also indicates a "switch to graphics mode". Due to c
 
 `dgetpixel()` returns the color of a pixel. Note that `dgetpixel()` reads from VRAM, not from the display.
 
-_Example ([`ex_draw1.py`](../../sh/ports/examples/ex_draw1.py))._
+_Example ([`ex_draw1.py`](../../ports/sh/examples/ex_draw1.py))._
 
 ```py
 from gint import *
@@ -279,13 +284,124 @@ dellipse(x1: int, y1: int, x2: int, y2: int, fill_color: int,
 
 TODO: Example for `drect()`, `drect_border()`, `dline()`.
 
-_Example ([`ex_circle.py`](../../sh/ports/examples/ex_circle.py))._
+_Example ([`ex_circle.py`](../../ports/sh/examples/ex_circle.py))._
 
 ![](images/modgint-circle-cg.png) ![](images/modgint-circle-fx.png)
 
 ### Image rendering functions
 
-TODO
+```py
+dimage(x: int, y: int, img: image) -> None
+dsubimage(x: int, y: int, img: image, left: int, top: int, width: int, height: int) -> None
+```
+
+**On black-and-white models**
+
+```py
+image:
+  .profile -> IMAGE_MONO | ...
+  .width   -> int
+  .height  -> int
+  .data    -> buffer-like
+
+# Constructor
+image(profile: IMAGE_*, width: int, height: int, data: buffer-like) -> image
+```
+
+Images on black-and-white models have either 2 or 4 colors (when the gray engine is enabled). Each image has a `.profile` field indicating the image format (the name "profile" comes from old gint versions), two fields `.width` and `.height` specifying its size, and a `.data` field providing direct access to pixel data.
+
+The table below lists the four available formats.
+
+| Format             | Colors                          | Layers | Name in fxconv |
+|--------------------|---------------------------------|--------|----------------|
+| `IMAGE_MONO`       | Black/white (2)                 | 1      | `mono`         |
+| `IMAGE_MONO_ALPHA` | Black/white, transparent (3)    | 2      | `mono_alpha`   |
+| `IMAGE_GRAY`       | Shades of gray (4)              | 2      | `gray`         |
+| `IMAGE_GRAY_ALPHA` | Shades of gray, transparent (5) | 3      | `gray_alpha`   |
+
+The raw storage format for data is a bit complicated. The image is stored in row-major order; each line is represented left-to-right by a series of words each covering 32 pixels. Each word contains one bit per pixel (as a 4-byte integer) for each layer.
+
+The easiest way to obtain an image is to generate the associated code with the fxconv tool from the [fxSDK](https://gitea.planet-casio.com/Lephenixnoir/fxsdk). The options `--bopti-image-fx --fx` specify a conversion for black-and-white models and the metadata `profile:mono` selects the encoding. The table above lists the value of `profile:` to use for each desired format. For instance for [`fx_image_7seg.py`](../../ports/sh/examples/fx_image_7seg.png) :
+
+![](../../ports/sh/examples/fx_image_7seg.png)
+
+```bash
+% fxconv --bopti-image fx_image_7seg.png -o 7seg.py --fx profile:mono name:seg --py
+```
+```py
+import gint
+seg = gint.image(0, 79, 12, b'|\x00||\x00|||||\x00\x00\xba\x02::\x82\xb8\xb8:\xba\xba\x00\x00\xc6\x06\x06\x06\xc6\xc0\xc0\x06\xc6\xc6\x00\x00\xc6\x06\x06\x06\xc6\xc0\xc0\x06\xc6\xc6\x00\x00\x82\x02\x02\x02\x82\x80\x80\x02\x82\x82\x00\x00\x00\x00|||||\x00||\x00\x00\x82\x02\xb8:::\xba\x02\xba:\x00\x00\xc6\x06\xc0\x06\x06\x06\xc6\x06\xc6\x06\x00\x00\xc6\x06\xc0\x06\x06\x06\xc6\x06\xc6\x06\x00\x00\xc6\x06\xc0\x06\x06\x06\xc6\x06\xc6\x06\x00\x00\xba\x02\xb8:\x02:\xba\x02\xba:\x00\x00|\x00||\x00||\x00||\x00\x00')
+```
+The option `--py-compact` generates much shorter code (less `\x`), however the resulting file can generally not be read or modified by a text editor. The only easy option to use that file is to send it to the calculator and import it as-is. (It can also by manipulated by a program if needed.)
+
+`dimage()` renders an image, positioned so that the top-left corner of the image is located at (x, y).
+
+`dsubimage()` renders a sub-rectangle of an image. The rectangle starts at position (left, top) within the image and is of size `width` by `height`. It is positioned so that the (left, top) pixel is drawn at (x, y) on the screen.
+
+_Example ([`fx_image.py`](../../ports/sh/examples/fx_image.py))._
+
+![](images/modgint-image-fx.png)
+
+**On color models**
+
+```py
+image:
+  .format      -> IMAGE_RGB565 | ...
+  .flags       -> int
+  .color_count -> int
+  .width       -> int
+  .height      -> int
+  .stride      -> int
+  .data        -> buffer-like
+  .palette     -> buffer-like
+
+# Constructor
+image(format: IMAGE_*, color_count: int, width: int, height: int, stride: int, data: buffer-like, palette: buffer-like) -> image
+
+# Format-specific constructors
+image_rgb565(width: int, height: int, data: buffer-like) -> image
+image_rgb565a(width: int, height: int, data: buffer-like) -> image
+image_p8_rgb565(width: int, height: int, data: buffer-like, palette: buffer-like) -> image
+image_p8_rgb565a(width: int, height: int, data: buffer-like, palette: buffer-like) -> image
+image_p4_rgb565(width: int, height: int, data: buffer-like, palette: buffer-like) -> image
+image_p4_rgb565a(width: int, height: int, data: buffer-like, palette: buffer-like) -> image
+```
+
+Images on color models are available in multiple formats as indicated by the `.format` field; the possible values are listed below. Formats differ in the number of colors, the presence of a transparent color, and the presence of a palette. Of course, the less colors the smaller the memory footprint of the image, so in general it is very beneficial to use the smallest format in which an image fits.
+
+| Format             | Colors              | Palette     | Name in fxconv |
+|--------------------|---------------------|-------------|----------------|
+| `IMAGE_RGB565`     | 65536               | No          | `rgb565`       |
+| `IMAGE_RGB565A`    | 65535 + transparent | No          | `rgb565a`      |
+| `IMAGE_P8_RGB565`  | 256                 | Yes (1-256) | `p8_rgb565`    |
+| `IMAGE_P8_RGB565A` | 255 + transparent   | Yes (1-256) | `p8_rgb565a`   |
+| `IMAGE_P4_RGB565`  | 16                  | Yes (16)    | `p4_rgb565`    |
+| `IMAGE_P4_RGB565A` | 15 + transparent    | Yes (16)    | `p4_rgb565a`   |
+
+The `.color_count` field indicates the number of colors in the palette, when there is one. For P8 formats this number varies between 1 and 256, and for P4 formats it is always equal to 16. The `.width` and `.height` fields indicate the image's size. Finally, the `.data` and `.palette` fields provide direct access to the raw data for the image's pixels and color palette.
+
+(The `.flags` field has details of memory management that shouldn't be important to Python scripts. The `.stride` fields indicates the distance in bytes between rows of pixels in `.data` and should similarly be of rare use.)
+
+The functions `dimage()` and `dsubimage()` work the same way as for black-and-white models; please see above.
+
+As for black-and-white models, images can be converted into a Python format with fxconv. For instance with [`cg_image_puzzle.png`](../../ports/sh/examples/cg_image_puzzle.png)
+
+![](../../ports/sh/examples/cg_image_puzzle.png)
+
+```bash
+% fxconv --bopti-image cg_image_puzzle.png -o puzzle.py --cg profile:p4_rgb565 name:puzzle --py
+```
+```py
+import gint
+puzzle = gint.image(6, 16, 64, 32, 32,
+    b'\xbb\xbb\xbb\xbb\xbb ... \xdd\xdd\xdd\xdd\xdd\xdd\xdd',
+    b'\xff\xff\xcfW\x86\xd8\xbe|\xceP\xe5\x8a\x963f9u\x9c}\xa8\x9dxD\xfa\x83\xceLNZ\xcci\xa7')
+```
+The option `--py-compact` is recommended to reduce code size; please see details in the black-and-white section above.
+
+_Exemple ([`cg_image.py`](../../ports/sh/examples/cg_image.py))._
+
+![](images/modgint-image-cg.png)
 
 ## Differences with gint's C API
 
