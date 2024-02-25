@@ -17,6 +17,14 @@
 // rendering. To render, one must first compute a "view" of the terminal, which
 // essentially determines line wrapping and scrolling bounds, and then use that
 // view and a valid scroll position within it to render.
+//
+// There are two features designed to minimize main memory usage, which is a
+// crucial concern on fx-9860G III and similar models:
+// * Only the last line gets edition metadata; anytime the last line is
+//   committed to the scrollback section of the console its text gets frozen.
+// * There are two circular line buffers; one for "recent" lines which stays in
+//   main memory, one for "older" lines which might (on G-III) go to volatile
+//   memory that resets when powering off.
 //---
 
 #ifndef __PYTHONEXTRA_CONSOLE_H
@@ -26,32 +34,60 @@
 #include <gint/display.h>
 #include <gint/defs/attributes.h>
 #include <stdbool.h>
+#include "stredit.h"
 
 /* Maximum line length, to ensure the console can threshold its memory usage
    while cleaning only entire lines. Lines longer than this get split. */
 #define PE_CONSOLE_LINE_MAX_LENGTH 1024
 
 /* Allocation arena for arrays of lines. */
+// TODO: Split circular buffers
 #ifdef FX9860G
-#define PE_CONSOLE_LINE_ALLOC "pram0"
+#define PE_CONSOLE_LINE_ALLOC NULL
 #else
 #define PE_CONSOLE_LINE_ALLOC NULL
 #endif
 
+//=== Static console lines ===//
+
+/* A line whose contents have been frozen. The only variable left is how many
+   render lines it takes, which is kept in the first byte in the buffer. Using
+   this instead of a console_line_t saves 15 bytes per line. */
+typedef char *console_fline_ptr_t;
+
+/* Create from a given buffer (with a prereserved 1st byte) and the existing
+   number of render lines. */
+static inline console_fline_ptr_t console_fline_create(char *buffer, int rl)
+{
+   buffer[0] = rl;
+   return buffer;
+}
+
+/* Get the number of render lines. */
+static inline int console_fline_get_render_lines(console_fline_ptr_t p)
+{
+   return (uint8_t)p[0];
+}
+
+/* Get a pointer to the data. */
+static inline char *console_fline_get_data(console_fline_ptr_t p)
+{
+   return p+1;
+}
+
+/* Update the number of render lines. */
+int console_fline_update_render_lines(console_fline_ptr_t p, int width);
+
 //=== Dynamic console lines ===//
 
-typedef volatile struct
+struct tmp { uint16_t size; uint8_t render_lines; char data[]; };
+
+typedef struct
 {
-    /* Line contents, NUL-terminated. The buffer might be larger. */
-    char *data;
-    /* Size of contents (not counting the NUL). */
-    int32_t size :16;
-    /* Allocated size (always ≥ size+1). */
-    int32_t alloc_size :16;
+    // TODO: To be simplified/replaced
+    stredit_t edit;
     /* Number or render lines used (updated on-demand). */
-    int32_t render_lines :16;
-    /* Number of initial characters that can't be edited. */
-    int32_t prefix :16;
+    int16_t render_lines;
 
 } console_line_t;
 
@@ -61,9 +97,6 @@ bool console_line_init(console_line_t *line, int init_chars);
 
 /* Clean up a line and free its contents. */
 void console_line_deinit(console_line_t *line);
-
-/* Realloc the line to ensure n characters plus a NUL can be written. */
-bool console_line_alloc(console_line_t *line, int n);
 
 /* Determine how many characters can be written before the line has to be
    broken up. */

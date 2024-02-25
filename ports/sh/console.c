@@ -44,92 +44,42 @@ static void view_params(int w,
 
 bool console_line_init(console_line_t *line, int prealloc_size)
 {
-    char *data = malloc(prealloc_size + 1);
-    if(!data)
+    if(!stredit_init(&line->edit, prealloc_size, sizeof (struct tmp),
+        PE_CONSOLE_LINE_MAX_LENGTH))
         return false;
-
-    data[0] = 0;
-    line->data = data;
-    line->size = 0;
-    line->alloc_size = prealloc_size + 1;
     line->render_lines = 0;
-    line->prefix = 0;
     return true;
 }
 
 void console_line_deinit(console_line_t *line)
 {
-    free(line->data);
-    /* Manual memset to allow for PRAM0 storage */
-    line->data = NULL;
-    line->size = 0;
-    line->alloc_size = 0;
-    line->render_lines = 0;
-    line->prefix = 0;
-}
-
-bool console_line_alloc(console_line_t *line, int n)
-{
-    if(line->alloc_size >= n + 1)
-        return true;
-
-    /* Always increase the size by at least 16 so we can insert many times in a
-       row without worrying about excessive allocations. */
-    int newsize = max(line->alloc_size + 16, n + 1);
-    char *newdata = realloc(line->data, newsize);
-    if(!newdata)
-        return false;
-
-    line->data = newdata;
-    line->alloc_size = newsize;
-    return true;
+    stredit_reset(&line->edit);
 }
 
 int console_line_capacity(console_line_t *line)
 {
-    return PE_CONSOLE_LINE_MAX_LENGTH - line->size;
+    return stredit_capacity(&line->edit);
 }
 
 void console_line_set_prefix(console_line_t *line, int prefix_size)
 {
-    line->prefix = min(max(0, prefix_size), (int)line->size);
+    return stredit_set_prefix(&line->edit, prefix_size);
 }
 
 bool console_line_insert(console_line_t *line, int p, char const *str, int n)
 {
-    if(p < 0 || p > line->size || n > console_line_capacity(line))
-        return false;
-    if(!console_line_alloc(line, line->size + n))
-        return false;
-
-    /* Move the end of the string (plus the NUL) n bytes forward */
-    memmove(line->data + p + n, line->data + p, line->size - p + 1);
-    memcpy(line->data + p, str, n);
-    line->size += n;
-    return true;
+    return stredit_insert(&line->edit, p, str, n);
 }
 
 int console_line_delete(console_line_t *line, int p, int n)
 {
-    if(p < line->prefix) {
-        int unremovable = line->prefix - p;
-        p += unremovable;
-        n -= unremovable;
-    }
-    n = min(n, line->size - p);
-
-    if(n < 0)
-        return 0;
-
-    /* Move the end of the string (plus the NUL) n bytes backwards */
-    memmove(line->data + p, line->data + p + n, line->size - n - p + 1);
-    line->size -= n;
-    return n;
+    return stredit_delete(&line->edit, p, n);
 }
 
 void console_line_update_render_lines(console_line_t *line, int width)
 {
-    char const *p = line->data;
+    // TODO: Merge into normal render_lines computation for frozen lines
+    char const *p = stredit_data(&line->edit);
     line->render_lines = 0;
 
     do {
@@ -142,7 +92,7 @@ void console_line_update_render_lines(console_line_t *line, int width)
 int console_line_render(int x, int y, console_line_t *line, int w, int dy,
     int show_from, int show_until, int cursor)
 {
-    char const *p = line->data;
+    char const *p = stredit_data(&line->edit);
     char const *endline = p + strlen(p);
     int line_offset = 0;
     int line_number = 0;
@@ -262,7 +212,9 @@ console_line_t *linebuf_newline(linebuf_t *buf)
     /* Freeze the current last line's size */
     if(buf->size > 0) {
         console_line_t *L = linebuf_get_nth_line(buf, buf->size - 1);
-        buf->total_size_except_last += L->size;
+        // TODO
+        buf->total_size_except_last += L->edit.size;
+        // L->data = stredit_freeze_and_reset(&L->edit);
     }
 
     buf->size++;
@@ -280,8 +232,9 @@ void linebuf_recycle_oldest_lines(linebuf_t *buf, int count)
     for(int nth = 0; nth < count; nth++) {
         console_line_t *L = linebuf_get_nth_line(buf, nth);
         buf->total_rendered -= L->render_lines;
+        // TODO
         if(nth != buf->size - 1)
-            buf->total_size_except_last -= L->size;
+            buf->total_size_except_last -= L->edit.size;
         console_line_deinit(L);
     }
 
@@ -296,10 +249,12 @@ void linebuf_clean_backlog(linebuf_t *buf)
         return;
 
     int remove = 0;
-    int n = buf->total_size_except_last + linebuf_get_last_line(buf)->size;
+    // TODO
+    int n = buf->total_size_except_last + linebuf_get_last_line(buf)->edit.size;
 
     while(remove < buf->size - 1 && n > buf->backlog_size) {
-        n -= linebuf_get_nth_line(buf, remove)->size;
+        // TODO
+        n -= linebuf_get_nth_line(buf, remove)->edit.size;
         remove++;
     }
 
@@ -456,16 +411,16 @@ void console_render(int x, int y0, console_t const *cons, int dy,
 
 //=== Edition functions ===//
 
-GINLINE static console_line_t *last_line(console_t *cons)
+GINLINE static stredit_t *last_line(console_t *cons)
 {
-    return linebuf_get_last_line(&cons->lines);
+    return &linebuf_get_last_line(&cons->lines)->edit;
 }
 
 bool console_set_cursor(console_t *cons, int pos)
 {
-    console_line_t *L = last_line(cons);
+    stredit_t *ed = last_line(cons);
 
-    if(pos < L->prefix || pos > L->size)
+    if(pos < ed->prefix || pos > ed->size)
         return false;
 
     cons->cursor = pos;
@@ -479,8 +434,8 @@ bool console_move_cursor(console_t *cons, int cursor_movement)
 
 char *console_get_line(console_t *cons, bool copy)
 {
-    console_line_t *L = last_line(cons);
-    char *str = L->data + L->prefix;
+    stredit_t *ed = last_line(cons);
+    char *str = stredit_data(ed) + ed->prefix;
     return copy ? strdup(str) : str;
 }
 
@@ -491,11 +446,11 @@ bool console_write_raw(console_t *cons, char const *str, int n)
 
     /* Split string into chunks smaller than each line's storage capacity. */
     while(n > 0) {
-        console_line_t *L = last_line(cons);
-        int capacity = console_line_capacity(L);
+        stredit_t *ed = last_line(cons);
+        int capacity = stredit_capacity(ed);
         int round_size = min(n, capacity);
 
-        if(!console_line_insert(L, cons->cursor, str, round_size))
+        if(!stredit_insert(ed, cons->cursor, str, round_size))
             return false;
         cons->cursor += round_size;
         cons->render_needed = true;
@@ -533,27 +488,26 @@ bool console_write(console_t *cons, char const *buf, int n)
         }
         else if(buf[offset] == 8) {
             offset++;
-            console_line_t *L = last_line(cons);
+            stredit_t *ed = last_line(cons);
             if(cons->cursor > 0) {
-                console_line_delete(L, cons->cursor-1, 1);
+                stredit_delete(ed, cons->cursor-1, 1);
                 cons->cursor--;
             }
         }
         else if(buf[offset] == '\e') {
-            console_line_t *L = last_line(cons);
+            stredit_t *ed = last_line(cons);
             offset++;
 
             /* TODO: Handle more complex escape sequences */
             if(offset + 2 <= n && buf[offset] == '[' && buf[offset+1] == 'K') {
-                console_line_delete(L, cons->cursor,
-                    L->size - cons->cursor);
+                stredit_delete(ed, cons->cursor, ed->size - cons->cursor);
                 offset += 2;
             }
             if(offset + 2 <= n && buf[offset] == 1 && buf[offset+1] == 'D') {
                 cons->cursor -= (cons->cursor > 0);
             }
             if(offset + 2 <= n && buf[offset] == 1 && buf[offset+1] == 'C') {
-                cons->cursor += (cons->cursor < L->size);
+                cons->cursor += (cons->cursor < ed->size);
             }
         }
 
@@ -565,21 +519,21 @@ bool console_write(console_t *cons, char const *buf, int n)
 
 void console_lock_prefix(console_t *cons)
 {
-    console_line_set_prefix(last_line(cons), cons->cursor);
+    stredit_set_prefix(last_line(cons), cons->cursor);
 }
 
 void console_delete_at_cursor(console_t *cons, int n)
 {
-    int real_n = console_line_delete(last_line(cons), cons->cursor - n, n);
+    int real_n = stredit_delete(last_line(cons), cons->cursor - n, n);
     cons->cursor -= real_n;
     cons->render_needed = true;
 }
 
 void console_clear_current_line(console_t *cons)
 {
-    console_line_t *L = last_line(cons);
-    console_line_delete(L, L->prefix, L->size - L->prefix);
-    cons->cursor = L->prefix;
+    stredit_t *ed = last_line(cons);
+    stredit_delete(ed, ed->prefix, ed->size - ed->prefix);
+    cons->cursor = ed->prefix;
     cons->render_needed = true;
 }
 
