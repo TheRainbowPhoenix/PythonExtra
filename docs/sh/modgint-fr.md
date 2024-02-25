@@ -239,7 +239,7 @@ La fonction `dpixel()` modifie la couleur d'un pixel. Les coordonnées, comme po
 
 La fonction `dgetpixel()` renvoie la couleur d'un pixel. Attention, `dgetpixel()` lit dans la VRAM, pas sur l'écran.
 
-_Exemple ([`ex_draw1.py`](../../sh/examples/ex_draw1.py))._
+_Exemple ([`ex_draw1.py`](../../sh/ports/examples/ex_draw1.py))._
 
 ```py
 from gint import *
@@ -280,13 +280,94 @@ dellipse(x1: int, y1: int, x2: int, y2: int, fill_color: int,
 
 TODO: Exemple pour `drect()`, `drect_border()`, `dline()`.
 
-_Exemple ([`ex_circle.py`](../../sh/examples/ex_circle.py))._
+_Exemple ([`ex_circle.py`](../../sh/ports/examples/ex_circle.py))._
 
 ![](images/modgint-circle-cg.png) ![](images/modgint-circle-fx.png)
 
 ### Fonctions de dessin d'images
 
+```py
+dimage(x: int, y: int, img: image) -> None
+dsubimage(x: int, y: int, img: image, left: int, top: int, width: int, height: int) -> None
+```
+
+**Sur Graph mono**
+
+```py
+image:
+  .profile -> IMAGE_MONO | ...
+  .width   -> int
+  .height  -> int
+  .data    -> buffer-like
+
+# Constructeur
+image(profile: IMAGE_*, width: int, height: int, data: buffer-like) -> image
+```
+
+Les images sur Graph mono sont en noir-et-blanc ou 4 couleurs (quand le moteur de gris est utilisé). Chaque image a un champ `.profile` indiquant le format d'image (le nom "profile" est hérité d'anciennes versions de gint), deux champs `.width` et `.height` indiquant sa taille, et un champ `.data` donnant accès aux données brutes.
+
+Les quatre formats disponibles sont les suivants.
+
+| Format             | Couleurs                         | Calques | Nom dans fxconv |
+|--------------------|----------------------------------|---------|-----------------|
+| `IMAGE_MONO`       | Noir/blanc (2)                   | 1       | `mono`          |
+| `IMAGE_MONO_ALPHA` | Noir/blanc, transparent (3)      | 2       | `mono_alpha`    |
+| `IMAGE_GRAY`       | Niveaux de gris (4)              | 2       | `gray`          |
+| `IMAGE_GRAY_ALPHA` | Niveaux de gris, transparent (5) | 3       | `gray_alpha`    |
+
+Le format des données brutes est un peu compliqué. Il y a un ou plusieurs calques, chacun stocké ligne par ligne de haut en bas ; chaque ligne est représentée de gauche à droite avec un bit par pixel, arrondi au multiple supérieur de 32 bits (4 octets).
+
+Le plus simple pour obtenir une image est de générer le code associé avec l'outil fxconv du [fxSDK](https://gitea.planet-casio.com/Lephenixnoir/fxsdk). Les options `--bopti-image-fx --fx` spécifient qu'on convertit une image pour Graph mono et la métadonnée `profile:mono` choisit le format de l'image produite. Le tableau ci-dessus list la valeur de `profile:` à spécifier pour chaque format. Exemple pourl'image [`fx_image_7seg.py`](../../ports/sh/examples/fx_image_7seg.png) :
+
+![](../../ports/sh/examples/fx_image_7seg.png)
+
+```bash
+% fxconv --bopti-image fx_image_7seg.png -o 7seg.py --fx profile:mono name:seg --py
+```
+```py
+import gint
+seg = gint.image(0, 79, 12, b'|\x00||\x00|||||\x00\x00\xba\x02::\x82\xb8\xb8:\xba\xba\x00\x00\xc6\x06\x06\x06\xc6\xc0\xc0\x06\xc6\xc6\x00\x00\xc6\x06\x06\x06\xc6\xc0\xc0\x06\xc6\xc6\x00\x00\x82\x02\x02\x02\x82\x80\x80\x02\x82\x82\x00\x00\x00\x00|||||\x00||\x00\x00\x82\x02\xb8:::\xba\x02\xba:\x00\x00\xc6\x06\xc0\x06\x06\x06\xc6\x06\xc6\x06\x00\x00\xc6\x06\xc0\x06\x06\x06\xc6\x06\xc6\x06\x00\x00\xc6\x06\xc0\x06\x06\x06\xc6\x06\xc6\x06\x00\x00\xba\x02\xb8:\x02:\xba\x02\xba:\x00\x00|\x00||\x00||\x00||\x00\x00')
+```
+L'option `--py-compact` permet de générer du code beaucoup plus compact (avec moins de `\x`), par contre le fichier obtenu ne peut pas être lu par un éditeur de texte. La seule option simple pour l'utiliser est de l'envoyer sur la calculatrice et l'installer inchangé (on peut aussi le manipuler avec un programme).
+
+_Exemple ([`fx_image.py`](../../sh/ports/examples/fx_image.py))._
+
+![](images/modgint-image-fx.png)
+
+**Sur Graph couleur**
+
+```py
+image:
+  .format      -> IMAGE_RGB565 | ...
+  .flags       -> int
+  .color_count -> int
+  .width       -> int
+  .height      -> int
+  .stride      -> int
+  .data        -> buffer-like
+  .palette     -> buffer-like
+```
+
+Les images sur Graph couleur sont déclinées en différents formats indiqués par le champ `.format`, dont les valeurs possibles sont listées ci-dessous. Les différences sont dans le nombre de couleurs, la présence ou pas de transparence, et la présence ou pas d'une palette de couleurs. Bien sûr, moins il y a de couleurs moins l'image prend de place en mémoire, donc de façon générale il est très bénéfique d'utiliser le plus petit format possible pour chaque image.
+
+| Format             | Couleurs            | Palette     | Nom dans fxconv |
+|--------------------|---------------------|-------------|-----------------|
+| `IMAGE_RGB565`     | 65536               | Non         | `rgb565`        |
+| `IMAGE_RGB565A`    | 65535 + transparent | Non         | `rgb565a`       |
+| `IMAGE_P8_RGB565`  | 256                 | Oui (1-256) | `p8_rgb565`     |
+| `IMAGE_P8_RGB565A` | 255 + transparent   | Oui (1-256) | `p8_rgb565a`    |
+| `IMAGE_P4_RGB565`  | 16                  | Oui (16)    | `p4_rgb565`     |
+| `IMAGE_P4_RGB565A` | 15 + transparent    | Oui (16)    | `p4_rgb565a`    |
+
+Le champ `.color_count` indique le nombre de couleurs dans la palette quand il y en a une. Pour les formats P8 ce nombre varie entre 1 et 256, pour les formats P4 il est toujours égal à 16. Les deux champs `.width` et `.height` indiquent la taille de l'image. Enifn, les champs `.data` et `.palette` permettent d'accéder aux données brutes des pixels ainsi que de la palette.
+
+(Le champ `.flags` est un détail de gestion de mémoire qui ne devrait pas importer aux scripts Python. Le champ `.stride` indique combien d'octets séparent chaque ligne de pixels dans `.data` et sera de même rarement utilisé.)
+
 TODO
+
+_Exemple ([`cg_image.py`](../../sh/ports/examples/cg_image.py))._
+
+![](images/modgint-image-cg.png)
 
 ## Différences avec l'API C de gint
 

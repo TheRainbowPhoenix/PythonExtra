@@ -238,7 +238,7 @@ In PythonExtra, `dupdate()` also indicates a "switch to graphics mode". Due to c
 
 `dgetpixel()` returns the color of a pixel. Note that `dgetpixel()` reads from VRAM, not from the display.
 
-_Example ([`ex_draw1.py`](../../sh/examples/ex_draw1.py))._
+_Example ([`ex_draw1.py`](../../sh/ports/examples/ex_draw1.py))._
 
 ```py
 from gint import *
@@ -267,19 +267,19 @@ dellipse(x1: int, y1: int, x2: int, y2: int, fill_color: int,
         border_color: int) -> None
 ```
 
-`drect()` draw a flat rectangle spanning from (x1, y1) to (x2, y2) (both inclusive). The order of points does not matter, i.e. x1 ≥ x2 and y1 ≥ y2 are both allowed.
+`drect()` draws a flat rectangle spanning from (x1, y1) to (x2, y2) (both inclusive). The order of points does not matter, i.e. x1 ≥ x2 and y1 ≥ y2 are both allowed.
 
 `drect_border()` is similar but also draws a border. The border is located _inside_ the rectangle.
 
 `dline()` draws a straight line from (x1, y1) to (x2, y2). The shortcut functions `dhline()` and `dvline()` draw a full horizontal and vertical line across the screen respectively.
 
-`dcircle()` draws a circle defined by its center and radius using the Bresenham algorithm. The colors for the cercle's interior and its edge can be specified separately, including as `C_NONE` (transparent). By construction, `dcircle()` can only draw circles of odd diameter; for even diameters, use `dellipse()`.
+`dcircle()` draws a circle defined by its center and radius using the Bresenham algorithm. The colors for the circle's interior and its edge can be specified separately, including as `C_NONE` (transparent). By construction, `dcircle()` can only draw circles of odd diameter; for even diameters, use `dellipse()`.
 
 `dellipse()` draws an ellipse defined by its bounding box. Both (x1, y1) and (x2, y2) are included in the bounding box. To render an ellipse from its center coordinates (x,y) and semi-major/minor axes a/b, use `dellipse(x-a, y-b, x+a, y+b, fill_color, border_color)`.
 
 TODO: Example for `drect()`, `drect_border()`, `dline()`.
 
-_Example ([`ex_circle.py`](../../sh/examples/ex_circle.py))._
+_Example ([`ex_circle.py`](../../sh/ports/examples/ex_circle.py))._
 
 ![](images/modgint-circle-cg.png) ![](images/modgint-circle-fx.png)
 
