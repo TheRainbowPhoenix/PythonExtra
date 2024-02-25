@@ -17,14 +17,6 @@
 // rendering. To render, one must first compute a "view" of the terminal, which
 // essentially determines line wrapping and scrolling bounds, and then use that
 // view and a valid scroll position within it to render.
-//
-// There are two features designed to minimize main memory usage, which is a
-// crucial concern on fx-9860G III and similar models:
-// * Only the last line gets edition metadata; anytime the last line is
-//   committed to the scrollback section of the console its text gets frozen.
-// * There are two circular line buffers; one for "recent" lines which stays in
-//   main memory, one for "older" lines which might (on G-III) go to volatile
-//   memory that resets when powering off.
 //---
 
 #ifndef __PYTHONEXTRA_CONSOLE_H
@@ -51,56 +43,27 @@
 //=== Static console lines ===//
 
 /* A line whose contents have been frozen. The only variable left is how many
-   render lines it takes, which is kept in the first byte in the buffer. Using
-   this instead of a console_line_t saves 15 bytes per line. */
-typedef char *console_fline_ptr_t;
-
-/* Create from a given buffer (with a prereserved 1st byte) and the existing
-   number of render lines. */
-static inline console_fline_ptr_t console_fline_create(char *buffer, int rl)
-{
-   buffer[0] = rl;
-   return buffer;
-}
-
-/* Get the number of render lines. */
-static inline int console_fline_get_render_lines(console_fline_ptr_t p)
-{
-   return (uint8_t)p[0];
-}
-
-/* Get a pointer to the data. */
-static inline char *console_fline_get_data(console_fline_ptr_t p)
-{
-   return p+1;
-}
-
-/* Update the number of render lines. */
-int console_fline_update_render_lines(console_fline_ptr_t p, int width);
-
-//=== Dynamic console lines ===//
-
-struct tmp { uint16_t size; uint8_t render_lines; char data[]; };
-
+   render lines it takes, which is kept at the beginning of the buffer along
+   with its size. */
 typedef struct
 {
-    // TODO: To be simplified/replaced
-    stredit_t edit;
+    /* Number of non-NUL bytes in data[] (read-only) */
+    uint16_t size;
+    /* Number of render lines occupied by the line (read-write) */
+    uint8_t render_lines;
+    /* Raw NUL-terminated data (read-only) */
+    char data[];
 
-} console_line_t;
+} console_fline_t;
 
-/* Create a new console line with at least init_chars characters of content
-   available. Returns false on error. Previous contents are not freed! */
-bool console_line_init(console_line_t *line, int init_chars);
-
-/* Clean up a line and free its contents. */
-void console_line_deinit(console_line_t *line);
+/* sizeof(console_fline_t) without alignment */
+#define CONSOLE_FLINE_SIZE 3
 
 /* Update the number of render lines for the chosen width. */
-void console_line_update_render_lines(console_line_t *line, int width);
+void console_fline_update_render_lines(console_fline_t *FL, int width);
 
 /* Render a vertical slice of the wrapped line. */
-int console_line_render(int x, int y, console_line_t *line, int w, int dy,
+int console_fline_render(int x, int y, console_fline_t *FL, int w, int dy,
     int show_from, int show_until, int cursor);
 
 //=== Rotating line storage ===//
@@ -109,8 +72,13 @@ int console_line_render(int x, int y, console_line_t *line, int w, int dy,
 typedef struct
 {
     /* A rotating array of `capacity` lines starting at position `start` and
-       holding `size` lines. The array is pre-allocated. */
-    console_line_t *lines;
+       holding `size` lines. The array is pre-allocated. The last line, if
+       there is one, is stored as NULL and its address is edit->raw. */
+    console_fline_t **lines;
+    /* Editor for the last line. The pointer to the last line is stored there
+       instead of in the `lines` array because it gets reallocated regularly
+       during edition. */
+    stredit_t edit;
 
     /* Invariants:
        - capacity > 0
@@ -141,8 +109,8 @@ typedef struct
     int total_size_except_last;
 
     /* Last absolute line that has been both laid out for rendering and frozen
-       for edition (ie. followed by another line). Lazy rendering can always
-       start at `absolute_rendered+1`. */
+       for edition (ie. followed by another line). Lazy layout would start at
+       `absolute_rendered+1`. */
     int absolute_rendered;
 
 } linebuf_t;
@@ -162,13 +130,13 @@ int linebuf_start(linebuf_t const *buf);
 int linebuf_end(linebuf_t const *buf);
 
 /* Get a pointer to the line with the given absolute number. */
-console_line_t *linebuf_get_line(linebuf_t const *buf, int absolute_number);
+console_fline_t *linebuf_get_line(linebuf_t const *buf, int absolute_number);
 
-/* Get a pointer to the last line in the buffer (usually the editable line). */
-console_line_t *linebuf_get_last_line(linebuf_t const *buf);
+/* Get a pointer to the last line in the buffer (the editable line). */
+stredit_t *linebuf_get_last_line(linebuf_t *buf);
 
 /* Add a new line to the buffer (recycling an old one if needed). */
-console_line_t *linebuf_new_line(linebuf_t *buf);
+stredit_t *linebuf_new_line(linebuf_t *buf);
 
 /* Recycle the `n` oldest lines from the buffer. */
 void linebuf_recycle_oldest_lines(linebuf_t *buf, int n);
@@ -238,7 +206,7 @@ console_scrollpos_t console_clamp_scrollpos(console_t const *cons,
 /* Render the console at (x,y). The render `width`, the number of `lines` and
    the text `font` are all as specified by the latest console_compute_view().
    `dy` indicates line height. */
-void console_render(int x, int y, console_t const *cons, int dy,
+void console_render(int x, int y, console_t *cons, int dy,
     console_scrollpos_t pos);
 
 //=== Edition functions ===//

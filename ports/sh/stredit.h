@@ -38,7 +38,8 @@ typedef struct
 } stredit_t;
 
 /* Create a new editable string with at least init_chars characters of content
-   available. Returns false on error. Previous contents are not freed! */
+   available. Returns false on error. Previous contents are not freed! If
+   max_size is 0, clears the stredit without allocating a new string. */
 bool stredit_init(stredit_t *ed, int init_chars, int reserved_bytes,
     int max_size);
 

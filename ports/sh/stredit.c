@@ -13,6 +13,11 @@
 bool stredit_init(stredit_t *ed, int prealloc_size, int reserved_bytes,
     int max_size)
 {
+    if(!max_size) {
+        memset(ed, 0, sizeof *ed);
+        return true;
+    }
+
     char *raw = malloc(reserved_bytes + prealloc_size + 1);
     if(!raw)
         return false;
@@ -29,12 +34,12 @@ bool stredit_init(stredit_t *ed, int prealloc_size, int reserved_bytes,
     return true;
 }
 
-char *stredit_freeze(stredit_t *ed)
+char *stredit_freeze_and_reset(stredit_t *ed)
 {
     /* Downsize the allocation if it's larger than needed. */
     int size_needed = ed->reserved + ed->size + 1;
     if(ed->alloc_size >= size_needed + 4)
-        assert(realloc(ed->raw, size_needed) == ed->raw);
+        ed->raw = realloc(ed->raw, size_needed);
 
     char *raw = ed->raw;
     ed->raw = NULL;

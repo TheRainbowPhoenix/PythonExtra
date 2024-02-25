@@ -40,38 +40,25 @@ static void view_params(int w,
 #endif
 }
 
-//=== Dynamic console lines ===//
+//=== Static console lines ===//
 
-bool console_line_init(console_line_t *line, int prealloc_size)
+void console_fline_update_render_lines(console_fline_t *FL, int width)
 {
-    return stredit_init(&line->edit, prealloc_size, sizeof (struct tmp),
-        PE_CONSOLE_LINE_MAX_LENGTH);
-}
-
-void console_line_deinit(console_line_t *line)
-{
-    stredit_reset(&line->edit);
-}
-
-void console_line_update_render_lines(console_line_t *line, int width)
-{
-    // TODO: Merge into normal render_lines computation for frozen lines
-    char const *p = stredit_data(&line->edit);
-    struct tmp *tmp = (void *)line->edit.raw;
-    tmp->render_lines = 0;
+    char const *p = FL->data;
+    FL->render_lines = 0;
 
     do {
-        tmp->render_lines++;
+        FL->render_lines++;
         p = drsize(p, NULL, width, NULL);
     }
     while(*p);
 }
 
-int console_line_render(int x, int y, console_line_t *line, int w, int dy,
+int console_fline_render(int x, int y, console_fline_t *FL, int w, int dy,
     int show_from, int show_until, int cursor)
 {
-    char const *p = stredit_data(&line->edit);
-    char const *endline = p + strlen(p);
+    char const *p = FL->data;
+    char const *endline = p + FL->size;
     int line_offset = 0;
     int line_number = 0;
 
@@ -112,6 +99,9 @@ bool linebuf_init(linebuf_t *buf, int capacity, int backlog_size)
     buf->lines = kmalloc(capacity * sizeof *buf->lines, PE_CONSOLE_LINE_ALLOC);
     if(!buf->lines)
         return false;
+    memset(buf->lines, 0, capacity * sizeof *buf->lines);
+
+    stredit_init(&buf->edit, 0, 0, 0);
 
     buf->capacity = capacity;
     buf->start = 0;
@@ -126,6 +116,9 @@ bool linebuf_init(linebuf_t *buf, int capacity, int backlog_size)
 
 void linebuf_deinit(linebuf_t *buf)
 {
+    stredit_reset(&buf->edit);
+    for(int i = 0; i < buf->capacity; i++)
+        free(buf->lines[i]);
     kfree((void *)buf->lines);
     memset(buf, 0, sizeof *buf);
 }
@@ -137,7 +130,7 @@ void linebuf_deinit(linebuf_t *buf)
    lines independent of rotation, we use their absolute line number.
 
    Such numbers refer to lines stored in the buffer if:
-     (index)   0 <= linebuf_index_to_nth(buf, index) < size
+     (index)   0 <= index < size
      (nth)     0 <= nth < size
      (abs)     0 <= abs - buf->absolute < size */
 
@@ -147,13 +140,16 @@ GINLINE static int linebuf_nth_to_index(linebuf_t const *buf, int nth)
 }
 
 /* Get the nth line. */
-GINLINE static console_line_t *linebuf_get_nth_line(linebuf_t const *buf,
+GINLINE static console_fline_t *linebuf_get_nth_line(linebuf_t const *buf,
     int nth)
 {
     if(nth < 0 || nth >= buf->size)
         return NULL;
 
-    return &buf->lines[linebuf_nth_to_index(buf, nth)];
+    if(nth == buf->size - 1)
+        return (console_fline_t *)buf->edit.raw;
+    else
+        return buf->lines[linebuf_nth_to_index(buf, nth)];
 }
 
 /* Move `index` by `diff`; assumes |diff| <= buf->capacity. */
@@ -172,37 +168,40 @@ int linebuf_end(linebuf_t const *buf)
     return buf->absolute + buf->size;
 }
 
-console_line_t *linebuf_get_line(linebuf_t const *buf, int abs)
+console_fline_t *linebuf_get_line(linebuf_t const *buf, int abs)
 {
     return linebuf_get_nth_line(buf, abs - buf->absolute);
 }
 
-console_line_t *linebuf_get_last_line(linebuf_t const *buf)
+stredit_t *linebuf_get_last_line(linebuf_t *buf)
 {
-    return linebuf_get_nth_line(buf, buf->size - 1);
+    return (buf->size > 0) ? &buf->edit : NULL;
 }
 
-console_line_t *linebuf_newline(linebuf_t *buf)
+stredit_t *linebuf_newline(linebuf_t *buf)
 {
     /* Make space if the buffer is full */
     linebuf_recycle_oldest_lines(buf, buf->size - buf->capacity + 1);
 
-    /* Freeze the current last line's and free the editor */
+    /* Freeze the current last line and reset the editor */
     if(buf->size > 0) {
-        console_line_t *L = linebuf_get_nth_line(buf, buf->size - 1);
+        buf->total_size_except_last += buf->edit.size;
 
-        // TODO: Reset shared editor
-        buf->total_size_except_last += L->edit.size;
-        struct tmp *tmp = (void *)L->edit.raw;
-        tmp->size = L->edit.size;
-        // stredit_reset(&L->edit);
-        // L->data = stredit_freeze_and_reset(&L->edit);
+        int size = buf->edit.size;
+        console_fline_t *frozen = (void *)stredit_freeze_and_reset(&buf->edit);
+        frozen->size = size;
+
+        int last_nth = linebuf_nth_to_index(buf, buf->size - 1);
+        assert(buf->lines[last_nth] == NULL);
+        buf->lines[last_nth] = frozen;
     }
 
     buf->size++;
-    console_line_t *L = linebuf_get_nth_line(buf, buf->size - 1);
-    console_line_init(L, 16);
-    return L;
+    int last_nth = linebuf_nth_to_index(buf, buf->size - 1);
+    buf->lines[last_nth] = NULL;
+    stredit_init(&buf->edit, 16, CONSOLE_FLINE_SIZE,
+        PE_CONSOLE_LINE_MAX_LENGTH);
+    return &buf->edit;
 }
 
 void linebuf_recycle_oldest_lines(linebuf_t *buf, int count)
@@ -212,13 +211,11 @@ void linebuf_recycle_oldest_lines(linebuf_t *buf, int count)
         return;
 
     for(int nth = 0; nth < count; nth++) {
-        console_line_t *L = linebuf_get_nth_line(buf, nth);
-        struct tmp *tmp = (void *)L->edit.raw;
-        buf->total_rendered -= tmp->render_lines;
-        // TODO
+        console_fline_t *FL = linebuf_get_nth_line(buf, nth);
+        buf->total_rendered -= FL->render_lines;
         if(nth != buf->size - 1)
-            buf->total_size_except_last -= tmp->size;
-        console_line_deinit(L);
+            buf->total_size_except_last -= FL->size;
+        free(FL);
     }
 
     buf->start = linebuf_index_add(buf, buf->start, count);
@@ -232,13 +229,10 @@ void linebuf_clean_backlog(linebuf_t *buf)
         return;
 
     int remove = 0;
-    // TODO
-    int n = buf->total_size_except_last + linebuf_get_last_line(buf)->edit.size;
+    int n = buf->total_size_except_last + linebuf_get_last_line(buf)->size;
 
     while(remove < buf->size - 1 && n > buf->backlog_size) {
-        // TODO
-        console_line_t *L = linebuf_get_nth_line(buf, remove);
-        n -= ((struct tmp *)L->edit.raw)->size;
+        n -= linebuf_get_nth_line(buf, remove)->size;
         remove++;
     }
 
@@ -256,11 +250,10 @@ void linebuf_update_render(linebuf_t *buf, int width, bool lazy)
     view_params(width, &text_w, NULL, NULL);
 
     for(int abs = start; abs < end; abs++) {
-        console_line_t *L = linebuf_get_nth_line(buf, abs - buf->absolute);
-        struct tmp *tmp = (void *)L->edit.raw;
-        buf->total_rendered -= tmp->render_lines;
-        console_line_update_render_lines(L, text_w);
-        buf->total_rendered += tmp->render_lines;
+        console_fline_t *FL = linebuf_get_nth_line(buf, abs - buf->absolute);
+        buf->total_rendered -= FL->render_lines;
+        console_fline_update_render_lines(FL, text_w);
+        buf->total_rendered += FL->render_lines;
     }
 
     buf->absolute_rendered = max(buf->absolute_rendered, end - 2);
@@ -339,7 +332,7 @@ console_scrollpos_t console_clamp_scrollpos(console_t const *cons,
     return max(0, min(pos, cons->lines.total_rendered - cons->render_lines));
 }
 
-void console_render(int x, int y0, console_t const *cons, int dy,
+void console_render(int x, int y0, console_t *cons, int dy,
     console_scrollpos_t pos)
 {
     int total_lines = cons->lines.total_rendered;
@@ -352,6 +345,12 @@ void console_render(int x, int y0, console_t const *cons, int dy,
 
     font_t const *old_font = dfont(cons->render_font);
 
+    /* Normally only frozen lines have a valid size field. Update the size of
+       the last line so we don't have to make an exception for it. */
+    stredit_t *ed = linebuf_get_last_line(&cons->lines);
+    console_fline_t *ed_FL = (console_fline_t *)ed->raw;
+    ed_FL->size = ed->size;
+
     /* Show only visible lines. We want to avoid counting all the lines in the
        console, and instead start from the end. */
     int line_y = visible_lines + pos;
@@ -359,23 +358,19 @@ void console_render(int x, int y0, console_t const *cons, int dy,
     int L_end = linebuf_end(&cons->lines);
     int i = linebuf_end(&cons->lines);
 
-    while(i > L_start && line_y > 0) {
-        console_line_t *L = linebuf_get_line(&cons->lines, --i);
-        struct tmp *tmp = (void *)L->edit.raw;
-        line_y -= tmp->render_lines;
-    }
+    while(i > L_start && line_y > 0)
+        line_y -= linebuf_get_line(&cons->lines, --i)->render_lines;
 
     /* If there isn't enough content to fill the view, start at the top. */
     line_y = min(line_y, pos);
 
-    while(i < L_end  && line_y < visible_lines) {
-        console_line_t *L = linebuf_get_line(&cons->lines, i);
-        struct tmp *tmp = (void *)L->edit.raw;
+    while(i < L_end && line_y < visible_lines) {
+        console_fline_t *FL = linebuf_get_line(&cons->lines, i);
         bool show_cursor = (i == L_end - 1);
 
-        y = console_line_render(x, y, L, text_w, dy, -line_y,
+        y = console_fline_render(x, y, FL, text_w, dy, -line_y,
             visible_lines - line_y, show_cursor ? cons->cursor : -1);
-        line_y += tmp->render_lines;
+        line_y += FL->render_lines;
         i++;
     }
 
@@ -402,7 +397,7 @@ void console_render(int x, int y0, console_t const *cons, int dy,
 
 GINLINE static stredit_t *last_line(console_t *cons)
 {
-    return &linebuf_get_last_line(&cons->lines)->edit;
+    return linebuf_get_last_line(&cons->lines);
 }
 
 bool console_set_cursor(console_t *cons, int pos)
