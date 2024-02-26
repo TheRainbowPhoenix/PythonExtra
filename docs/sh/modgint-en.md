@@ -82,19 +82,19 @@ elif ev.key == KEY_DOWN and pos < N-1:
 
 The function `getkey_opt()` generalizes `getkey()` and provides more options to customize its behavior. The `opts` parameter accepts a combination (sum) of options from the table below, and the parameter `timeout_ms`, when not `None`, specifies how long `getkey_opt()` should wait before returning a `KEYEV_NONE` event if nothing happens. The delay is specified in milliseconds but the actual resolution is about 7-8 ms.
 
-| Option               | `getkey()` | Description                                      |
-|----------------------|------------|--------------------------------------------------|
-| GETKEY_MOD_SHIFT     | Yes        | SHIFT is a modifier key                          |
-| GETKEY_MOD_ALPHA     | Yes        | ALPHA is a modifier key                          |
-| GETKEY_BACKLIGHT     | Yes        | SHIFT+OPTN toggles display backlight             |
-| GETKEY_MENU          | Yes        | MENU brings up the calculator's main menu        |
-| GETKEY_REP_ARROWS    | Yes        | Repeats arrow keys when held                     |
-| GETKEY_REP_ALL       | No         | Repeats all keys when held                       |
-| GETKEY_REP_PROFILE   | Yes*       | Enable custom repeat delays                      |
-| GETKEY_FEATURES      | Yes*       | Enable custom global shortcuts                   |
-| GETKEY_MENU_DUPDATE  | Yes        | Update display after return to menu (fx-CG)      |
-| GETKEY_MENU_EVENT    | No         | Send a `KEYEV_OSMENU` event after return to menu |
-| GETKEY_POWEROFF      | Yes        | SHIFT+AC/ON turns the calculator off             |
+| Option                 | `getkey()` | Description                                      |
+|------------------------|------------|--------------------------------------------------|
+| `GETKEY_MOD_SHIFT`     | Yes        | SHIFT is a modifier key                          |
+| `GETKEY_MOD_ALPHA`     | Yes        | ALPHA is a modifier key                          |
+| `GETKEY_BACKLIGHT`     | Yes        | SHIFT+OPTN toggles display backlight             |
+| `GETKEY_MENU`          | Yes        | MENU brings up the calculator's main menu        |
+| `GETKEY_REP_ARROWS`    | Yes        | Repeats arrow keys when held                     |
+| `GETKEY_REP_ALL`       | No         | Repeats all keys when held                       |
+| `GETKEY_REP_PROFILE`   | Yes*       | Enable custom repeat delays                      |
+| `GETKEY_FEATURES`      | Yes*       | Enable custom global shortcuts                   |
+| `GETKEY_MENU_DUPDATE`  | Yes        | Update display after return to menu (fx-CG)      |
+| `GETKEY_MENU_EVENT`    | No         | Send a `KEYEV_OSMENU` event after return to menu |
+| `GETKEY_POWEROFF`      | Yes        | SHIFT+AC/ON turns the calculator off             |
 
 `getkey()` is equivalent to `getkey_opt(opts, None)` where `opts` is the sum of all options that have "Yes" in the `getkey()` column above.
 
@@ -301,7 +301,9 @@ dellipse(x1: int, y1: int, x2: int, y2: int, fill_color: int,
 
 `dellipse()` draws an ellipse defined by its bounding box. Both (x1, y1) and (x2, y2) are included in the bounding box. To render an ellipse from its center coordinates (x,y) and semi-major/minor axes a/b, use `dellipse(x-a, y-b, x+a, y+b, fill_color, border_color)`.
 
-TODO: Example for `drect()`, `drect_border()`, `dline()`.
+_Exemple ([`ex_draw2.py`](../../ports/sh/examples/ex_draw2.py))._
+
+![](images/modgint-draw2-cg.png) ![](images/modgint-draw2-fx.png)
 
 _Example ([`ex_circle.py`](../../ports/sh/examples/ex_circle.py))._
 

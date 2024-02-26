@@ -84,19 +84,19 @@ elif ev.key == KEY_DOWN and pos < N-1:
 
 La fonction `getkey_opt()` est une généralisation de `getkey()` qui donne accès à plus d'options pour personnaliser le comportement de la fonction. Le paramètre `opts` accepte une combinaison d'options dans le tableau ci-dessous, et le paramètre `timeout_ms`, quand il n'est pas `None`, spécifie au bout de combien de temps la fonction doit s'arrêter et renvoyer un événement de type `KEYEV_NONE` s'il n'y a aucune activité sur le clavier. Le délai est exprimé en millisecondes mais la précision réelle est de l'ordre de 7-8 ms.
 
-| Option               | `getkey()` | Description                                                |
-|----------------------|------------|------------------------------------------------------------|
-| GETKEY_MOD_SHIFT     | Oui        | La touche SHIFT est un modifieur                           |
-| GETKEY_MOD_ALPHA     | Oui        | La touche ALPHA est un modifieur                           |
-| GETKEY_BACKLIGHT     | Oui        | SHIFT+OPTN allume/éteint le rétroéclairage                 |
-| GETKEY_MENU          | Oui        | MENU retourne au menu principal de la calculatrice         |
-| GETKEY_REP_ARROWS    | Oui        | Répète les touches directionnelles si maintenues           |
-| GETKEY_REP_ALL       | Non        | Répète toutes les touches si maintenues                    |
-| GETKEY_REP_PROFILE   | Oui*       | Personnalisation des durées de répétition                  |
-| GETKEY_FEATURES      | Oui*       | Personnalisation des raccourcis claviers globaux           |
-| GETKEY_MENU_DUPDATE  | Oui        | Rafraîchit l'écran après un retour au menu (Prizm/G90)     |
-| GETKEY_MENU_EVENT    | Non        | Envoie un événement `KEYEV_OSMENU` après un retour au menu |
-| GETKEY_POWEROFF      | Oui        | SHIFT+AC/ON éteint la calculatrice                         |
+| Option                 | `getkey()` | Description                                                |
+|------------------------|------------|------------------------------------------------------------|
+| `GETKEY_MOD_SHIFT`     | Oui        | La touche SHIFT est un modifieur                           |
+| `GETKEY_MOD_ALPHA`     | Oui        | La touche ALPHA est un modifieur                           |
+| `GETKEY_BACKLIGHT`     | Oui        | SHIFT+OPTN allume/éteint le rétroéclairage                 |
+| `GETKEY_MENU`          | Oui        | MENU retourne au menu principal de la calculatrice         |
+| `GETKEY_REP_ARROWS`    | Oui        | Répète les touches directionnelles si maintenues           |
+| `GETKEY_REP_ALL`       | Non        | Répète toutes les touches si maintenues                    |
+| `GETKEY_REP_PROFILE`   | Oui*       | Personnalisation des durées de répétition                  |
+| `GETKEY_FEATURES`      | Oui*       | Personnalisation des raccourcis claviers globaux           |
+| `GETKEY_MENU_DUPDATE`  | Oui        | Rafraîchit l'écran après un retour au menu (Prizm/G90)     |
+| `GETKEY_MENU_EVENT`    | Non        | Envoie un événement `KEYEV_OSMENU` après un retour au menu |
+| `GETKEY_POWEROFF`      | Oui        | SHIFT+AC/ON éteint la calculatrice                         |
 
 `getkey()` est équivalent à `getkey_opt(opts, None)` où `opts` est la somme de toutes les options marquées "Oui" dans la colonne `getkey()` ci-dessus.
 
@@ -263,7 +263,7 @@ La fonction `dpixel()` modifie la couleur d'un pixel. Les coordonnées, comme po
 
 La fonction `dgetpixel()` renvoie la couleur d'un pixel. Attention, `dgetpixel()` lit dans la VRAM, pas sur l'écran.
 
-_Exemple ([`ex_draw1.py`](../../sh/ports/examples/ex_draw1.py))._
+_Exemple ([`ex_draw1.py`](../../ports/sh/examples/ex_draw1.py))._
 
 ```py
 from gint import *
@@ -302,9 +302,11 @@ dellipse(x1: int, y1: int, x2: int, y2: int, fill_color: int,
 
 `dellipse()` dessine une ellipse définie par son rectangle englobant. Les points (x1, y1) et (x2, y2) sont tous les deux inclus dans le rectangle. Pour dessiner une ellipse à partir de son centre (x, y) et de ses demi-grand/petit axes a/b, utilisez `dellipse(x-a, y-b, x+a, y+b, fill_color, border_color)`.
 
-TODO: Exemple pour `drect()`, `drect_border()`, `dline()`.
+_Exemple ([`ex_draw2.py`](../../ports/sh/examples/ex_draw2.py))._
 
-_Exemple ([`ex_circle.py`](../../sh/ports/examples/ex_circle.py))._
+![](images/modgint-draw2-cg.png) ![](images/modgint-draw2-fx.png)
+
+_Exemple ([`ex_circle.py`](../../ports/sh/examples/ex_circle.py))._
 
 ![](images/modgint-circle-cg.png) ![](images/modgint-circle-fx.png)
 
