@@ -57,6 +57,7 @@ The functions `getkey()`, `getkey_opt()`, `pollevent()` and `waitevent()` all re
 
 ```py
 getkey() -> key_event
+getkey_opt(opts: GETKEY_*, timeout_ms: int | None) -> key_event
 ```
 
 The function `getkey()` pauses the program until a key is pressed or repeated, and returns the associated event (which is always of type `KEYEV_DOWN` or `KEYEV_HOLD`). By default, only arrow keys are repeated, once after 400 ms, then every 40 ms.
@@ -79,7 +80,25 @@ elif ev.key == KEY_DOWN and pos < N-1:
     pos += 1   # Move one place down
 ```
 
-TODO: Mention `getkey_opt()`
+The function `getkey_opt()` generalizes `getkey()` and provides more options to customize its behavior. The `opts` parameter accepts a combination (sum) of options from the table below, and the parameter `timeout_ms`, when not `None`, specifies how long `getkey_opt()` should wait before returning a `KEYEV_NONE` event if nothing happens. The delay is specified in milliseconds but the actual resolution is about 7-8 ms.
+
+| Option               | `getkey()` | Description                                      |
+|----------------------|------------|--------------------------------------------------|
+| GETKEY_MOD_SHIFT     | Yes        | SHIFT is a modifier key                          |
+| GETKEY_MOD_ALPHA     | Yes        | ALPHA is a modifier key                          |
+| GETKEY_BACKLIGHT     | Yes        | SHIFT+OPTN toggles display backlight             |
+| GETKEY_MENU          | Yes        | MENU brings up the calculator's main menu        |
+| GETKEY_REP_ARROWS    | Yes        | Repeats arrow keys when held                     |
+| GETKEY_REP_ALL       | No         | Repeats all keys when held                       |
+| GETKEY_REP_PROFILE   | Yes*       | Enable custom repeat delays                      |
+| GETKEY_FEATURES      | Yes*       | Enable custom global shortcuts                   |
+| GETKEY_MENU_DUPDATE  | Yes        | Update display after return to menu (fx-CG)      |
+| GETKEY_MENU_EVENT    | No         | Send a `KEYEV_OSMENU` event after return to menu |
+| GETKEY_POWEROFF      | Yes        | SHIFT+AC/ON turns the calculator off             |
+
+`getkey()` is equivalent to `getkey_opt(opts, None)` where `opts` is the sum of all options that have "Yes" in the `getkey()` column above.
+
+The two options `GETKEY_REP_PROFILE` and `GETKEY_FEATURES` are only useful when configured through other functions that are not yet available in PythonExtra.
 
 ### Reading keyboard events in real time
 
@@ -384,7 +403,7 @@ The `.color_count` field indicates the number of colors in the palette, when the
 
 The functions `dimage()` and `dsubimage()` work the same way as for black-and-white models; please see above.
 
-As for black-and-white models, images can be converted into a Python format with fxconv. For instance with [`cg_image_puzzle.png`](../../ports/sh/examples/cg_image_puzzle.png)
+As for black-and-white models, images can be converted into a Python format with fxconv. For instance with [`cg_image_puzzle.png`](../../ports/sh/examples/cg_image_puzzle.png) (full encoding elided):
 
 ![](../../ports/sh/examples/cg_image_puzzle.png)
 
