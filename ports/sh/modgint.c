@@ -17,6 +17,7 @@
 #include <gint/keyboard.h>
 #include <gint/timer.h>
 #include <gint/drivers/keydev.h>
+#include <stdlib.h>
 
 void pe_enter_graphics_mode(void);
 
@@ -326,6 +327,34 @@ STATIC mp_obj_t modgint_dellipse(size_t n_args, const mp_obj_t *args)
     return mp_const_none;
 }
 
+STATIC mp_obj_t modgint_dpoly(mp_obj_t arg1, mp_obj_t arg2, mp_obj_t arg3)
+{
+    mp_uint_t nbitems;
+    mp_obj_t *items;
+    mp_obj_list_get(arg1, &nbitems, &items);
+    int len = nbitems / 2;
+
+    int *x = malloc(len * sizeof *x);
+    int *y = malloc(len * sizeof *y);
+    if(!x || !y)
+        goto dpoly_end;
+
+    for(int i = 0; i < len; i++) {
+        x[i] = mp_obj_get_int(items[2*i]);
+        y[i] = mp_obj_get_int(items[2*i+1]);
+    }
+
+    mp_int_t fill = mp_obj_get_int(arg2);
+    mp_int_t border = mp_obj_get_int(arg3);
+
+    dpoly(x, y, len, fill, border);
+
+dpoly_end:
+    free(x);
+    free(y);
+    return mp_const_none;
+}
+
 // TODO: modgint: Font management?
 
 STATIC mp_obj_t modgint_dtext_opt(size_t n, mp_obj_t const *args)
@@ -470,6 +499,7 @@ FUN_2(dhline);
 FUN_2(dvline);
 FUN_BETWEEN(dcircle, 5, 5);
 FUN_BETWEEN(dellipse, 6, 6);
+FUN_3(dpoly);
 FUN_BETWEEN(dtext_opt, 8, 8);
 FUN_BETWEEN(dtext, 4, 4);
 #ifdef FXCG50
@@ -640,6 +670,7 @@ STATIC const mp_rom_map_elem_t modgint_module_globals_table[] = {
     OBJ(dvline),
     OBJ(dcircle),
     OBJ(dellipse),
+    OBJ(dpoly),
     OBJ(dtext_opt),
     OBJ(dtext),
 
