@@ -25,7 +25,7 @@ draw_string(x: int, y: int, text: str, ?color: (int, int, int), ?size: str) -> N
 
 The rendering area is of size 128x64 on G-III and 384x216 on fx-CG. While the G-III supports only two colors (black and white), the fx-CG supports 65536 colors (16-bit RGB565). Still, the color format is _always_ (r,g,b) triplets with 0 ≤ r,g,b ≤ 255. This helps compatibility between models and with PC, at a performance cost. Calculators process these colors by _approximating_ them to the closest color they can represent.
 
-Like the gint module, `casioplot` functions draw to an internal buffer called the VRAM, and only pushes that to the screen when explicitly asked to or at the end of the program.
+Like the gint module, `casioplot` functions draw to an internal buffer called the VRAM, and the module only pushes that to the screen when explicitly asked to or at the end of the program.
 
 `show_screen()` pushes the VRAM to screen after something has been drawn.
 
@@ -43,7 +43,7 @@ TODO: Example
 
 _Text mode._ `casioplot` automatically switches PythonExtra into graphics mode when imported. Programs that want to render graphics frames after a `print()` should `show_screen()` _before_ rendering the first frame since `print()` switches to text mode.
 
-_Performance._ Writing to VRAM is the main reason why rendering in `casioplot` is sometimes much faster than in Basic. Basic pushes the rendered data to the display after every call, which is slow. Unfortunately, `casioplot` ends up losing for complex drawing tasks for which Basic has complex functions (like DrawStat) while `casioplot` just as single pixels. In this case, functions from the [gint module](modgint-en.md) can be of help.
+_Performance._ Writing to VRAM is the main reason why rendering in `casioplot` is sometimes much faster than in Basic. Basic pushes the rendered data to the display after every call, which is slow. Unfortunately, `casioplot` ends up losing for complex drawing tasks for which Basic has complex functions (like DrawStat) while `casioplot` just has single pixels. In this case, functions from the [gint module](modgint-en.md) can be of help.
 
 ## Differences with the official `casioplot` module
 

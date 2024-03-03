@@ -10,8 +10,8 @@ from casioplot import *
 
 **Sommaire**
 - [Fonctions de dessin](#fonctions-de-dessin)
-- [Considérations spéciale pour le rendu](#considerations-speciales-pour-le-rendu)
-- [Différences avec le module `casioplot` officiel](#differences-avec-le-module-casioplot-officiel)
+- [Considérations spéciales pour le rendu](#considérations-spéciales-pour-le-rendu)
+- [Différences avec le module `casioplot` officiel](#différences-avec-le-module-casioplot-officiel)
 
 ## Fonctions de dessin
 
@@ -39,7 +39,7 @@ Comme le module gint, `casioplot` dessine systématiquement dans un buffer inter
 
 TODO: Exemple
 
-## Considérations spéciale pour le rendu
+## Considérations spéciales pour le rendu
 
 _Mode texte._ `casioplot` passe automatiquement PythonExtra en mode graphique à l'import. Les programmes qui veulent faire du dessin graphique après un `print()` doivent appeler `show_screen()` _avant_ de commencer à dessiner le premier frame parce que `print()` repasse en mode texte.
 
