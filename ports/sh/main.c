@@ -18,6 +18,7 @@
 #include <gint/keyboard.h>
 #include <gint/kmalloc.h>
 #include <gint/fs.h>
+#include <gint/timer.h>
 
 #include <justui/jscene.h>
 #include <justui/jlabel.h>
@@ -56,6 +57,14 @@ struct pe_globals {
 widget_shell *pe_shell;
 
 struct pe_globals PE = { 0 };
+
+
+// TODO : make this more clean by putting these globals into pe_globals and
+// making this accessible to modules
+bool is_dwindowed = false;
+bool is_timered = false;
+unsigned int timer_altered[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+bool is_refreshed_required = false;
 
 //=== Hook for redirecting stdout/stderr to the shell ===//
 
@@ -170,6 +179,15 @@ void pe_enter_graphics_mode(void)
     PE.shell->widget.update = 0;
 }
 
+void pe_refresh_graphics(void)
+{
+    /* refresh graphical output on request by setting
+    is_refresh_graphics to true */
+    dupdate();
+    pe_debug_run_videocapture();
+    is_refreshed_required = false;
+}
+
 void pe_draw(void)
 {
     dclear(C_WHITE);
@@ -193,6 +211,31 @@ void pe_draw(void)
 }
 
 //=== Application control functions ===//
+
+void pe_restore_window_and_timer(void)
+{
+    if (is_dwindowed)
+    {
+        struct dwindow win;
+        win.left = 0;
+        win.top = 0;
+        win.right = DWIDTH;
+        win.bottom = DHEIGHT;
+
+        dwindow_set(win);
+
+        is_dwindowed = false; // we mark as not windowed
+    }
+
+    if (is_timered)
+    {
+        for (int u = 0; u < 9; u++)
+            if (timer_altered[u] == 1)
+                timer_stop(u);
+
+        is_timered = false;
+    }
+}
 
 static void pe_reset_micropython(void)
 {
@@ -289,6 +332,8 @@ static char *pe_handle_event(jevent e, bool shell_bound)
                 free(str);
             }
             free(module);
+
+            pe_restore_window_and_timer();
 
             pe_print_prompt(1);
         }
@@ -430,6 +475,13 @@ int main(int argc, char **argv)
        - The OS' extra VRAM
        - Memory past the 2 MB boundary on tested OSes */
     // gc_add(start, end)...
+
+    /* TODO : test to check if we can definitely maintain this addition of RAM */    
+    
+    void *uram_area = kmalloc(300000, "_uram");
+    if(uram_area)
+        gc_add(uram_area, uram_area+300000);
+
 #endif
 
     mp_init();
@@ -501,6 +553,8 @@ int main(int argc, char **argv)
 
     //=== Deinitialization ===//
 
+    pe_debug_close();
+    
     gc_sweep_all();
     mp_deinit();
     console_destroy(PE.console);

@@ -84,6 +84,9 @@ void pe_debug_toggle_videocapture(void);
 /* Send a video capture frame if video capture is enabled. */
 void pe_debug_run_videocapture(void);
 
+/* Close the debugging ressources */
+void pe_debug_close(void);
+
 #if !PE_DEBUG
 #define PE_DEBUG_NOOP do {} while(0)
 #define pe_debug_init(...)                 PE_DEBUG_NOOP
@@ -92,6 +95,7 @@ void pe_debug_run_videocapture(void);
 #define pe_debug_screenshot(...)           PE_DEBUG_NOOP
 #define pe_debug_toggle_videocapture(...)  PE_DEBUG_NOOP
 #define pe_debug_run_videocapture(...)     PE_DEBUG_NOOP
+#define pe_debug_close(...)                PE_DEBUG_NOOP
 #endif
 
 #endif /* __PYTHONEXTRA_DEBUG_H */

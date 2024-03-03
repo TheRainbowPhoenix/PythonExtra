@@ -32,6 +32,29 @@ SRC_QSTR += \
     ports/sh/objgintimage.c \
     ports/sh/pyexec.c \
 
+
+ifeq ($(TARGETCASIO),"FXCG50")
+    $(info ************  FXCG50 VERSION ************ )
+    $(info *********  Add Numworks modules ********* )  
+    SRC_C += \
+        ports/sh/numworks/modkandinsky.c \
+        ports/sh/numworks/ion.c \
+        ports/sh/numworks/time.c \
+
+    SRC_QSTR += \
+        ports/sh/numworks/modkandinsky.c \
+        ports/sh/numworks/ion.c \
+        ports/sh/numworks/time.c
+
+    
+endif
+
+ifeq ($(TARGETCASIO),"FX9860G")
+    $(info ***********  FX9860G  VERSION *********** )
+
+endif
+
+
 ASSETS_O := $(SH_ASSETS:%=$(BUILD)/sh_assets/%.o)
 
 OBJ = $(PY_O) $(ASSETS_O) $(addprefix $(BUILD)/, $(SRC_C:.c=.o))

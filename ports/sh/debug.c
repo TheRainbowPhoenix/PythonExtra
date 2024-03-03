@@ -224,4 +224,9 @@ void pe_debug_run_videocapture(void)
     }
 }
 
+void pe_debug_close(void)
+{
+    usb_close();
+}
+
 #endif /* PE_DEBUG */
