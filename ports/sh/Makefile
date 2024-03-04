@@ -39,14 +39,11 @@ ifeq ($(TARGETCASIO),"FXCG50")
     SRC_C += \
         ports/sh/numworks/modkandinsky.c \
         ports/sh/numworks/ion.c \
-        ports/sh/numworks/time.c \
 
     SRC_QSTR += \
         ports/sh/numworks/modkandinsky.c \
         ports/sh/numworks/ion.c \
-        ports/sh/numworks/time.c
 
-    
 endif
 
 ifeq ($(TARGETCASIO),"FX9860G")
