@@ -61,7 +61,6 @@ struct pe_globals PE = { 0 };
 
 // TODO : make this more clean by putting these globals into pe_globals and
 // making this accessible to modules
-bool is_dwindowed = false;
 bool is_timered = false;
 unsigned int timer_altered[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
 bool is_refreshed_required = false;
@@ -212,21 +211,8 @@ void pe_draw(void)
 
 //=== Application control functions ===//
 
-void pe_restore_window_and_timer(void)
+void pe_restore_timer(void)
 {
-    if (is_dwindowed)
-    {
-        struct dwindow win;
-        win.left = 0;
-        win.top = 0;
-        win.right = DWIDTH;
-        win.bottom = DHEIGHT;
-
-        dwindow_set(win);
-
-        is_dwindowed = false; // we mark as not windowed
-    }
-
     if (is_timered)
     {
         for (int u = 0; u < 9; u++)
@@ -333,7 +319,7 @@ static char *pe_handle_event(jevent e, bool shell_bound)
             }
             free(module);
 
-            pe_restore_window_and_timer();
+            pe_restore_timer();
 
             pe_print_prompt(1);
         }

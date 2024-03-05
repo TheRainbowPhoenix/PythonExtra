@@ -16,7 +16,7 @@
 
 extern font_t numworks;
 
-extern bool is_dwindowed;
+static bool is_dwindowed;
 extern bool is_timered;
 extern unsigned int timer_altered[9];
 extern bool is_refreshed_required;
@@ -62,6 +62,29 @@ static int callback(void) {
   return TIMER_CONTINUE;
 }
 
+static void set_window(void) {
+  if(is_dwindowed) {
+    struct dwindow nw;
+    nw.left = DELTAXNW;
+    nw.top = DELTAYNW;
+    nw.right = 320 + DELTAXNW;
+    nw.bottom = 222 + DELTAYNW;
+    dwindow_set(nw);
+  }
+}
+
+static void reset_window(void)
+{
+  if(is_dwindowed) {
+    struct dwindow nw;
+    nw.left = 0;
+    nw.top = 0;
+    nw.right = DWIDTH;
+    nw.bottom = DHEIGHT;
+    dwindow_set(nw);
+  }
+}
+
 static mp_obj_t Kandinsky_make_color(color_t color) {
   int r, g, b;
   r = (color >> 8) & 0xf8;
@@ -82,13 +105,8 @@ static mp_obj_t Kandinsky_init(void) {
 
   dclear(NW_WHITE);
 
-  struct dwindow nw;
-  nw.left = DELTAXNW;
-  nw.top = DELTAYNW;
-  nw.right = 320 + DELTAXNW;
-  nw.bottom = 222 + DELTAYNW;
-  dwindow_set(nw);
-  is_dwindowed = true; // we mark as windowed
+  /* Start in windowed 320x222 windowed mode */
+  is_dwindowed = true;
 
   int t = timer_configure(TIMER_TMU, (1000000/TARGET_FPS), GINT_CALL(callback));
   if (t >= 0) {
@@ -108,6 +126,7 @@ static mp_obj_t Kandinsky_color(size_t n, mp_obj_t const *args) {
   return mp_obj_new_int(color);
 }
 
+// TODO: Use qstrs here
 int Internal_Get_Color_From_String(const char *str) {
 
   if (strcmp(str, "red") == 0 || strcmp(str, "r") == 0)
@@ -173,7 +192,9 @@ static mp_obj_t Kandinsky_fill_rect(size_t n, mp_obj_t const *args) {
 
   int color = Internal_Treat_Color(args[4]);
 
+  set_window();
   drect(x, y, x + w - 1, y + h - 1, color);
+  reset_window();
 
   return mp_const_none;
 }
@@ -188,7 +209,10 @@ static mp_obj_t Kandinsky_set_pixel(size_t n, mp_obj_t const *args) {
   else
     color = NW_BLACK;
 
+  /* TODO: Terribly inefficient */
+  set_window();
   dpixel(x, y, color);
+  reset_window();
   return mp_const_none;
 }
 
@@ -221,6 +245,7 @@ static mp_obj_t Kandinsky_draw_string(size_t n, mp_obj_t const *args) {
 
   font_t const *old_font = dfont(&numworks);
   
+  set_window();
   int u = 0;
   int v = 0;
   for (int l = 0; l < (int)text_len; l++) {
@@ -230,7 +255,7 @@ static mp_obj_t Kandinsky_draw_string(size_t n, mp_obj_t const *args) {
     } else {
       /* The following test is for support of unicode characters that are encoded on 1 char or more */
       /* we need to pass multiple chars to dtext to take care of unicode encoding */
-      if(((unsigned char) text[l]) >= 0x00 && ((unsigned char) text[l]) <= 0x7F){
+      if(((unsigned char) text[l]) <= 0x7F){
         drect(x + u - 1, y + v - 1, x + u + 9, y + v + 15, colorback);
         dtext_opt(x + u, y + v, colortext, C_NONE, DTEXT_LEFT, DTEXT_TOP, &text[l], 1);
         u += 10;
@@ -256,6 +281,7 @@ static mp_obj_t Kandinsky_draw_string(size_t n, mp_obj_t const *args) {
     }
   }
 
+  reset_window();
   dfont(old_font);
 
   return mp_const_none;
@@ -263,27 +289,13 @@ static mp_obj_t Kandinsky_draw_string(size_t n, mp_obj_t const *args) {
 
 static mp_obj_t Kandinsky_CGEXT_Enable_Wide_Screen( void ) {
 
-  struct dwindow nw;
-  nw.left = 0;
-  nw.top = 0;
-  nw.right = DWIDTH;
-  nw.bottom = DHEIGHT;
-  dwindow_set(nw);
   is_dwindowed = false; // we mark as not windowed
-
   return mp_const_none;
 }
 
 static mp_obj_t Kandinsky_CGEXT_Disable_Wide_Screen( void ) {
-  
-  struct dwindow nw;
-  nw.left = DELTAXNW;
-  nw.top = DELTAYNW;
-  nw.right = 320 + DELTAXNW;
-  nw.bottom = 222 + DELTAYNW;
-  dwindow_set(nw);
-  is_dwindowed = true; // we mark as windowed
 
+  is_dwindowed = true; // we mark as windowed
   return mp_const_none;
 }
 
@@ -297,9 +309,7 @@ static mp_obj_t Kandinsky_CGEXT_Set_Margin_Color( mp_obj_t color ) {
   color_t colorside = NW_BLACK;
   colorside = Internal_Treat_Color(color);
   
-  Kandinsky_CGEXT_Enable_Wide_Screen();
   dclear(colorside);
-  Kandinsky_CGEXT_Disable_Wide_Screen();
   
   return mp_obj_new_bool( is_dwindowed );
 }
