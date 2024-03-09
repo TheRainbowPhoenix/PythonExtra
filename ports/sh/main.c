@@ -36,6 +36,7 @@
 #include "console.h"
 #include "widget_shell.h"
 #include "debug.h"
+#include "resources.h"
 
 //=== Application globals ===//
 
@@ -61,8 +62,6 @@ struct pe_globals PE = { 0 };
 
 // TODO : make this more clean by putting these globals into pe_globals and
 // making this accessible to modules
-bool is_timered = false;
-unsigned int timer_altered[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
 bool is_refreshed_required = false;
 
 //=== Hook for redirecting stdout/stderr to the shell ===//
@@ -157,6 +156,7 @@ void pe_after_python_exec(int input_kind, int exec_flags, void *ret_val,
     (void)ret_val;
     (void)ret;
     clearevents();
+    pe_resources_autofree();
 }
 
 //=== Rendering ===//
@@ -210,18 +210,6 @@ void pe_draw(void)
 }
 
 //=== Application control functions ===//
-
-void pe_restore_timer(void)
-{
-    if (is_timered)
-    {
-        for (int u = 0; u < 9; u++)
-            if (timer_altered[u] == 1)
-                timer_stop(u);
-
-        is_timered = false;
-    }
-}
 
 static void pe_reset_micropython(void)
 {
@@ -318,8 +306,6 @@ static char *pe_handle_event(jevent e, bool shell_bound)
                 free(str);
             }
             free(module);
-
-            pe_restore_timer();
 
             pe_print_prompt(1);
         }

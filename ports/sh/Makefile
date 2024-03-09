@@ -19,6 +19,7 @@ SRC_C = \
     ports/sh/mphalport.c \
     ports/sh/objgintimage.c \
     ports/sh/pyexec.c \
+    ports/sh/resources.c \
     ports/sh/stredit.c \
     ports/sh/widget_shell.c \
     shared/runtime/gchelper_generic.c \

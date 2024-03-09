@@ -10,6 +10,7 @@
 #include <gint/display.h>
 #include <gint/drivers/r61524.h>
 #include <gint/timer.h>
+#include "../resources.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -17,8 +18,6 @@
 extern font_t numworks;
 
 static bool is_dwindowed;
-extern bool is_timered;
-extern unsigned int timer_altered[9];
 extern bool is_refreshed_required;
 
 #define NW_MAX_X 320
@@ -108,12 +107,11 @@ static mp_obj_t Kandinsky_init(void) {
   /* Start in windowed 320x222 windowed mode */
   is_dwindowed = true;
 
-  int t = timer_configure(TIMER_TMU, (1000000/TARGET_FPS), GINT_CALL(callback));
-  if (t >= 0) {
+  /* Allocate an auto-freed timer until the end of the program's execution */
+  int t = pe_timer_configure(TIMER_ANY, (1000000/TARGET_FPS),
+    GINT_CALL(callback), false);
+  if (t >= 0)
     timer_start(t);
-    is_timered = true;    // there is a timer altered from this module
-    timer_altered[t] = 1; // we put the corresponding timer at 1 to identify it
-  }
   return mp_const_none;
 }
 
