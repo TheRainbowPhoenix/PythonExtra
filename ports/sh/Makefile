@@ -52,6 +52,15 @@ ifeq ($(TARGETCASIO),"FX9860G")
 
 endif
 
+ifeq ($(shell [[ x"$$(git describe)" == x"$$(git describe main)" ]] \
+              && [[ -z "$$(git status -uno --porcelain)" ]] \
+              && echo y),y)
+    $(info * RELEASE BUILD)
+    BUILDTYPE := RELEASE
+else
+    $(info * DEVELOPMENT BUILD)
+    BUILDTYPE := DEV
+endif
 
 ASSETS_O := $(SH_ASSETS:%=$(BUILD)/sh_assets/%.o)
 

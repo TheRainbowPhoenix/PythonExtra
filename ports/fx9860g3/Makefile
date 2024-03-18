@@ -12,8 +12,11 @@ SH_CONVFLAGS := --fx
 
 all: PythonEx.g1a
 
-PythonEx.g1a: $(BUILD)/firmware.bin icon.png
-	fxgxa --g1a -n PythonExtra -i icon.png $< -o $@
+ICON_RELEASE := icon.png
+ICON_DEV := icon-dev.png
+
+PythonEx.g1a: $(BUILD)/firmware.bin icon.png icon-dev.png
+	fxgxa --g1a -n PythonExtra -i $(ICON_$(BUILDTYPE)) $< -o $@
 
 send: all
 	fxlink -sw PythonEx.g1a
