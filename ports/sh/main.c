@@ -18,7 +18,6 @@
 #include <gint/keyboard.h>
 #include <gint/kmalloc.h>
 #include <gint/fs.h>
-#include <gint/timer.h>
 
 #include <justui/jscene.h>
 #include <justui/jlabel.h>
@@ -56,13 +55,11 @@ struct pe_globals {
 
 // TODO: Put pe_globals in a header for use by the loop hook in mpconfigport.h
 widget_shell *pe_shell;
+/* Whether a delayed dupdate has been scheduled asynchronously. */
+bool pe_dupdate_scheduled;
 
 struct pe_globals PE = { 0 };
 
-
-// TODO : make this more clean by putting these globals into pe_globals and
-// making this accessible to modules
-bool is_refreshed_required = false;
 
 //=== Hook for redirecting stdout/stderr to the shell ===//
 
@@ -178,13 +175,17 @@ void pe_enter_graphics_mode(void)
     PE.shell->widget.update = 0;
 }
 
-void pe_refresh_graphics(void)
+void pe_schedule_dupdate(void)
 {
-    /* refresh graphical output on request by setting
-    is_refresh_graphics to true */
+    pe_enter_graphics_mode();
+    pe_dupdate_scheduled = true;
+}
+
+void pe_dupdate(void)
+{
     dupdate();
     pe_debug_run_videocapture();
-    is_refreshed_required = false;
+    pe_dupdate_scheduled = false;
 }
 
 void pe_draw(void)
@@ -205,8 +206,7 @@ void pe_draw(void)
     dsubimage(377, 207, &img_modifier_states, 16*icon, 0, 15, 14,
         DIMAGE_NONE);
 #endif
-    dupdate();
-    pe_debug_run_videocapture();
+    pe_dupdate();
 }
 
 //=== Application control functions ===//

@@ -109,11 +109,11 @@ void pe_after_python_exec(
 /* Command executed regularly during execution */
 extern void pe_draw(void);
 extern widget_shell *pe_shell;
-extern void pe_refresh_graphics(void);
-extern bool is_refreshed_required;
+extern void pe_dupdate(void);
+extern bool pe_dupdate_scheduled;
 #define MICROPY_VM_HOOK_LOOP \
     { if(pe_shell->widget.update) pe_draw(); \
-      if(is_refreshed_required) pe_refresh_graphics(); }
+      if(pe_dupdate_scheduled) pe_dupdate(); }
 
 /* extra built in names to add to the global namespace
 #define MICROPY_PORT_BUILTINS \

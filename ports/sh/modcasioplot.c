@@ -12,6 +12,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+extern void pe_enter_graphics_mode(void);
+extern void pe_dupdate(void);
+
 #ifdef FX9860G
 extern font_t font_4x4;
 extern font_t font_4x6;
@@ -70,10 +73,8 @@ static mp_obj_t init(void)
 
 static mp_obj_t show_screen(void)
 {
-    void pe_enter_graphics_mode(void);
     pe_enter_graphics_mode();
-    dupdate();
-    pe_debug_run_videocapture();
+    pe_dupdate();
     return mp_const_none;
 }
 

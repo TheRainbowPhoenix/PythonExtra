@@ -19,7 +19,8 @@
 #include <gint/drivers/keydev.h>
 #include <stdlib.h>
 
-void pe_enter_graphics_mode(void);
+extern void pe_enter_graphics_mode(void);
+extern void pe_dupdate(void);
 
 #define FUN_0(NAME) \
     MP_DEFINE_CONST_FUN_OBJ_0(modgint_ ## NAME ## _obj, modgint_ ## NAME)
@@ -230,8 +231,7 @@ STATIC mp_obj_t modgint_dclear(mp_obj_t arg1)
 STATIC mp_obj_t modgint_dupdate(void)
 {
     pe_enter_graphics_mode();
-    dupdate();
-    pe_debug_run_videocapture();
+    pe_dupdate();
     return mp_const_none;
 }
 

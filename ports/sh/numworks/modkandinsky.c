@@ -15,10 +15,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+extern void pe_schedule_dupdate(void);
+
 extern font_t numworks;
 
 static bool is_dwindowed;
-extern bool is_refreshed_required;
 
 #define NW_MAX_X 320
 #define NW_MAX_Y 222
@@ -57,7 +58,7 @@ extern bool is_refreshed_required;
 // There are possibly some others to be listed correctly
 
 static int callback(void) {
-  is_refreshed_required = true;
+  pe_schedule_dupdate();
   return TIMER_CONTINUE;
 }
 
