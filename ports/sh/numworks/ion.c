@@ -3,13 +3,8 @@
 //.-'`_ o `;__,   A community port of MicroPython for CASIO calculators.     //
 //.-'` `---`  '   License: MIT (except some files; see LICENSE)              //
 //---------------------------------------------------------------------------//
-// pe.ion: `gint` module
-//
-// This module aims to wrap commonly-used gint functions (not all APIs are
-// considered relevant for high-level Python development).
-//---
+// pe.io: Compatibility module for NumWorks Ion library
 
-#include "console.h"
 #include "py/objtuple.h"
 #include "py/runtime.h"
 #include <gint/keyboard.h>
@@ -90,20 +85,6 @@ int KeyTranslationMap[ 53 ] = { 0x85, 0x86, 0x75, 0x76, 0x91, // gint LEFT, UP, 
 /* END OF KEY TRANSLATION */
 
 
-
-#define FUN_0(NAME) MP_DEFINE_CONST_FUN_OBJ_0(ion_##NAME##_obj, ion_##NAME)
-#define FUN_1(NAME) MP_DEFINE_CONST_FUN_OBJ_1(ion_##NAME##_obj, ion_##NAME)
-#define FUN_2(NAME) MP_DEFINE_CONST_FUN_OBJ_2(ion_##NAME##_obj, ion_##NAME)
-#define FUN_3(NAME) MP_DEFINE_CONST_FUN_OBJ_3(ion_##NAME##_obj, ion_##NAME)
-#define FUN_VAR(NAME, MIN)                                                     \
-  MP_DEFINE_CONST_FUN_OBJ_VAR(ion_##NAME##_obj, MIN, ion_##NAME)
-#define FUN_BETWEEN(NAME, MIN, MAX)                                            \
-  MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(ion_##NAME##_obj, MIN, MAX, ion_##NAME)
-
-STATIC mp_obj_t ion___init__(void) { return mp_const_none; }
-
-/* <gint/keyboard.h> */
-
 STATIC mp_obj_t ion_keydown(mp_obj_t arg1) {
   mp_int_t key = mp_obj_get_int(arg1);
 
@@ -121,14 +102,9 @@ STATIC mp_obj_t ion_keydown(mp_obj_t arg1) {
   return mp_obj_new_bool(down);
 }
 
-FUN_1(keydown);
-FUN_0(__init__);
+MP_DEFINE_CONST_FUN_OBJ_1(ion_keydown_obj, ion_keydown);
 
 /* Module definition */
-
-// Helper: define object "ion_F_obj" as object "F" in the module
-#define OBJ(F)                                                                 \
-  { MP_ROM_QSTR(MP_QSTR_##F), MP_ROM_PTR(&ion_##F##_obj) }
 
 // Helper: define small integer constant "I" as "I" in the module
 #define INT(I)                                                                 \
@@ -136,7 +112,6 @@ FUN_0(__init__);
 
 STATIC const mp_rom_map_elem_t ion_module_globals_table[] = {
     {MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR_ion)},
-    OBJ(__init__),
 
     /*Numworks keycodes */
     /* BE CAREFUL THERE ARE MISSING SLOTS */
@@ -192,7 +167,7 @@ STATIC const mp_rom_map_elem_t ion_module_globals_table[] = {
     INT(KEY_ANS),
     INT(KEY_EXE), // value 52
 
-    OBJ(keydown),
+    { MP_ROM_QSTR(MP_QSTR_keydown), MP_ROM_PTR(&ion_keydown_obj) }
 };
 STATIC MP_DEFINE_CONST_DICT(ion_module_globals, ion_module_globals_table);
 
