@@ -39,11 +39,11 @@ ifeq ($(TARGETCASIO),"FXCG50")
     $(info *********  Add Numworks modules ********* )  
     SRC_C += \
         ports/sh/numworks/modkandinsky.c \
-        ports/sh/numworks/ion.c \
+        ports/sh/numworks/modion.c \
 
     SRC_QSTR += \
         ports/sh/numworks/modkandinsky.c \
-        ports/sh/numworks/ion.c \
+        ports/sh/numworks/modion.c \
 
 endif
 
