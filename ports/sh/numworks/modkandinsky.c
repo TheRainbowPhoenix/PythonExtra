@@ -126,34 +126,34 @@ static mp_obj_t Kandinsky_color(size_t n, mp_obj_t const *args) {
 }
 
 // TODO: Use qstrs here
-int Internal_Get_Color_From_String(const char *str) {
+int Internal_Get_Color_From_String(int qstr) {
 
-  if (strcmp(str, "red") == 0 || strcmp(str, "r") == 0)
+  if (qstr == MP_QSTR_red || qstr == MP_QSTR_r)
     return NW_RED;
-  else if (strcmp(str, "green") == 0 || strcmp(str, "g") == 0)
+  else if (qstr == MP_QSTR_green || qstr == MP_QSTR_g)
     return NW_GREEN;
-  else if (strcmp(str, "blue") == 0 || strcmp(str, "b") == 0)
+  else if (qstr == MP_QSTR_blue || qstr == MP_QSTR_b)
     return NW_BLUE;
-  else if (strcmp(str, "black") == 0 || strcmp(str, "k") == 0)
+  else if (qstr == MP_QSTR_black || qstr == MP_QSTR_k)
     return NW_BLACK;
-  else if (strcmp(str, "white") == 0 || strcmp(str, "w") == 0)
+  else if (qstr == MP_QSTR_white || qstr == MP_QSTR_w)
     return NW_WHITE;
 
-  else if (strcmp(str, "yellow") == 0 || strcmp(str, "y") == 0)
+  else if (qstr == MP_QSTR_yellow || qstr == MP_QSTR_y)
     return NW_YELLOW;
-  else if (strcmp(str, "pink") == 0)
+  else if (qstr == MP_QSTR_pink)
     return NW_PINK;
-  else if (strcmp(str, "magenta") == 0)
+  else if (qstr == MP_QSTR_magenta)
     return NW_MAGENTA;
-  else if (strcmp(str, "grey") == 0 || strcmp(str, "gray") == 0)
+  else if (qstr == MP_QSTR_grey || qstr == MP_QSTR_gray)
     return NW_GRAY;
-  else if (strcmp(str, "purple") == 0)
+  else if (qstr == MP_QSTR_purple)
     return NW_PURPLE;
-  else if (strcmp(str, "orange") == 0)
+  else if (qstr == MP_QSTR_orange)
     return NW_ORANGE;
-  else if (strcmp(str, "cyan") == 0)
+  else if (qstr == MP_QSTR_cyan)
     return NW_CYAN;
-  else if (strcmp(str, "brown") == 0)
+  else if (qstr == MP_QSTR_brown)
     return NW_BROWN;
   else
     return C_NONE;
@@ -162,11 +162,8 @@ int Internal_Get_Color_From_String(const char *str) {
 int Internal_Treat_Color(mp_obj_t color) {
   const mp_obj_type_t *type = mp_obj_get_type(color);
 
-  if (type == &mp_type_str) {
-    size_t text_len;
-    char const *text = mp_obj_str_get_data(color, &text_len);
-    return Internal_Get_Color_From_String(text);
-  }
+  if (type == &mp_type_str)
+    return Internal_Get_Color_From_String(mp_obj_str_get_qstr(color));
 
   else if (type == &mp_type_int)
     return mp_obj_get_int(color);
@@ -179,7 +176,9 @@ int Internal_Treat_Color(mp_obj_t color) {
     int g = mp_obj_get_int(items[1]);
     int b = mp_obj_get_int(items[2]);
     return NW_RGB(r, g, b);
-  } else
+  }
+
+  else
     return NW_BLACK;
 }
 
