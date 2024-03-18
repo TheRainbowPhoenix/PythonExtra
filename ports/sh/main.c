@@ -437,23 +437,21 @@ int main(int argc, char **argv)
     gc_add(py_ram_start, py_ram_end); */
 #endif
 #else
-    /* Get everything from the OS stack (~ 350 ko) */
+    /* Get everything from the OS stack (~ 350 kB) */
     size_t gc_area_size;
     void *gc_area = kmalloc_max(&gc_area_size, "_ostk");
     gc_init(gc_area, gc_area + gc_area_size);
+
+    /* Also get most of _uram; we can try and fit in the remaining ~150 kB */
+    void *uram_area = kmalloc(300000, "_uram");
+    if(uram_area)
+        gc_add(uram_area, uram_area + 300000);
 
     /* Other options:
        - All of _uram (leaving the OS heap for the shell/GUI/etc)
        - The OS' extra VRAM
        - Memory past the 2 MB boundary on tested OSes */
     // gc_add(start, end)...
-
-    /* TODO : test to check if we can definitely maintain this addition of RAM */    
-    
-    void *uram_area = kmalloc(300000, "_uram");
-    if(uram_area)
-        gc_add(uram_area, uram_area+300000);
-
 #endif
 
     mp_init();
