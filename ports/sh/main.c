@@ -476,7 +476,7 @@ int main(int argc, char **argv)
     PE.scene = jscene_create_fullscreen(NULL);
     PE.title = jlabel_create("<temp>", PE.scene);
     jwidget *stack = jwidget_create(PE.scene);
-    jfkeys *fkeys = jfkeys_create2(&img_fkeys_main, "/FILES;/SHELL", PE.scene);
+    jfkeys *fkeys = jfkeys_create2(_(&img_fkeys_main, NULL), "/FILES;/SHELL", PE.scene);
     (void)fkeys;
 
     jwidget_set_stretch(PE.title, 1, 0, false);
