@@ -46,6 +46,10 @@
 #include "extmod/vfs_posix.h"
 #endif
 
+#if MICROPY_VFS_ROM && MICROPY_VFS_ROM_IOCTL
+#include "extmod/vfs_rom.h"
+#endif
+
 // For mp_vfs_proxy_call, the maximum number of additional args that can be passed.
 // A fixed maximum size is used to avoid the need for a costly variable array.
 #define PROXY_MAX_ARGS (2)
@@ -93,7 +97,7 @@ mp_vfs_mount_t *mp_vfs_lookup_path(const char *path, const char **path_out) {
 }
 
 // Version of mp_vfs_lookup_path that takes and returns uPy string objects.
-STATIC mp_vfs_mount_t *lookup_path(mp_obj_t path_in, mp_obj_t *path_out) {
+static mp_vfs_mount_t *lookup_path(mp_obj_t path_in, mp_obj_t *path_out) {
     const char *path = mp_obj_str_get_str(path_in);
     const char *p_out;
     mp_vfs_mount_t *vfs = mp_vfs_lookup_path(path, &p_out);
@@ -106,7 +110,7 @@ STATIC mp_vfs_mount_t *lookup_path(mp_obj_t path_in, mp_obj_t *path_out) {
     return vfs;
 }
 
-STATIC mp_obj_t mp_vfs_proxy_call(mp_vfs_mount_t *vfs, qstr meth_name, size_t n_args, const mp_obj_t *args) {
+static mp_obj_t mp_vfs_proxy_call(mp_vfs_mount_t *vfs, qstr meth_name, size_t n_args, const mp_obj_t *args) {
     assert(n_args <= PROXY_MAX_ARGS);
     if (vfs == MP_VFS_NONE) {
         // mount point not found
@@ -139,7 +143,7 @@ mp_import_stat_t mp_vfs_import_stat(const char *path) {
     }
 
     // delegate to vfs.stat() method
-    mp_obj_t path_o = mp_obj_new_str(path_out, strlen(path_out));
+    mp_obj_t path_o = mp_obj_new_str_from_cstr(path_out);
     mp_obj_t stat;
     nlr_buf_t nlr;
     if (nlr_push(&nlr) == 0) {
@@ -159,7 +163,7 @@ mp_import_stat_t mp_vfs_import_stat(const char *path) {
     }
 }
 
-STATIC mp_obj_t mp_vfs_autodetect(mp_obj_t bdev_obj) {
+static mp_obj_t mp_vfs_autodetect(mp_obj_t bdev_obj) {
     #if MICROPY_VFS_LFS1 || MICROPY_VFS_LFS2
     nlr_buf_t nlr;
     if (nlr_push(&nlr) == 0) {
@@ -273,7 +277,7 @@ mp_obj_t mp_vfs_umount(mp_obj_t mnt_in) {
         mnt_str = mp_obj_str_get_data(mnt_in, &mnt_len);
     }
     for (mp_vfs_mount_t **vfsp = &MP_STATE_VM(vfs_mount_table); *vfsp != NULL; vfsp = &(*vfsp)->next) {
-        if ((mnt_str != NULL && !memcmp(mnt_str, (*vfsp)->str, mnt_len + 1)) || (*vfsp)->obj == mnt_in) {
+        if ((mnt_str != NULL && mnt_len == (*vfsp)->len && !memcmp(mnt_str, (*vfsp)->str, mnt_len)) || (*vfsp)->obj == mnt_in) {
             vfs = *vfsp;
             *vfsp = (*vfsp)->next;
             break;
@@ -376,7 +380,7 @@ typedef struct _mp_vfs_ilistdir_it_t {
     bool is_iter;
 } mp_vfs_ilistdir_it_t;
 
-STATIC mp_obj_t mp_vfs_ilistdir_it_iternext(mp_obj_t self_in) {
+static mp_obj_t mp_vfs_ilistdir_it_iternext(mp_obj_t self_in) {
     mp_vfs_ilistdir_it_t *self = MP_OBJ_TO_PTR(self_in);
     if (self->is_iter) {
         // continue delegating to root dir
@@ -443,6 +447,8 @@ mp_obj_t mp_vfs_listdir(size_t n_args, const mp_obj_t *args) {
 }
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(mp_vfs_listdir_obj, 0, 1, mp_vfs_listdir);
 
+#if MICROPY_VFS_WRITABLE
+
 mp_obj_t mp_vfs_mkdir(mp_obj_t path_in) {
     mp_obj_t path_out;
     mp_vfs_mount_t *vfs = lookup_path(path_in, &path_out);
@@ -478,6 +484,8 @@ mp_obj_t mp_vfs_rmdir(mp_obj_t path_in) {
     return mp_vfs_proxy_call(vfs, MP_QSTR_rmdir, 1, &path_out);
 }
 MP_DEFINE_CONST_FUN_OBJ_1(mp_vfs_rmdir_obj, mp_vfs_rmdir);
+
+#endif // MICROPY_VFS_WRITABLE
 
 mp_obj_t mp_vfs_stat(mp_obj_t path_in) {
     mp_obj_t path_out;
@@ -547,6 +555,32 @@ int mp_vfs_mount_and_chdir_protected(mp_obj_t bdev, mp_obj_t mount_point) {
     }
     return ret;
 }
+
+#if MICROPY_VFS_ROM && MICROPY_VFS_ROM_IOCTL
+
+int mp_vfs_mount_romfs_protected(void) {
+    int ret;
+    nlr_buf_t nlr;
+    if (nlr_push(&nlr) == 0) {
+        mp_obj_t args[2] = { MP_OBJ_NEW_SMALL_INT(MP_VFS_ROM_IOCTL_GET_SEGMENT), MP_OBJ_NEW_SMALL_INT(0) };
+        mp_obj_t rom = mp_vfs_rom_ioctl(2, args);
+        mp_obj_t romfs = mp_call_function_1(MP_OBJ_FROM_PTR(&mp_type_vfs_rom), rom);
+        mp_obj_t mount_point = MP_OBJ_NEW_QSTR(MP_QSTR__slash_rom);
+        mp_call_function_2(MP_OBJ_FROM_PTR(&mp_vfs_mount_obj), romfs, mount_point);
+        #if MICROPY_PY_SYS_PATH_ARGV_DEFAULTS
+        // Add "/rom" and "/rom/lib" to `sys.path`.
+        mp_obj_list_append(mp_sys_path, MP_OBJ_NEW_QSTR(MP_QSTR__slash_rom));
+        mp_obj_list_append(mp_sys_path, MP_OBJ_NEW_QSTR(MP_QSTR__slash_rom_slash_lib));
+        #endif
+        ret = 0; // success
+        nlr_pop();
+    } else {
+        ret = -MP_EIO;
+    }
+    return ret;
+}
+
+#endif
 
 MP_REGISTER_ROOT_POINTER(struct _mp_vfs_mount_t *vfs_cur);
 MP_REGISTER_ROOT_POINTER(struct _mp_vfs_mount_t *vfs_mount_table);

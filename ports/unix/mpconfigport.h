@@ -105,7 +105,7 @@ typedef long mp_off_t;
 // Always enable GC.
 #define MICROPY_ENABLE_GC           (1)
 
-#if !(defined(MICROPY_GCREGS_SETJMP) || defined(__x86_64__) || defined(__i386__) || defined(__thumb2__) || defined(__thumb__) || defined(__arm__))
+#if !(defined(MICROPY_GCREGS_SETJMP) || defined(__x86_64__) || defined(__i386__) || defined(__thumb2__) || defined(__thumb__) || defined(__arm__) || (defined(__riscv) && (__riscv_xlen == 64)))
 // Fall back to setjmp() implementation for discovery of GC pointers in registers.
 #define MICROPY_GCREGS_SETJMP (1)
 #endif
@@ -117,8 +117,8 @@ typedef long mp_off_t;
 #define MICROPY_HELPER_LEXER_UNIX   (1)
 #define MICROPY_VFS_POSIX           (1)
 #define MICROPY_READER_POSIX        (1)
-#ifndef MICROPY_TRACKED_ALLOC
-#define MICROPY_TRACKED_ALLOC       (MICROPY_BLUETOOTH_BTSTACK)
+#if MICROPY_PY_FFI || MICROPY_BLUETOOTH_BTSTACK
+#define MICROPY_TRACKED_ALLOC       (1)
 #endif
 
 // VFS stat functions should return time values relative to 1970/1/1
@@ -168,14 +168,8 @@ extern const struct _mp_print_t mp_stderr_print;
 // For the native emitter configure how to mark a region as executable.
 void mp_unix_alloc_exec(size_t min_size, void **ptr, size_t *size);
 void mp_unix_free_exec(void *ptr, size_t size);
-void mp_unix_mark_exec(void);
 #define MP_PLAT_ALLOC_EXEC(min_size, ptr, size) mp_unix_alloc_exec(min_size, ptr, size)
 #define MP_PLAT_FREE_EXEC(ptr, size) mp_unix_free_exec(ptr, size)
-#ifndef MICROPY_FORCE_PLAT_ALLOC_EXEC
-// Use MP_PLAT_ALLOC_EXEC for any executable memory allocation, including for FFI
-// (overriding libffi own implementation)
-#define MICROPY_FORCE_PLAT_ALLOC_EXEC (1)
-#endif
 
 // If enabled, configure how to seed random on init.
 #ifdef MICROPY_PY_RANDOM_SEED_INIT_FUNC
@@ -220,12 +214,6 @@ static inline unsigned long mp_random_seed_init(void) {
 // For debugging purposes, make printf() available to any source file.
 #include <stdio.h>
 #endif
-
-// In lieu of a WFI(), slow down polling from being a tight loop.
-//
-// Note that we don't delay for the full TIMEOUT_MS, as execution
-// can't be woken from the delay.
-#define MICROPY_INTERNAL_WFE(TIMEOUT_MS) mp_hal_delay_us(500)
 
 // Configure the implementation of machine.idle().
 #include <sched.h>

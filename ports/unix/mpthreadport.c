@@ -60,33 +60,33 @@ typedef struct _mp_thread_t {
     struct _mp_thread_t *next;
 } mp_thread_t;
 
-STATIC pthread_key_t tls_key;
+static pthread_key_t tls_key;
 
 // The mutex is used for any code in this port that needs to be thread safe.
 // Specifically for thread management, access to the linked list is one example.
 // But also, e.g. scheduler state.
-STATIC pthread_mutex_t thread_mutex;
-STATIC mp_thread_t *thread;
+static mp_thread_recursive_mutex_t thread_mutex;
+static mp_thread_t *thread;
 
 // this is used to synchronise the signal handler of the thread
 // it's needed because we can't use any pthread calls in a signal handler
 #if defined(__APPLE__)
-STATIC char thread_signal_done_name[25];
-STATIC sem_t *thread_signal_done_p;
+static char thread_signal_done_name[25];
+static sem_t *thread_signal_done_p;
 #else
-STATIC sem_t thread_signal_done;
+static sem_t thread_signal_done;
 #endif
 
 void mp_thread_unix_begin_atomic_section(void) {
-    pthread_mutex_lock(&thread_mutex);
+    mp_thread_recursive_mutex_lock(&thread_mutex, true);
 }
 
 void mp_thread_unix_end_atomic_section(void) {
-    pthread_mutex_unlock(&thread_mutex);
+    mp_thread_recursive_mutex_unlock(&thread_mutex);
 }
 
 // this signal handler is used to scan the regs and stack of a thread
-STATIC void mp_thread_gc(int signo, siginfo_t *info, void *context) {
+static void mp_thread_gc(int signo, siginfo_t *info, void *context) {
     (void)info; // unused
     (void)context; // unused
     if (signo == MP_THREAD_GC_SIGNAL) {
@@ -113,10 +113,7 @@ void mp_thread_init(void) {
 
     // Needs to be a recursive mutex to emulate the behavior of
     // BEGIN_ATOMIC_SECTION on bare metal.
-    pthread_mutexattr_t thread_mutex_attr;
-    pthread_mutexattr_init(&thread_mutex_attr);
-    pthread_mutexattr_settype(&thread_mutex_attr, PTHREAD_MUTEX_RECURSIVE);
-    pthread_mutex_init(&thread_mutex, &thread_mutex_attr);
+    mp_thread_recursive_mutex_init(&thread_mutex);
 
     // create first entry in linked list of all threads
     thread = malloc(sizeof(mp_thread_t));
@@ -320,6 +317,26 @@ void mp_thread_mutex_unlock(mp_thread_mutex_t *mutex) {
     pthread_mutex_unlock(mutex);
     // TODO check return value
 }
+
+#if MICROPY_PY_THREAD_RECURSIVE_MUTEX
+
+void mp_thread_recursive_mutex_init(mp_thread_recursive_mutex_t *mutex) {
+    pthread_mutexattr_t attr;
+    pthread_mutexattr_init(&attr);
+    pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
+    pthread_mutex_init(mutex, &attr);
+    pthread_mutexattr_destroy(&attr);
+}
+
+int mp_thread_recursive_mutex_lock(mp_thread_recursive_mutex_t *mutex, int wait) {
+    return mp_thread_mutex_lock(mutex, wait);
+}
+
+void mp_thread_recursive_mutex_unlock(mp_thread_recursive_mutex_t *mutex) {
+    mp_thread_mutex_unlock(mutex);
+}
+
+#endif // MICROPY_PY_THREAD_RECURSIVE_MUTEX
 
 #endif // MICROPY_PY_THREAD
 

@@ -27,6 +27,7 @@
 #define MICROPY_INCLUDED_RP2_CYW43_CONFIGPORT_H
 
 // The board-level config will be included here, so it can set some CYW43 values.
+#include <stdio.h>
 #include "py/mpconfig.h"
 #include "py/mperrno.h"
 #include "py/mphal.h"
@@ -34,11 +35,13 @@
 #include "extmod/modnetwork.h"
 #include "pendsv.h"
 
+#define CYW43_INCLUDE_LEGACY_F1_OVERFLOW_WORKAROUND_VARIABLES (1)
 #define CYW43_WIFI_NVRAM_INCLUDE_FILE   "wifi_nvram_43439.h"
 #define CYW43_IOCTL_TIMEOUT_US          (1000000)
 #define CYW43_SLEEP_MAX                 (10)
 #define CYW43_NETUTILS                  (1)
 #define CYW43_USE_OTP_MAC               (1)
+#define CYW43_PRINTF(...)               mp_printf(MP_PYTHON_PRINTER, __VA_ARGS__)
 
 #define CYW43_EPERM                     MP_EPERM // Operation not permitted
 #define CYW43_EIO                       MP_EIO // I/O error
@@ -50,6 +53,41 @@
 #define CYW43_THREAD_LOCK_CHECK
 
 #define CYW43_HOST_NAME                 mod_network_hostname_data
+
+#if CYW43_PIN_WL_DYNAMIC
+
+// Dynamic pins can be changed at runtime before initialising the CYW43
+
+typedef enum cyw43_pin_index_t {
+    CYW43_PIN_INDEX_WL_REG_ON,
+    CYW43_PIN_INDEX_WL_DATA_OUT,
+    CYW43_PIN_INDEX_WL_DATA_IN,
+    CYW43_PIN_INDEX_WL_HOST_WAKE,
+    CYW43_PIN_INDEX_WL_CLOCK,
+    CYW43_PIN_INDEX_WL_CS,
+    CYW43_PIN_INDEX_WL_COUNT // last
+} cyw43_pin_index_t;
+
+// Function to retrieve a cyw43 dynamic pin
+uint cyw43_get_pin_wl(cyw43_pin_index_t pin_id);
+
+#define CYW43_PIN_WL_REG_ON cyw43_get_pin_wl(CYW43_PIN_INDEX_WL_REG_ON)
+#define CYW43_PIN_WL_DATA_OUT cyw43_get_pin_wl(CYW43_PIN_INDEX_WL_DATA_OUT)
+#define CYW43_PIN_WL_DATA_IN cyw43_get_pin_wl(CYW43_PIN_INDEX_WL_DATA_IN)
+#define CYW43_PIN_WL_HOST_WAKE cyw43_get_pin_wl(CYW43_PIN_INDEX_WL_HOST_WAKE)
+#define CYW43_PIN_WL_CLOCK cyw43_get_pin_wl(CYW43_PIN_INDEX_WL_CLOCK)
+#define CYW43_PIN_WL_CS cyw43_get_pin_wl(CYW43_PIN_INDEX_WL_CS)
+
+#else
+
+#define CYW43_PIN_WL_REG_ON             CYW43_DEFAULT_PIN_WL_REG_ON
+#define CYW43_PIN_WL_DATA_OUT           CYW43_DEFAULT_PIN_WL_DATA_OUT
+#define CYW43_PIN_WL_DATA_IN            CYW43_DEFAULT_PIN_WL_DATA_IN
+#define CYW43_PIN_WL_HOST_WAKE          CYW43_DEFAULT_PIN_WL_HOST_WAKE
+#define CYW43_PIN_WL_CLOCK              CYW43_DEFAULT_PIN_WL_CLOCK
+#define CYW43_PIN_WL_CS                 CYW43_DEFAULT_PIN_WL_CS
+
+#endif
 
 #define CYW43_SDPCM_SEND_COMMON_WAIT \
     if (get_core_num() == 0) { \
@@ -117,7 +155,12 @@ static inline void cyw43_delay_us(uint32_t us) {
 }
 
 static inline void cyw43_delay_ms(uint32_t ms) {
-    mp_hal_delay_ms(ms);
+    // PendSV may be disabled via CYW43_THREAD_ENTER, so this delay is a busy loop.
+    uint32_t us = ms * 1000;
+    uint32_t start = mp_hal_ticks_us();
+    while (mp_hal_ticks_us() - start < us) {
+        mp_event_handle_nowait();
+    }
 }
 
 #define CYW43_EVENT_POLL_HOOK mp_event_handle_nowait()

@@ -1,87 +1,147 @@
-# PythonExtra - A community MicroPython for CASIO calculators
+[![Unix CI badge](https://github.com/micropython/micropython/actions/workflows/ports_unix.yml/badge.svg)](https://github.com/micropython/micropython/actions?query=branch%3Amaster+event%3Apush) [![STM32 CI badge](https://github.com/micropython/micropython/actions/workflows/ports_stm32.yml/badge.svg)](https://github.com/micropython/micropython/actions?query=branch%3Amaster+event%3Apush) [![Docs CI badge](https://github.com/micropython/micropython/actions/workflows/docs.yml/badge.svg)](https://docs.micropython.org/) [![codecov](https://codecov.io/gh/micropython/micropython/branch/master/graph/badge.svg?token=I92PfD05sD)](https://codecov.io/gh/micropython/micropython)
 
-*Original MicroPython README: [`README-MicroPython.md`](README-MicroPython.md).*
+The MicroPython project
+=======================
+<p align="center">
+  <img src="https://raw.githubusercontent.com/micropython/micropython/master/logo/upython-with-micro.jpg" alt="MicroPython Logo"/>
+</p>
 
-This is a MicroPython port for fx-CG 50, fx-9860G III and related CASIO calculators.
+This is the MicroPython project, which aims to put an implementation
+of Python 3.x on microcontrollers and small embedded systems.
+You can find the official website at [micropython.org](http://www.micropython.org).
 
-**Build instructions**
+WARNING: this project is in beta stage and is subject to changes of the
+code-base, including project-wide name changes and API changes.
 
-Requires the [fxSDK](/Lephenixnoir/fxsdk). Go to `ports/fxcg50` or `ports/fx9860g3` and run `make`. If it doesn't build, first try to use the `dev` branches for [fxSDK](/Lephenixnoir/fxSDK), [gint](/Lephenixnoir/gint), [fxlibc](/Lephenixnoir/fxlib) and [JustUI](/Lephenixnoir/JustUI). Rebuilds don't always work especially when checking out other commits (maybe my fault), so try to delete `build` if you think that's related.
+MicroPython implements the entire Python 3.4 syntax (including exceptions,
+`with`, `yield from`, etc., and additionally `async`/`await` keywords from
+Python 3.5 and some select features from later versions). The following core
+datatypes are provided: `str`(including basic Unicode support), `bytes`,
+`bytearray`, `tuple`, `list`, `dict`, `set`, `frozenset`, `array.array`,
+`collections.namedtuple`, classes and instances. Builtin modules include
+`os`, `sys`, `time`, `re`, and `struct`, etc. Some ports have support for
+`_thread` module (multithreading), `socket` and `ssl` for networking, and
+`asyncio`. Note that only a subset of Python 3 functionality is implemented
+for the data types and modules.
 
-Most of the code is in `ports/sh` and is shared between the platforms.
+MicroPython can execute scripts in textual source form (.py files) or from
+precompiled bytecode (.mpy files), in both cases either from an on-device
+filesystem or "frozen" into the MicroPython executable.
 
----
+MicroPython also provides a set of MicroPython-specific modules to access
+hardware-specific functionality and peripherals such as GPIO, Timers, ADC,
+DAC, PWM, SPI, I2C, CAN, Bluetooth, and USB.
 
-**Test suite**
+Getting started
+---------------
 
-Located in [`ports/sh/examples`](ports/sh/examples).
+See the [online documentation](https://docs.micropython.org/) for the API
+reference and information about using MicroPython and information about how
+it is implemented.
 
-* **fx-CG**: Whether the program successfully runs on PythonExtra on
-  models of the fx-CG family. This is typically tested on a Graph 90+E but
-  should include the fx-CG 10/20/50.
-* **G-III**: Whether the program successfully runs on G-III models.
-  This does **not** include older models like the fx-9860G II.
-* **Raw speedup**: Speedup from using PythonExtra instead of the official
-  Python app, without changing the code (as a ratio of execution times).
-* **Full speedup**: Seedup from using PythonExtra-provided modules for
-  rendering and input (usually `gint`), after changing the program's code.
+We use [GitHub Discussions](https://github.com/micropython/micropython/discussions)
+as our forum, and [Discord](https://discord.gg/RB8HZSAExQ) for chat. These
+are great places to ask questions and advice from the community or to discuss your
+MicroPython-based projects.
 
-| Program | fx-CG | G-III | Raw speedup | Full speedup |
-| ------- | ----- | ----- | ----------- | ------------ |
-| Chute tridimensionnelle | Yes | Yes | x1.36 | x2.26 ⁽¹⁾ |
-| Bad Apple | Meh⁽²⁾ | - | TODO | TODO |
-| Island of the Dead Kings | TODO | TODO | TODO | TODO |
-| Synchro-Donjon (AI mode) | Yes | TODO | x1.82 | - |
-| Flappy Bird | Yes | Yes | x1.04 | x2.35 |
+For bugs and feature requests, please [raise an issue](https://github.com/micropython/micropython/issues/new/choose)
+and follow the templates there.
 
-⁽¹⁾ After upgrading to full-screen 396x224 instead of the original 120x80. (!)
+For information about the [MicroPython pyboard](https://store.micropython.org/pyb-features),
+the officially supported board from the
+[original Kickstarter campaign](https://www.kickstarter.com/projects/214379695/micro-python-python-for-microcontrollers),
+see the [schematics and pinouts](http://github.com/micropython/pyboard) and
+[documentation](https://docs.micropython.org/en/latest/pyboard/quickref.html).
 
-⁽²⁾ Bad Apple requires unloading modules to not run out of memory, and I
-haven't been able to consistently do that. See the `unload-modules` branch.
+Contributing
+------------
 
----
+MicroPython is an open-source project and welcomes contributions. To be
+productive, please be sure to follow the
+[Contributors' Guidelines](https://github.com/micropython/micropython/wiki/ContributorGuidelines)
+and the [Code Conventions](https://github.com/micropython/micropython/blob/master/CODECONVENTIONS.md).
+Note that MicroPython is licenced under the MIT license, and all contributions
+should follow this license.
 
-**Basic benchmarks**
+About this repository
+---------------------
 
-PythonExtra is slightly faster than the official Python app, probably due to
-optimization during compilation of the VM. The tests below show the effect on
-basic Python operations.
+This repository contains the following components:
+- [py/](py/) -- the core Python implementation, including compiler, runtime, and
+  core library.
+- [mpy-cross/](mpy-cross/) -- the MicroPython cross-compiler which is used to turn scripts
+  into precompiled bytecode.
+- [ports/](ports/) -- platform-specific code for the various ports and architectures that MicroPython runs on.
+- [lib/](lib/) -- submodules for external dependencies.
+- [tests/](tests/) -- test framework and test scripts.
+- [docs/](docs/) -- user documentation in Sphinx reStructuredText format. This is used to generate the [online documentation](http://docs.micropython.org).
+- [extmod/](extmod/) -- additional (non-core) modules implemented in C.
+- [tools/](tools/) -- various tools, including the pyboard.py module.
+- [examples/](examples/) -- a few example Python scripts.
 
-| Test | Program | Official Python (fx-CG 50) | PythonExtra (fx-CG 50) |
-| ---- | ------- | -------------------------- | ---------------------- |
-| VM speed | `pe_loop.py` (1 million `pass`) | ~12 seconds | 8.9 seconds |
-| Shell output | `pe_print.py` (print 100000 integers) | ~22 seconds | 11.3 seconds |
-| Large integers | `pe_fact.py` (compute 250!, 500 times) | ~15 seconds | 8.6 seconds |
+"make" is used to build the components, or "gmake" on BSD-based systems.
+You will also need bash, gcc, and Python 3.3+ available as the command `python3`
+(if your system only has Python 2.7 then invoke make with the additional option
+`PYTHON=python2`). Some ports (rp2 and esp32) additionally use CMake.
 
----
+Supported platforms & architectures
+-----------------------------------
 
-**TODO list**
+MicroPython runs on a wide range of microcontrollers, as well as on Unix-like
+(including Linux, BSD, macOS, WSL) and Windows systems.
 
-Bugs to fix:
-- Fix not world switching during filesystem accesses (very unstable)
-- Fix current working directory not changing during a module import (for
-  relative imports)
-- Fix casioplot not stopping on the last `show_screen()`
+Microcontroller targets can be as small as 256kiB flash + 16kiB RAM, although
+devices with at least 512kiB flash + 128kiB RAM allow a much more
+full-featured experience.
 
-Python features:
-- Compare features with existing implementations and other brands
-- Get filesystem access (open etc) with the POSIX interface
-- Get a decent amount of RAM not just the fixed 32 kiB that's hardcoded so far
+The [Unix](ports/unix) and [Windows](ports/windows) ports allow both
+development and testing of MicroPython itself, as well as providing
+lightweight alternative to CPython on these platforms (in particular on
+embedded Linux systems).
 
-UI:
-- Add an option for fixed-width font which also sets $COLUMNS properly so that
-  MicroPython paginates (requires better getenv/setenv support in fxlibc)
-- Use [unicode-fonts](/Lephenixnoir/unicode-fonts) to provide Unicode support
-  * Extend it with a fixed-width uf8x9 which maybe changes some glyphs (like
-    `i` and `l`; the usual fixed-width unambiguous styles)
-  * Try and provide a font smaller than 5x7 for more compact shell on mono
-- A decent keymap that can input all relevant characters into the shell
-- Features that would match MicroPython's readline:
-   * Multi-line input (figure out how to store it); also, auto-indent
-   * History (use `MP_STATE_PORT(readline_hist)` with `readline_push_history()`
-     for a start); also, zsh-style search
-   * Autocompletion (use `mp_repl_autocomplete()` which should hook just fine)
+The ["minimal"](ports/minimal) port provides an example of a very basic
+MicroPython port and can be compiled as both a standalone Linux binary as
+well as for ARM Cortex M4. Start with this if you want to port MicroPython to
+another microcontroller. Additionally the ["bare-arm"](ports/bare-arm) port
+is an example of the absolute minimum configuration, and is used to keep
+track of the code size of the core runtime and VM.
 
-Future wishes:
-- Build for fx-9860G II (requires manual filesystem support)
-- Lephe's secret ideas (complete previous list to unlock)
+In addition, the following ports are provided in this repository:
+ - [cc3200](ports/cc3200) -- Texas Instruments CC3200 (including PyCom WiPy).
+ - [esp32](ports/esp32) -- Espressif ESP32 SoC (including ESP32S2, ESP32S3, ESP32C3, ESP32C6).
+ - [esp8266](ports/esp8266) -- Espressif ESP8266 SoC.
+ - [mimxrt](ports/mimxrt) -- NXP m.iMX RT (including Teensy 4.x).
+ - [nrf](ports/nrf) -- Nordic Semiconductor nRF51 and nRF52.
+ - [pic16bit](ports/pic16bit) -- Microchip PIC 16-bit.
+ - [powerpc](ports/powerpc) -- IBM PowerPC (including Microwatt)
+ - [qemu](ports/qemu) -- QEMU-based emulated target (for testing)
+ - [renesas-ra](ports/renesas-ra) -- Renesas RA family.
+ - [rp2](ports/rp2) -- Raspberry Pi RP2040 (including Pico and Pico W).
+ - [samd](ports/samd) -- Microchip (formerly Atmel) SAMD21 and SAMD51.
+ - [stm32](ports/stm32) -- STMicroelectronics STM32 family (including F0, F4, F7, G0, G4, H7, L0, L4, WB)
+ - [webassembly](ports/webassembly) -- Emscripten port targeting browsers and NodeJS.
+ - [zephyr](ports/zephyr) -- Zephyr RTOS.
+
+The MicroPython cross-compiler, mpy-cross
+-----------------------------------------
+
+Most ports require the [MicroPython cross-compiler](mpy-cross) to be built
+first.  This program, called mpy-cross, is used to pre-compile Python scripts
+to .mpy files which can then be included (frozen) into the
+firmware/executable for a port.  To build mpy-cross use:
+
+    $ cd mpy-cross
+    $ make
+
+External dependencies
+---------------------
+
+The core MicroPython VM and runtime has no external dependencies, but a given
+port might depend on third-party drivers or vendor HALs. This repository
+includes [several submodules](lib/) linking to these external dependencies.
+Before compiling a given port, use
+
+    $ cd ports/name
+    $ make submodules
+
+to ensure that all required submodules are initialised.

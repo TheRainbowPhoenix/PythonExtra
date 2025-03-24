@@ -32,6 +32,8 @@
 #include "driver/i2c.h"
 #include "hal/i2c_ll.h"
 
+#if MICROPY_PY_MACHINE_I2C || MICROPY_PY_MACHINE_SOFTI2C
+
 #ifndef MICROPY_HW_I2C0_SCL
 #define MICROPY_HW_I2C0_SCL (GPIO_NUM_18)
 #define MICROPY_HW_I2C0_SDA (GPIO_NUM_19)
@@ -47,9 +49,9 @@
 #endif
 #endif
 
-#if CONFIG_IDF_TARGET_ESP32C3 || CONFIG_IDF_TARGET_ESP32S3
+#if SOC_I2C_SUPPORT_XTAL
 #define I2C_SCLK_FREQ XTAL_CLK_FREQ
-#elif CONFIG_IDF_TARGET_ESP32 || CONFIG_IDF_TARGET_ESP32S2
+#elif SOC_I2C_SUPPORT_APB
 #define I2C_SCLK_FREQ APB_CLK_FREQ
 #else
 #error "unsupported I2C for ESP32 SoC variant"
@@ -64,9 +66,9 @@ typedef struct _machine_hw_i2c_obj_t {
     gpio_num_t sda : 8;
 } machine_hw_i2c_obj_t;
 
-STATIC machine_hw_i2c_obj_t machine_hw_i2c_obj[I2C_NUM_MAX];
+static machine_hw_i2c_obj_t machine_hw_i2c_obj[I2C_NUM_MAX];
 
-STATIC void machine_hw_i2c_init(machine_hw_i2c_obj_t *self, uint32_t freq, uint32_t timeout_us, bool first_init) {
+static void machine_hw_i2c_init(machine_hw_i2c_obj_t *self, uint32_t freq, uint32_t timeout_us, bool first_init) {
     if (!first_init) {
         i2c_driver_delete(self->port);
     }
@@ -135,7 +137,7 @@ int machine_hw_i2c_transfer(mp_obj_base_t *self_in, uint16_t addr, size_t n, mp_
 /******************************************************************************/
 // MicroPython bindings for machine API
 
-STATIC void machine_hw_i2c_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
+static void machine_hw_i2c_print(const mp_print_t *print, mp_obj_t self_in, mp_print_kind_t kind) {
     machine_hw_i2c_obj_t *self = MP_OBJ_TO_PTR(self_in);
     int h, l;
     i2c_get_period(self->port, &h, &l);
@@ -144,12 +146,15 @@ STATIC void machine_hw_i2c_print(const mp_print_t *print, mp_obj_t self_in, mp_p
 }
 
 mp_obj_t machine_hw_i2c_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *all_args) {
-    MP_MACHINE_I2C_CHECK_FOR_LEGACY_SOFTI2C_CONSTRUCTION(n_args, n_kw, all_args);
+    // Create a SoftI2C instance if no id is specified (or is -1) but other arguments are given
+    if (n_args != 0) {
+        MP_MACHINE_I2C_CHECK_FOR_LEGACY_SOFTI2C_CONSTRUCTION(n_args, n_kw, all_args);
+    }
 
     // Parse args
     enum { ARG_id, ARG_scl, ARG_sda, ARG_freq, ARG_timeout };
     static const mp_arg_t allowed_args[] = {
-        { MP_QSTR_id, MP_ARG_REQUIRED | MP_ARG_OBJ, {.u_obj = MP_OBJ_NULL} },
+        { MP_QSTR_id, MP_ARG_INT, {.u_int = I2C_NUM_0} },
         { MP_QSTR_scl, MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_obj = MP_OBJ_NULL} },
         { MP_QSTR_sda, MP_ARG_KW_ONLY | MP_ARG_OBJ, {.u_obj = MP_OBJ_NULL} },
         { MP_QSTR_freq, MP_ARG_KW_ONLY | MP_ARG_INT, {.u_int = 400000} },
@@ -159,7 +164,9 @@ mp_obj_t machine_hw_i2c_make_new(const mp_obj_type_t *type, size_t n_args, size_
     mp_arg_parse_all_kw_array(n_args, n_kw, all_args, MP_ARRAY_SIZE(allowed_args), allowed_args, args);
 
     // Get I2C bus
-    mp_int_t i2c_id = mp_obj_get_int(args[ARG_id].u_obj);
+    mp_int_t i2c_id = args[ARG_id].u_int;
+
+    // Check if the I2C bus is valid
     if (!(I2C_NUM_0 <= i2c_id && i2c_id < I2C_NUM_MAX)) {
         mp_raise_msg_varg(&mp_type_ValueError, MP_ERROR_TEXT("I2C(%d) doesn't exist"), i2c_id);
     }
@@ -196,7 +203,7 @@ mp_obj_t machine_hw_i2c_make_new(const mp_obj_type_t *type, size_t n_args, size_
     return MP_OBJ_FROM_PTR(self);
 }
 
-STATIC const mp_machine_i2c_p_t machine_hw_i2c_p = {
+static const mp_machine_i2c_p_t machine_hw_i2c_p = {
     .transfer_supports_write1 = true,
     .transfer = machine_hw_i2c_transfer,
 };
@@ -210,3 +217,5 @@ MP_DEFINE_CONST_OBJ_TYPE(
     protocol, &machine_hw_i2c_p,
     locals_dict, &mp_machine_i2c_locals_dict
     );
+
+#endif

@@ -39,20 +39,20 @@ extern uint8_t __StackTop, __StackBottom;
 void *core_state[2];
 
 // This will be non-NULL while Python code is executing.
-STATIC void *(*core1_entry)(void *) = NULL;
+core_entry_func_t core1_entry = NULL;
 
-STATIC void *core1_arg = NULL;
-STATIC uint32_t *core1_stack = NULL;
-STATIC size_t core1_stack_num_words = 0;
+static void *core1_arg = NULL;
+static uint32_t *core1_stack = NULL;
+static size_t core1_stack_num_words = 0;
 
 // Thread mutex.
-STATIC mutex_t atomic_mutex;
+static recursive_mutex_t atomic_mutex;
 
 uint32_t mp_thread_begin_atomic_section(void) {
     if (core1_entry) {
         // When both cores are executing, we also need to provide
         // full mutual exclusion.
-        return mutex_enter_blocking_and_disable_interrupts(&atomic_mutex);
+        return recursive_mutex_enter_blocking_and_disable_interrupts(&atomic_mutex);
     } else {
         return save_and_disable_interrupts();
     }
@@ -60,7 +60,7 @@ uint32_t mp_thread_begin_atomic_section(void) {
 
 void mp_thread_end_atomic_section(uint32_t state) {
     if (atomic_mutex.owner != LOCK_INVALID_OWNER_ID) {
-        mutex_exit_and_restore_interrupts(&atomic_mutex, state);
+        recursive_mutex_exit_and_restore_interrupts(&atomic_mutex, state);
     } else {
         restore_interrupts(state);
     }
@@ -70,7 +70,7 @@ void mp_thread_end_atomic_section(uint32_t state) {
 void mp_thread_init(void) {
     assert(get_core_num() == 0);
 
-    mutex_init(&atomic_mutex);
+    recursive_mutex_init(&atomic_mutex);
 
     // Allow MICROPY_BEGIN_ATOMIC_SECTION to be invoked from core1.
     multicore_lockout_victim_init();
@@ -84,10 +84,10 @@ void mp_thread_deinit(void) {
     assert(get_core_num() == 0);
     // Must ensure that core1 is not currently holding the GC lock, otherwise
     // it will be terminated while holding the lock.
-    mp_thread_mutex_lock(&MP_STATE_MEM(gc_mutex), 1);
+    mp_thread_recursive_mutex_lock(&MP_STATE_MEM(gc_mutex), 1);
     multicore_reset_core1();
     core1_entry = NULL;
-    mp_thread_mutex_unlock(&MP_STATE_MEM(gc_mutex));
+    mp_thread_recursive_mutex_unlock(&MP_STATE_MEM(gc_mutex));
 }
 
 void mp_thread_gc_others(void) {
@@ -102,7 +102,7 @@ void mp_thread_gc_others(void) {
     }
 }
 
-STATIC void core1_entry_wrapper(void) {
+static void core1_entry_wrapper(void) {
     // Allow MICROPY_BEGIN_ATOMIC_SECTION to be invoked from core0.
     multicore_lockout_victim_init();
 
@@ -115,9 +115,9 @@ STATIC void core1_entry_wrapper(void) {
 }
 
 mp_uint_t mp_thread_get_id(void) {
-    // On RP2, there are only two threads, one for each core, so the thread id
-    // is the core number.
-    return get_core_num();
+    // On RP2, there are only two threads, one for each core.
+    // _thread.get_ident() must be non-zero.
+    return get_core_num() + 1;
 }
 
 mp_uint_t mp_thread_create(void *(*entry)(void *), void *arg, size_t *stack_size) {
@@ -149,7 +149,7 @@ mp_uint_t mp_thread_create(void *(*entry)(void *), void *arg, size_t *stack_size
     // Adjust stack_size to provide room to recover from hitting the limit.
     *stack_size -= 512;
 
-    return 1;
+    return 2; // mp_thread_get_id() result for core 1
 }
 
 void mp_thread_start(void) {

@@ -13,7 +13,7 @@ facilities for network sockets, both client-side and server-side.
 Functions
 ---------
 
-.. function:: ssl.wrap_socket(sock, server_side=False, keyfile=None, certfile=None, cert_reqs=CERT_NONE, cadata=None, server_hostname=None, do_handshake=True)
+.. function:: ssl.wrap_socket(sock, server_side=False, key=None, cert=None, cert_reqs=CERT_NONE, cadata=None, server_hostname=None, do_handshake=True)
 
     Wrap the given *sock* and return a new wrapped-socket object.  The implementation
     of this function is to first create an `SSLContext` and then call the `SSLContext.wrap_socket`
@@ -117,11 +117,32 @@ Exceptions
 
    This exception does NOT exist. Instead its base class, OSError, is used.
 
+DTLS support
+------------
+
+.. admonition:: Difference to CPython
+   :class: attention
+
+   This is a MicroPython extension.
+
+This module supports DTLS in client and server mode via the `PROTOCOL_DTLS_CLIENT`
+and `PROTOCOL_DTLS_SERVER` constants that can be used as the ``protocol`` argument
+of `SSLContext`.
+
+In this case the underlying socket is expected to behave as a datagram socket (i.e.
+like the socket opened with ``socket.socket`` with ``socket.AF_INET`` as ``af`` and
+``socket.SOCK_DGRAM`` as ``type``).
+
+DTLS is only supported on ports that use mbed TLS, and it is not enabled by default:
+it requires enabling ``MBEDTLS_SSL_PROTO_DTLS`` in the specific port configuration.
+
 Constants
 ---------
 
 .. data:: ssl.PROTOCOL_TLS_CLIENT
           ssl.PROTOCOL_TLS_SERVER
+          ssl.PROTOCOL_DTLS_CLIENT (when DTLS support is enabled)
+          ssl.PROTOCOL_DTLS_SERVER (when DTLS support is enabled)
 
     Supported values for the *protocol* parameter.
 

@@ -29,9 +29,17 @@ typedef unsigned int mp_uint_t;     // must be pointer size
 #define MICROPY_HW_ENABLE_TIMER     (1)
 #define MICROPY_HW_ENABLE_SDCARD    (1)
 #define MICROPY_HW_ENABLE_MMCARD    (0)
+#define MICROPY_HW_ENTER_BOOTLOADER_VIA_RESET   (0)
+#define MICROPY_HW_TIM_IS_RESERVED(id) (id == 1)
+
+// ROMFS config
+#define MICROPY_HW_ROMFS_ENABLE_EXTERNAL_QSPI       (1)
+#define MICROPY_HW_ROMFS_QSPI_SPIFLASH_OBJ          (&spi_bdev.spiflash)
+#define MICROPY_HW_ROMFS_ENABLE_PART0               (1)
 
 // Flash storage config
 #define MICROPY_HW_SPIFLASH_ENABLE_CACHE            (1)
+#define MICROPY_HW_SPIFLASH_SOFT_RESET              (1)
 #define MICROPY_HW_ENABLE_INTERNAL_FLASH_STORAGE    (0)
 
 #define MICROPY_BOARD_STARTUP       PORTENTA_board_startup
@@ -49,8 +57,8 @@ void PORTENTA_board_low_power(int mode);
 #define MICROPY_BOARD_ENTER_STANDBY PORTENTA_board_low_power(2);
 
 void PORTENTA_board_osc_enable(int enable);
-#define MICROPY_BOARD_OSC_ENABLE    PORTENTA_board_osc_enable(1);
-#define MICROPY_BOARD_OSC_DISABLE   PORTENTA_board_osc_enable(0);
+#define MICROPY_BOARD_PRE_STOP      PORTENTA_board_osc_enable(0);
+#define MICROPY_BOARD_POST_STOP     PORTENTA_board_osc_enable(1);
 
 // PLL1 400MHz/50MHz for SDMMC and FDCAN
 // USB and RNG are clocked from the HSI48
@@ -126,8 +134,8 @@ void PORTENTA_board_osc_enable(int enable);
 // QSPI flash #1 for storage
 #define MICROPY_HW_QSPI_PRESCALER           (2) // 100MHz
 #define MICROPY_HW_QSPIFLASH_SIZE_BITS_LOG2 (27)
-// Reserve 1MiB at the end for compatibility with alternate firmware that places WiFi blob here.
-#define MICROPY_HW_SPIFLASH_SIZE_BITS       (120 * 1024 * 1024)
+// Reserve 4MiB for romfs and 1MiB for WiFi/BT firmware.
+#define MICROPY_HW_SPIFLASH_SIZE_BITS       (88 * 1024 * 1024)
 #define MICROPY_HW_QSPIFLASH_CS             (pyb_pin_QSPI2_CS)
 #define MICROPY_HW_QSPIFLASH_SCK            (pyb_pin_QSPI2_CLK)
 #define MICROPY_HW_QSPIFLASH_IO0            (pyb_pin_QSPI2_D0)
@@ -170,7 +178,12 @@ extern struct _spi_bdev_t spi_bdev;
 #define MICROPY_HW_I2C3_SCL         (pin_H7)
 #define MICROPY_HW_I2C3_SDA         (pin_H8)
 
-// SPI
+// SPI buses
+#define MICROPY_HW_SPI1_NSS         (pin_C13)
+#define MICROPY_HW_SPI1_SCK         (pin_B3)
+#define MICROPY_HW_SPI1_MISO        (pin_B4)
+#define MICROPY_HW_SPI1_MOSI        (pin_D7)
+
 #define MICROPY_HW_SPI2_NSS         (pin_I0)
 #define MICROPY_HW_SPI2_SCK         (pin_I1)
 #define MICROPY_HW_SPI2_MISO        (pin_C2)
@@ -235,11 +248,12 @@ extern struct _spi_bdev_t spi_bdev;
 #define MICROPY_HW_SDRAM_SIZE               (64 / 8 * 1024 * 1024)  // 64 Mbit
 #define MICROPY_HW_SDRAM_STARTUP_TEST       (1)
 #define MICROPY_HW_SDRAM_TEST_FAIL_ON_ERROR (true)
+#define MICROPY_HW_FMC_SWAP_BANKS           (1)
 
 // Timing configuration for 200MHz/2=100MHz (10ns)
 #define MICROPY_HW_SDRAM_CLOCK_PERIOD       2
 #define MICROPY_HW_SDRAM_CAS_LATENCY        2
-#define MICROPY_HW_SDRAM_FREQUENCY          (100000) // 100 MHz
+#define MICROPY_HW_SDRAM_FREQUENCY_KHZ      (100000) // 100 MHz
 #define MICROPY_HW_SDRAM_TIMING_TMRD        (2)
 #define MICROPY_HW_SDRAM_TIMING_TXSR        (7)
 #define MICROPY_HW_SDRAM_TIMING_TRAS        (5)

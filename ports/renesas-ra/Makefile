@@ -93,12 +93,12 @@ CFLAGS_CORTEX_M = -mthumb
 SUPPORTS_HARDWARE_FP_SINGLE = 0
 SUPPORTS_HARDWARE_FP_DOUBLE = 0
 ifeq ($(MCU_SERIES),$(filter $(MCU_SERIES),m4))
-CFLAGS_CORTEX_M += -mfpu=fpv4-sp-d16 -mfloat-abi=hard 
+CFLAGS_CORTEX_M += -mfpu=fpv4-sp-d16 -mfloat-abi=hard
 SUPPORTS_HARDWARE_FP_SINGLE = 1
 endif
 
 ifeq ($(MCU_SERIES),$(filter $(MCU_SERIES),m33))
-CFLAGS_CORTEX_M += -mfpu=fpv5-sp-d16 -mfloat-abi=hard 
+CFLAGS_CORTEX_M += -mfpu=fpv5-sp-d16 -mfloat-abi=hard
 SUPPORTS_HARDWARE_FP_SINGLE = 1
 endif
 
@@ -157,6 +157,9 @@ LIBSTDCPP_FILE_NAME = "$(shell $(CXX) $(CXXFLAGS) -print-file-name=libstdc++.a)"
 LDFLAGS += -L"$(shell dirname $(LIBSTDCPP_FILE_NAME))"
 endif
 
+# Hook tinyusb USB interrupt if used to service usb task.
+LDFLAGS += --wrap=dcd_event_handler
+
 # Options for mpy-cross
 MPY_CROSS_FLAGS += -march=armv7m
 
@@ -174,8 +177,8 @@ SHARED_SRC_C += $(addprefix shared/,\
 	runtime/stdout_helpers.c \
 	runtime/sys_stdio_mphal.c \
 	timeutils/timeutils.c \
-	tinyusb/mp_cdc_common.c \
 	tinyusb/mp_usbd.c \
+	tinyusb/mp_usbd_cdc.c \
 	tinyusb/mp_usbd_descriptor.c \
 	)
 
@@ -247,6 +250,7 @@ SRC_C += \
 	machine_pin.c \
 	machine_rtc.c \
 	machine_sdcard.c \
+	modrenesas.c \
 	extint.c \
 	usrsw.c \
 	flash.c \
@@ -439,7 +443,8 @@ endef
 
 define GENERATE_BIN
 	$(ECHO) "GEN $(1)"
-	$(Q)$(OBJCOPY) -I ihex -O binary $(2) $(1)
+	$(Q)$(OBJCOPY) -O binary -j .id_code $(2) $(BUILD)/id_code.bin
+	$(Q)$(OBJCOPY) -O binary --remove-section=.id_code $(2) $(1)
 endef
 
 define GENERATE_HEX
@@ -449,7 +454,7 @@ endef
 
 .PHONY:
 
-$(BUILD)/firmware.bin: $(BUILD)/firmware.hex
+$(BUILD)/firmware.bin: $(BUILD)/firmware.elf
 	$(call GENERATE_BIN,$@,$^)
 
 $(BUILD)/firmware.hex: $(BUILD)/firmware.elf
@@ -484,7 +489,7 @@ FILE2H = $(TOP)/tools/file2h.py
 # List of sources for qstr extraction
 SRC_QSTR += $(SRC_C) $(SRC_CXX) $(SHARED_SRC_C) $(GEN_PINS_SRC)
 
-# Making OBJ use an order-only depenedency on the generated pins.h file
+# Making OBJ use an order-only dependency on the generated pins.h file
 # has the side effect of making the pins.h file before we actually compile
 # any of the objects. The normal dependency generation will deal with the
 # case when pins.h is modified. But when it doesn't exist, we don't know

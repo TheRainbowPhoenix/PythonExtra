@@ -79,6 +79,9 @@
 #define MICROPY_SCHEDULER_STATIC_NODES (1)
 #define MICROPY_SCHEDULER_DEPTH     (8)
 #define MICROPY_VFS                 (1)
+#ifndef MICROPY_VFS_ROM
+#define MICROPY_VFS_ROM (MICROPY_HW_ROMFS_ENABLE_INTERNAL_FLASH || MICROPY_HW_ROMFS_ENABLE_EXTERNAL_QSPI)
+#endif
 
 // control over Python builtins
 #ifndef MICROPY_PY_BUILTINS_HELP_TEXT
@@ -99,7 +102,6 @@
 #define MICROPY_PY_OS_DUPTERM       (3)
 #define MICROPY_PY_OS_DUPTERM_BUILTIN_STREAM (1)
 #define MICROPY_PY_OS_DUPTERM_STREAM_DETACHED_ATTACHED (1)
-#define MICROPY_PY_OS_SEP           (1)
 #define MICROPY_PY_OS_SYNC          (1)
 #define MICROPY_PY_OS_UNAME         (1)
 #define MICROPY_PY_OS_URANDOM       (MICROPY_HW_ENABLE_RNG)
@@ -107,11 +109,14 @@
 #define MICROPY_PY_TIME_GMTIME_LOCALTIME_MKTIME (1)
 #define MICROPY_PY_TIME_TIME_TIME_NS (1)
 #define MICROPY_PY_TIME_INCLUDEFILE "ports/stm32/modtime.c"
+#define MICROPY_PY_LWIP_PPP         (MICROPY_PY_NETWORK_PPP_LWIP)
 #define MICROPY_PY_LWIP_SOCK_RAW    (MICROPY_PY_LWIP)
 #ifndef MICROPY_PY_MACHINE
 #define MICROPY_PY_MACHINE          (1)
 #define MICROPY_PY_MACHINE_INCLUDEFILE "ports/stm32/modmachine.c"
+#define MICROPY_PY_MACHINE_RESET    (1)
 #define MICROPY_PY_MACHINE_BARE_METAL_FUNCS (1)
+#define MICROPY_PY_MACHINE_FREQ_NUM_ARGS_MAX (4)
 #define MICROPY_PY_MACHINE_BOOTLOADER (1)
 #define MICROPY_PY_MACHINE_ADC      (1)
 #define MICROPY_PY_MACHINE_ADC_INCLUDEFILE "ports/stm32/machine_adc.c"
@@ -144,9 +149,6 @@
 #define MICROPY_HW_SOFTSPI_MAX_BAUDRATE (HAL_RCC_GetSysClockFreq() / 48)
 #define MICROPY_PY_WEBSOCKET        (MICROPY_PY_LWIP)
 #define MICROPY_PY_WEBREPL          (MICROPY_PY_LWIP)
-#ifndef MICROPY_PY_SOCKET
-#define MICROPY_PY_SOCKET           (1)
-#endif
 #ifndef MICROPY_PY_NETWORK
 #define MICROPY_PY_NETWORK          (1)
 #endif
@@ -154,8 +156,19 @@
 #define MICROPY_PY_ONEWIRE          (1)
 #endif
 
+// optional network features
+#if MICROPY_PY_NETWORK
+#ifndef MICROPY_PY_SOCKET
+#define MICROPY_PY_SOCKET           (1)
+#endif
+
+#ifndef MICROPY_PY_NETWORK_PPP_LWIP
+#define MICROPY_PY_NETWORK_PPP_LWIP     (0)
+#endif
+#endif
+
 // fatfs configuration used in ffconf.h
-#define MICROPY_FATFS_ENABLE_LFN       (1)
+#define MICROPY_FATFS_ENABLE_LFN       (2)
 #define MICROPY_FATFS_LFN_CODE_PAGE    437 /* 1=SFN/ANSI 437=LFN/U.S.(OEM) */
 #define MICROPY_FATFS_USE_LABEL        (1)
 #define MICROPY_FATFS_RPATH            (2)
@@ -267,11 +280,6 @@ typedef long mp_off_t;
 
 // Configuration for shared/runtime/softtimer.c.
 #define MICROPY_SOFT_TIMER_TICKS_MS uwTick
-
-// Prevent the "LWIP task" from running.
-#define MICROPY_PY_LWIP_ENTER   MICROPY_PY_PENDSV_ENTER
-#define MICROPY_PY_LWIP_REENTER MICROPY_PY_PENDSV_REENTER
-#define MICROPY_PY_LWIP_EXIT    MICROPY_PY_PENDSV_EXIT
 
 #ifndef MICROPY_PY_NETWORK_HOSTNAME_DEFAULT
 #define MICROPY_PY_NETWORK_HOSTNAME_DEFAULT "mpy-stm32"

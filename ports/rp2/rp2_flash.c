@@ -28,6 +28,7 @@
 
 #include "py/mphal.h"
 #include "py/runtime.h"
+#include "py/mperrno.h"
 #include "extmod/vfs.h"
 #include "modrp2.h"
 #include "hardware/flash.h"
@@ -35,14 +36,15 @@
 
 #define BLOCK_SIZE_BYTES (FLASH_SECTOR_SIZE)
 
-#ifndef MICROPY_HW_FLASH_STORAGE_BYTES
-#define MICROPY_HW_FLASH_STORAGE_BYTES (1408 * 1024)
-#endif
+static_assert(MICROPY_HW_ROMFS_BYTES % 4096 == 0, "ROMFS size must be a multiple of 4K");
 static_assert(MICROPY_HW_FLASH_STORAGE_BYTES % 4096 == 0, "Flash storage size must be a multiple of 4K");
 
 #ifndef MICROPY_HW_FLASH_STORAGE_BASE
 #define MICROPY_HW_FLASH_STORAGE_BASE (PICO_FLASH_SIZE_BYTES - MICROPY_HW_FLASH_STORAGE_BYTES)
 #endif
+
+// Put ROMFS at the upper end of the code space.
+#define MICROPY_HW_ROMFS_BASE (MICROPY_HW_FLASH_STORAGE_BASE - MICROPY_HW_ROMFS_BYTES)
 
 static_assert(MICROPY_HW_FLASH_STORAGE_BYTES <= PICO_FLASH_SIZE_BYTES, "MICROPY_HW_FLASH_STORAGE_BYTES too big");
 static_assert(MICROPY_HW_FLASH_STORAGE_BASE + MICROPY_HW_FLASH_STORAGE_BYTES <= PICO_FLASH_SIZE_BYTES, "MICROPY_HW_FLASH_STORAGE_BYTES too big");
@@ -53,7 +55,15 @@ typedef struct _rp2_flash_obj_t {
     uint32_t flash_size;
 } rp2_flash_obj_t;
 
-STATIC rp2_flash_obj_t rp2_flash_obj = {
+#if MICROPY_HW_ROMFS_BYTES > 0
+static rp2_flash_obj_t rp2_flash_romfs_obj = {
+    .base = { &rp2_flash_type },
+    .flash_base = MICROPY_HW_ROMFS_BASE,
+    .flash_size = MICROPY_HW_ROMFS_BYTES,
+};
+#endif
+
+static rp2_flash_obj_t rp2_flash_obj = {
     .base = { &rp2_flash_type },
     .flash_base = MICROPY_HW_FLASH_STORAGE_BASE,
     .flash_size = MICROPY_HW_FLASH_STORAGE_BYTES,
@@ -70,10 +80,20 @@ bi_decl(bi_block_device(
     BINARY_INFO_BLOCK_DEV_FLAG_WRITE |
     BINARY_INFO_BLOCK_DEV_FLAG_PT_UNKNOWN));
 
+// This is a workaround to pico-sdk #2201: https://github.com/raspberrypi/pico-sdk/issues/2201
+// which means the multicore_lockout_victim_is_initialized returns true even after core1 is reset.
+static bool use_multicore_lockout(void) {
+    return multicore_lockout_victim_is_initialized(1 - get_core_num())
+           #if MICROPY_PY_THREAD
+           && core1_entry != NULL
+           #endif
+    ;
+}
+
 // Flash erase and write must run with interrupts disabled and the other core suspended,
 // because the XIP bit gets disabled.
 static uint32_t begin_critical_flash_section(void) {
-    if (multicore_lockout_victim_is_initialized(1 - get_core_num())) {
+    if (use_multicore_lockout()) {
         multicore_lockout_start_blocking();
     }
     return save_and_disable_interrupts();
@@ -81,12 +101,12 @@ static uint32_t begin_critical_flash_section(void) {
 
 static void end_critical_flash_section(uint32_t state) {
     restore_interrupts(state);
-    if (multicore_lockout_victim_is_initialized(1 - get_core_num())) {
+    if (use_multicore_lockout()) {
         multicore_lockout_end_blocking();
     }
 }
 
-STATIC mp_obj_t rp2_flash_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *all_args) {
+static mp_obj_t rp2_flash_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *all_args) {
     // Parse arguments
     enum { ARG_start, ARG_len };
     static const mp_arg_t allowed_args[] = {
@@ -128,7 +148,20 @@ STATIC mp_obj_t rp2_flash_make_new(const mp_obj_type_t *type, size_t n_args, siz
     return MP_OBJ_FROM_PTR(self);
 }
 
-STATIC mp_obj_t rp2_flash_readblocks(size_t n_args, const mp_obj_t *args) {
+static mp_int_t rp2_flash_get_buffer(mp_obj_t self_in, mp_buffer_info_t *bufinfo, mp_uint_t flags) {
+    rp2_flash_obj_t *self = MP_OBJ_TO_PTR(self_in);
+    if (flags == MP_BUFFER_READ) {
+        bufinfo->buf = (void *)(XIP_BASE + self->flash_base);
+        bufinfo->len = self->flash_size;
+        bufinfo->typecode = 'B';
+        return 0;
+    } else {
+        // Write unsupported.
+        return 1;
+    }
+}
+
+static mp_obj_t rp2_flash_readblocks(size_t n_args, const mp_obj_t *args) {
     rp2_flash_obj_t *self = MP_OBJ_TO_PTR(args[0]);
     uint32_t offset = mp_obj_get_int(args[1]) * BLOCK_SIZE_BYTES;
     mp_buffer_info_t bufinfo;
@@ -143,9 +176,9 @@ STATIC mp_obj_t rp2_flash_readblocks(size_t n_args, const mp_obj_t *args) {
     mp_event_handle_nowait();
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(rp2_flash_readblocks_obj, 3, 4, rp2_flash_readblocks);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(rp2_flash_readblocks_obj, 3, 4, rp2_flash_readblocks);
 
-STATIC mp_obj_t rp2_flash_writeblocks(size_t n_args, const mp_obj_t *args) {
+static mp_obj_t rp2_flash_writeblocks(size_t n_args, const mp_obj_t *args) {
     rp2_flash_obj_t *self = MP_OBJ_TO_PTR(args[0]);
     uint32_t offset = mp_obj_get_int(args[1]) * BLOCK_SIZE_BYTES;
     mp_buffer_info_t bufinfo;
@@ -166,9 +199,9 @@ STATIC mp_obj_t rp2_flash_writeblocks(size_t n_args, const mp_obj_t *args) {
     // TODO check return value
     return mp_const_none;
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(rp2_flash_writeblocks_obj, 3, 4, rp2_flash_writeblocks);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(rp2_flash_writeblocks_obj, 3, 4, rp2_flash_writeblocks);
 
-STATIC mp_obj_t rp2_flash_ioctl(mp_obj_t self_in, mp_obj_t cmd_in, mp_obj_t arg_in) {
+static mp_obj_t rp2_flash_ioctl(mp_obj_t self_in, mp_obj_t cmd_in, mp_obj_t arg_in) {
     rp2_flash_obj_t *self = MP_OBJ_TO_PTR(self_in);
     mp_int_t cmd = mp_obj_get_int(cmd_in);
     switch (cmd) {
@@ -194,19 +227,35 @@ STATIC mp_obj_t rp2_flash_ioctl(mp_obj_t self_in, mp_obj_t cmd_in, mp_obj_t arg_
             return mp_const_none;
     }
 }
-STATIC MP_DEFINE_CONST_FUN_OBJ_3(rp2_flash_ioctl_obj, rp2_flash_ioctl);
+static MP_DEFINE_CONST_FUN_OBJ_3(rp2_flash_ioctl_obj, rp2_flash_ioctl);
 
-STATIC const mp_rom_map_elem_t rp2_flash_locals_dict_table[] = {
+static const mp_rom_map_elem_t rp2_flash_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_readblocks), MP_ROM_PTR(&rp2_flash_readblocks_obj) },
     { MP_ROM_QSTR(MP_QSTR_writeblocks), MP_ROM_PTR(&rp2_flash_writeblocks_obj) },
     { MP_ROM_QSTR(MP_QSTR_ioctl), MP_ROM_PTR(&rp2_flash_ioctl_obj) },
 };
-STATIC MP_DEFINE_CONST_DICT(rp2_flash_locals_dict, rp2_flash_locals_dict_table);
+static MP_DEFINE_CONST_DICT(rp2_flash_locals_dict, rp2_flash_locals_dict_table);
 
 MP_DEFINE_CONST_OBJ_TYPE(
     rp2_flash_type,
     MP_QSTR_Flash,
     MP_TYPE_FLAG_NONE,
     make_new, rp2_flash_make_new,
+    buffer, rp2_flash_get_buffer,
     locals_dict, &rp2_flash_locals_dict
     );
+
+#if MICROPY_VFS_ROM_IOCTL
+mp_obj_t mp_vfs_rom_ioctl(size_t n_args, const mp_obj_t *args) {
+    switch (mp_obj_get_int(args[0])) {
+        #if MICROPY_HW_ROMFS_BYTES > 0
+        case MP_VFS_ROM_IOCTL_GET_NUMBER_OF_SEGMENTS:
+            return MP_OBJ_NEW_SMALL_INT(1);
+        case MP_VFS_ROM_IOCTL_GET_SEGMENT:
+            return MP_OBJ_FROM_PTR(&rp2_flash_romfs_obj);
+        #endif
+        default:
+            return MP_OBJ_NEW_SMALL_INT(-MP_EINVAL);
+    }
+}
+#endif

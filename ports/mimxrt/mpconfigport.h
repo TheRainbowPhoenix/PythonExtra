@@ -29,7 +29,6 @@
 // Board specific definitions
 #include "mpconfigboard.h"
 #include "fsl_common.h"
-#include "lib/nxp_driver/sdk/CMSIS/Include/core_cm7.h"
 
 uint32_t trng_random_u32(void);
 
@@ -79,6 +78,7 @@ uint32_t trng_random_u32(void);
 #define MICROPY_PY_RANDOM_SEED_INIT_FUNC    (trng_random_u32())
 #define MICROPY_PY_MACHINE                  (1)
 #define MICROPY_PY_MACHINE_INCLUDEFILE      "ports/mimxrt/modmachine.c"
+#define MICROPY_PY_MACHINE_RESET            (1)
 #define MICROPY_PY_MACHINE_BARE_METAL_FUNCS (1)
 #define MICROPY_PY_MACHINE_BOOTLOADER       (1)
 #define MICROPY_PY_MACHINE_DISABLE_IRQ_ENABLE_IRQ (1)
@@ -113,13 +113,17 @@ uint32_t trng_random_u32(void);
 #define MICROPY_PY_MACHINE_UART             (1)
 #define MICROPY_PY_MACHINE_UART_INCLUDEFILE "ports/mimxrt/machine_uart.c"
 #define MICROPY_PY_MACHINE_UART_SENDBREAK   (1)
+#define MICROPY_PY_MACHINE_UART_IRQ         (1)
 #define MICROPY_PY_ONEWIRE                  (1)
+#define MICROPY_PY_MACHINE_BOOTLOADER       (1)
 
 // fatfs configuration used in ffconf.h
-#define MICROPY_FATFS_ENABLE_LFN            (1)
-#define MICROPY_FATFS_RPATH                 (2)
-#define MICROPY_FATFS_MAX_SS                (4096)
+#define MICROPY_FATFS_ENABLE_LFN            (2)
 #define MICROPY_FATFS_LFN_CODE_PAGE         437 /* 1=SFN/ANSI 437=LFN/U.S.(OEM) */
+#define MICROPY_FATFS_USE_LABEL             (1)
+#define MICROPY_FATFS_RPATH                 (2)
+#define MICROPY_FATFS_MULTI_PARTITION       (1)
+#define MICROPY_FATFS_MAX_SS                (4096)
 
 #ifndef MICROPY_PY_NETWORK
 #define MICROPY_PY_NETWORK                  (1)
@@ -130,14 +134,9 @@ uint32_t trng_random_u32(void);
 #define MICROPY_PY_WEBSOCKET                (MICROPY_PY_LWIP)
 #define MICROPY_PY_WEBREPL                  (MICROPY_PY_LWIP)
 #define MICROPY_PY_LWIP_SOCK_RAW            (MICROPY_PY_LWIP)
-// #define MICROPY_PY_HASHLIB_MD5              (MICROPY_PY_SSL)
+#define MICROPY_PY_HASHLIB_MD5              (MICROPY_PY_SSL)
 #define MICROPY_PY_HASHLIB_SHA1             (MICROPY_PY_SSL)
-// #define MICROPY_PY_CRYPTOLIB                (MICROPY_PY_SSL)
-
-// Prevent the "LWIP task" from running.
-#define MICROPY_PY_LWIP_ENTER   MICROPY_PY_PENDSV_ENTER
-#define MICROPY_PY_LWIP_REENTER MICROPY_PY_PENDSV_REENTER
-#define MICROPY_PY_LWIP_EXIT    MICROPY_PY_PENDSV_EXIT
+#define MICROPY_PY_CRYPTOLIB                (MICROPY_PY_SSL)
 
 #ifndef MICROPY_PY_BLUETOOTH_ENABLE_CENTRAL_MODE
 #define MICROPY_PY_BLUETOOTH_ENABLE_CENTRAL_MODE (1)
@@ -149,6 +148,17 @@ uint32_t trng_random_u32(void);
 
 #ifndef MICROPY_PY_NETWORK_HOSTNAME_DEFAULT
 #define MICROPY_PY_NETWORK_HOSTNAME_DEFAULT "mpy-mimxrt"
+#endif
+
+#define MICROPY_HW_ENABLE_USBDEV            (1)
+// Enable USB-CDC serial port
+#ifndef MICROPY_HW_USB_CDC
+#define MICROPY_HW_USB_CDC                  (1)
+#define MICROPY_HW_USB_CDC_1200BPS_TOUCH    (1)
+#endif
+// Enable USB Mass Storage with FatFS filesystem.
+#ifndef MICROPY_HW_USB_MSC
+#define MICROPY_HW_USB_MSC                  (0)
 #endif
 
 // Hooks to add builtins
@@ -188,6 +198,14 @@ extern const struct _mp_obj_type_t mp_network_cyw43_type;
 #define MP_STATE_PORT MP_STATE_VM
 
 // Miscellaneous settings
+#ifndef MICROPY_HW_USB_VID
+#define MICROPY_HW_USB_VID (0xf055)
+#endif
+
+#ifndef MICROPY_HW_USB_PID
+#define MICROPY_HW_USB_PID (0x9802)
+#endif
+
 #ifndef  MICROPY_EVENT_POLL_HOOK
 #define MICROPY_EVENT_POLL_HOOK \
     do { \

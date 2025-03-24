@@ -24,8 +24,8 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-#ifndef MICROPY_INCLUDED_STM32_CYW43_CONFIGPORT_H
-#define MICROPY_INCLUDED_STM32_CYW43_CONFIGPORT_H
+#ifndef MICROPY_INCLUDED_MIMXRT_CYW43_CONFIGPORT_H
+#define MICROPY_INCLUDED_MIMXRT_CYW43_CONFIGPORT_H
 
 // The board-level config will be included here, so it can set some CYW43 values.
 #include "py/mpconfig.h"
@@ -107,7 +107,7 @@
 #endif
 
 #if MICROPY_HW_ENABLE_RF_SWITCH
-#define CYW43_PIN_WL_RFSW_VDD           pin_WL_RFSW_VDD
+#define CYW43_PIN_RFSW_VDD              pin_WL_RFSW_VDD
 #endif
 
 #define cyw43_schedule_internal_poll_dispatch(func) pendsv_schedule_dispatch(PENDSV_DISPATCH_CYW43, func)
@@ -152,4 +152,4 @@ static inline int cyw43_sdio_transfer_cmd53(bool write, uint32_t block_size, uin
 
 #define CYW43_EVENT_POLL_HOOK MICROPY_EVENT_POLL_HOOK
 
-#endif // MICROPY_INCLUDED_STM32_CYW43_CONFIGPORT_H
+#endif // MICROPY_INCLUDED_MIMXRT_CYW43_CONFIGPORT_H

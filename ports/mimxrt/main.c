@@ -34,11 +34,12 @@
 #include "shared/runtime/gchelper.h"
 #include "shared/runtime/pyexec.h"
 #include "shared/runtime/softtimer.h"
+#include "shared/tinyusb/mp_usbd.h"
 #include "ticks.h"
-#include "tusb.h"
 #include "led.h"
 #include "pendsv.h"
 #include "modmachine.h"
+#include "modmimxrt.h"
 
 #if MICROPY_PY_LWIP
 #include "lwip/init.h"
@@ -55,6 +56,7 @@
 
 #include "systick.h"
 #include "extmod/modnetwork.h"
+#include "extmod/vfs.h"
 
 extern uint8_t _sstack, _estack, _gc_heap_start, _gc_heap_end;
 
@@ -63,7 +65,6 @@ void board_init(void);
 int main(void) {
     board_init();
     ticks_init();
-    tusb_init();
     pendsv_init();
 
     #if MICROPY_PY_LWIP
@@ -88,6 +89,7 @@ int main(void) {
         memcpy(&buf[0], "PYBD", 4);
         mp_hal_get_mac_ascii(MP_HAL_MAC_WLAN0, 8, 4, (char *)&buf[4]);
         cyw43_wifi_ap_set_ssid(&cyw43_state, 8, buf);
+        cyw43_wifi_ap_set_auth(&cyw43_state, CYW43_AUTH_WPA2_MIXED_PSK);
         cyw43_wifi_ap_set_password(&cyw43_state, 8, (const uint8_t *)"pybd0123");
     }
     #endif
@@ -113,8 +115,26 @@ int main(void) {
         // Execute _boot.py to set up the filesystem.
         pyexec_frozen_module("_boot.py", false);
 
+        #if MICROPY_HW_USB_MSC
+        // Set the USB medium to flash block device.
+        mimxrt_msc_medium = &mimxrt_flash_type;
+
+        #if MICROPY_PY_MACHINE_SDCARD
+        const char *path = "/sdcard";
+        // If SD is mounted, set the USB medium to SD.
+        if (mp_vfs_lookup_path(path, &path) != MP_VFS_NONE) {
+            mimxrt_msc_medium = &machine_sdcard_type;
+        }
+        #endif
+        #endif
+
         // Execute user scripts.
         int ret = pyexec_file_if_exists("boot.py");
+
+        #if MICROPY_HW_ENABLE_USBDEV
+        mp_usbd_init();
+        #endif
+
         if (ret & PYEXEC_FORCED_EXIT) {
             goto soft_reset_exit;
         }
