@@ -37,7 +37,7 @@ extern void pe_dupdate(void);
     MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(modgint_ ## NAME ## _obj, MIN, MAX, \
         modgint_ ## NAME)
 
-STATIC mp_obj_t modgint___init__(void)
+static mp_obj_t modgint___init__(void)
 {
     pe_enter_graphics_mode();
     dclear(C_WHITE);
@@ -46,7 +46,7 @@ STATIC mp_obj_t modgint___init__(void)
 
 /* <gint/keyboard.h> */
 
-STATIC qstr const key_event_fields[] = {
+static qstr const key_event_fields[] = {
     MP_QSTR_time,
     MP_QSTR_mod,
     MP_QSTR_shift,
@@ -55,7 +55,7 @@ STATIC qstr const key_event_fields[] = {
     MP_QSTR_key,
 };
 
-STATIC mp_obj_t mk_key_event(key_event_t ev)
+static mp_obj_t mk_key_event(key_event_t ev)
 {
     mp_obj_t items[] = {
         mp_obj_new_int(ev.time),
@@ -68,7 +68,7 @@ STATIC mp_obj_t mk_key_event(key_event_t ev)
     return mp_obj_new_attrtuple(key_event_fields, 6, items);
 }
 
-STATIC mp_obj_t modgint_pollevent(void)
+static mp_obj_t modgint_pollevent(void)
 {
     key_event_t ev = pollevent();
     return mk_key_event(ev);
@@ -76,26 +76,26 @@ STATIC mp_obj_t modgint_pollevent(void)
 
 // TODO: waitevent: timeout parameter?
 
-STATIC mp_obj_t modgint_clearevents(void)
+static mp_obj_t modgint_clearevents(void)
 {
     clearevents();
     return mp_const_none;
 }
 
-STATIC mp_obj_t modgint_cleareventflips(void)
+static mp_obj_t modgint_cleareventflips(void)
 {
     cleareventflips();
     return mp_const_none;
 }
 
-STATIC mp_obj_t modgint_keydown(mp_obj_t arg1)
+static mp_obj_t modgint_keydown(mp_obj_t arg1)
 {
     mp_int_t key = mp_obj_get_int(arg1);
     bool down = keydown(key) != 0;
     return mp_obj_new_bool(down);
 }
 
-STATIC mp_obj_t modgint_keydown_all(size_t n, mp_obj_t const *args)
+static mp_obj_t modgint_keydown_all(size_t n, mp_obj_t const *args)
 {
     bool down = true;
     for(size_t i = 0; i < n; i++)
@@ -103,7 +103,7 @@ STATIC mp_obj_t modgint_keydown_all(size_t n, mp_obj_t const *args)
     return mp_obj_new_bool(down);
 }
 
-STATIC mp_obj_t modgint_keydown_any(size_t n, mp_obj_t const *args)
+static mp_obj_t modgint_keydown_any(size_t n, mp_obj_t const *args)
 {
     bool down = false;
     for(size_t i = 0; i < n; i++)
@@ -111,20 +111,20 @@ STATIC mp_obj_t modgint_keydown_any(size_t n, mp_obj_t const *args)
     return mp_obj_new_bool(down);
 }
 
-STATIC mp_obj_t modgint_keypressed(mp_obj_t arg1)
+static mp_obj_t modgint_keypressed(mp_obj_t arg1)
 {
     mp_int_t key = mp_obj_get_int(arg1);
     return mp_obj_new_bool(keypressed(key) != 0);
 }
 
-STATIC mp_obj_t modgint_keyreleased(mp_obj_t arg1)
+static mp_obj_t modgint_keyreleased(mp_obj_t arg1)
 {
     mp_int_t key = mp_obj_get_int(arg1);
     return mp_obj_new_bool(keyreleased(key) != 0);
 }
 
 /* Version of getkey_opt() that includes a VM hook */
-STATIC key_event_t getkey_opt_internal(int opt, int timeout_ms)
+static key_event_t getkey_opt_internal(int opt, int timeout_ms)
 {
     /* Preset keydev transforms so they stay between calls */
     keydev_t *d = keydev_std();
@@ -166,13 +166,13 @@ STATIC key_event_t getkey_opt_internal(int opt, int timeout_ms)
     return ev;
 }
 
-STATIC mp_obj_t modgint_getkey(void)
+static mp_obj_t modgint_getkey(void)
 {
     key_event_t ev = getkey_opt_internal(GETKEY_DEFAULT, -1);
     return mk_key_event(ev);
 }
 
-STATIC mp_obj_t modgint_getkey_opt(mp_obj_t arg1, mp_obj_t arg2)
+static mp_obj_t modgint_getkey_opt(mp_obj_t arg1, mp_obj_t arg2)
 {
     int options = mp_obj_get_int(arg1);
 
@@ -184,13 +184,13 @@ STATIC mp_obj_t modgint_getkey_opt(mp_obj_t arg1, mp_obj_t arg2)
     return mk_key_event(ev);
 }
 
-STATIC mp_obj_t modgint_keycode_function(mp_obj_t arg1)
+static mp_obj_t modgint_keycode_function(mp_obj_t arg1)
 {
     int keycode = mp_obj_get_int(arg1);
     return MP_OBJ_NEW_SMALL_INT(keycode_function(keycode));
 }
 
-STATIC mp_obj_t modgint_keycode_digit(mp_obj_t arg1)
+static mp_obj_t modgint_keycode_digit(mp_obj_t arg1)
 {
     int keycode = mp_obj_get_int(arg1);
     return MP_OBJ_NEW_SMALL_INT(keycode_digit(keycode));
@@ -212,7 +212,7 @@ FUN_1(keycode_digit);
 /* <gint/display.h> */
 
 #ifdef FXCG50
-STATIC mp_obj_t modgint_C_RGB(mp_obj_t arg1, mp_obj_t arg2, mp_obj_t arg3)
+static mp_obj_t modgint_C_RGB(mp_obj_t arg1, mp_obj_t arg2, mp_obj_t arg3)
 {
     mp_int_t r = mp_obj_get_int(arg1);
     mp_int_t g = mp_obj_get_int(arg2);
@@ -221,21 +221,21 @@ STATIC mp_obj_t modgint_C_RGB(mp_obj_t arg1, mp_obj_t arg2, mp_obj_t arg3)
 }
 #endif
 
-STATIC mp_obj_t modgint_dclear(mp_obj_t arg1)
+static mp_obj_t modgint_dclear(mp_obj_t arg1)
 {
     mp_int_t color = mp_obj_get_int(arg1);
     dclear(color);
     return mp_const_none;
 }
 
-STATIC mp_obj_t modgint_dupdate(void)
+static mp_obj_t modgint_dupdate(void)
 {
     pe_enter_graphics_mode();
     pe_dupdate();
     return mp_const_none;
 }
 
-STATIC mp_obj_t modgint_drect(size_t n, mp_obj_t const *args)
+static mp_obj_t modgint_drect(size_t n, mp_obj_t const *args)
 {
     mp_int_t x1 = mp_obj_get_int(args[0]);
     mp_int_t y1 = mp_obj_get_int(args[1]);
@@ -246,7 +246,7 @@ STATIC mp_obj_t modgint_drect(size_t n, mp_obj_t const *args)
     return mp_const_none;
 }
 
-STATIC mp_obj_t modgint_drect_border(size_t n, mp_obj_t const *args)
+static mp_obj_t modgint_drect_border(size_t n, mp_obj_t const *args)
 {
     mp_int_t x1 = mp_obj_get_int(args[0]);
     mp_int_t y1 = mp_obj_get_int(args[1]);
@@ -259,7 +259,7 @@ STATIC mp_obj_t modgint_drect_border(size_t n, mp_obj_t const *args)
     return mp_const_none;
 }
 
-STATIC mp_obj_t modgint_dpixel(mp_obj_t arg1, mp_obj_t arg2, mp_obj_t arg3)
+static mp_obj_t modgint_dpixel(mp_obj_t arg1, mp_obj_t arg2, mp_obj_t arg3)
 {
     mp_int_t x = mp_obj_get_int(arg1);
     mp_int_t y = mp_obj_get_int(arg2);
@@ -268,14 +268,14 @@ STATIC mp_obj_t modgint_dpixel(mp_obj_t arg1, mp_obj_t arg2, mp_obj_t arg3)
     return mp_const_none;
 }
 
-STATIC mp_obj_t modgint_dgetpixel(mp_obj_t arg1, mp_obj_t arg2)
+static mp_obj_t modgint_dgetpixel(mp_obj_t arg1, mp_obj_t arg2)
 {
     mp_int_t x = mp_obj_get_int(arg1);
     mp_int_t y = mp_obj_get_int(arg2);
     return MP_OBJ_NEW_SMALL_INT(dgetpixel(x, y));
 }
 
-STATIC mp_obj_t modgint_dline(size_t n, mp_obj_t const *args)
+static mp_obj_t modgint_dline(size_t n, mp_obj_t const *args)
 {
     mp_int_t x1 = mp_obj_get_int(args[0]);
     mp_int_t y1 = mp_obj_get_int(args[1]);
@@ -286,7 +286,7 @@ STATIC mp_obj_t modgint_dline(size_t n, mp_obj_t const *args)
     return mp_const_none;
 }
 
-STATIC mp_obj_t modgint_dhline(mp_obj_t arg1, mp_obj_t arg2)
+static mp_obj_t modgint_dhline(mp_obj_t arg1, mp_obj_t arg2)
 {
     mp_int_t y = mp_obj_get_int(arg1);
     mp_int_t color = mp_obj_get_int(arg2);
@@ -294,7 +294,7 @@ STATIC mp_obj_t modgint_dhline(mp_obj_t arg1, mp_obj_t arg2)
     return mp_const_none;
 }
 
-STATIC mp_obj_t modgint_dvline(mp_obj_t arg1, mp_obj_t arg2)
+static mp_obj_t modgint_dvline(mp_obj_t arg1, mp_obj_t arg2)
 {
     mp_int_t x = mp_obj_get_int(arg1);
     mp_int_t color = mp_obj_get_int(arg2);
@@ -302,7 +302,7 @@ STATIC mp_obj_t modgint_dvline(mp_obj_t arg1, mp_obj_t arg2)
     return mp_const_none;
 }
 
-STATIC mp_obj_t modgint_dcircle(size_t n_args, const mp_obj_t *args)
+static mp_obj_t modgint_dcircle(size_t n_args, const mp_obj_t *args)
 {
     mp_int_t x = mp_obj_get_int(args[0]);
     mp_int_t y = mp_obj_get_int(args[1]);
@@ -314,7 +314,7 @@ STATIC mp_obj_t modgint_dcircle(size_t n_args, const mp_obj_t *args)
     return mp_const_none;
 }
 
-STATIC mp_obj_t modgint_dellipse(size_t n_args, const mp_obj_t *args)
+static mp_obj_t modgint_dellipse(size_t n_args, const mp_obj_t *args)
 {
     mp_int_t x1 = mp_obj_get_int(args[0]);
     mp_int_t y1 = mp_obj_get_int(args[1]);
@@ -327,7 +327,7 @@ STATIC mp_obj_t modgint_dellipse(size_t n_args, const mp_obj_t *args)
     return mp_const_none;
 }
 
-STATIC mp_obj_t modgint_dpoly(mp_obj_t arg1, mp_obj_t arg2, mp_obj_t arg3)
+static mp_obj_t modgint_dpoly(mp_obj_t arg1, mp_obj_t arg2, mp_obj_t arg3)
 {
     mp_uint_t nbitems;
     mp_obj_t *items;
@@ -357,7 +357,7 @@ dpoly_end:
 
 // TODO: modgint: Font management?
 
-STATIC mp_obj_t modgint_dtext_opt(size_t n, mp_obj_t const *args)
+static mp_obj_t modgint_dtext_opt(size_t n, mp_obj_t const *args)
 {
     mp_int_t x = mp_obj_get_int(args[0]);
     mp_int_t y = mp_obj_get_int(args[1]);
@@ -371,7 +371,7 @@ STATIC mp_obj_t modgint_dtext_opt(size_t n, mp_obj_t const *args)
     return mp_const_none;
 }
 
-STATIC mp_obj_t modgint_dtext(size_t n, mp_obj_t const *args)
+static mp_obj_t modgint_dtext(size_t n, mp_obj_t const *args)
 {
     mp_int_t x = mp_obj_get_int(args[0]);
     mp_int_t y = mp_obj_get_int(args[1]);
@@ -384,7 +384,7 @@ STATIC mp_obj_t modgint_dtext(size_t n, mp_obj_t const *args)
 /* fx-CG-specific image constructors */
 #ifdef FXCG50
 
-STATIC mp_obj_t modgint_image_rgb565(mp_obj_t arg1, mp_obj_t arg2,
+static mp_obj_t modgint_image_rgb565(mp_obj_t arg1, mp_obj_t arg2,
     mp_obj_t arg3)
 {
     int width = mp_obj_get_int(arg1);
@@ -393,7 +393,7 @@ STATIC mp_obj_t modgint_image_rgb565(mp_obj_t arg1, mp_obj_t arg2,
         height, width * 2, arg3, mp_const_none);
 }
 
-STATIC mp_obj_t modgint_image_rgb565a(mp_obj_t arg1, mp_obj_t arg2,
+static mp_obj_t modgint_image_rgb565a(mp_obj_t arg1, mp_obj_t arg2,
     mp_obj_t arg3)
 {
     int width = mp_obj_get_int(arg1);
@@ -402,7 +402,7 @@ STATIC mp_obj_t modgint_image_rgb565a(mp_obj_t arg1, mp_obj_t arg2,
         height, width * 2, arg3, mp_const_none);
 }
 
-STATIC mp_obj_t modgint_image_p8_rgb565(size_t n, mp_obj_t const *args)
+static mp_obj_t modgint_image_p8_rgb565(size_t n, mp_obj_t const *args)
 {
     int width = mp_obj_get_int(args[0]);
     int height = mp_obj_get_int(args[1]);
@@ -415,7 +415,7 @@ STATIC mp_obj_t modgint_image_p8_rgb565(size_t n, mp_obj_t const *args)
         color_count, width, height, stride, data, palette);
 }
 
-STATIC mp_obj_t modgint_image_p8_rgb565a(size_t n, mp_obj_t const *args)
+static mp_obj_t modgint_image_p8_rgb565a(size_t n, mp_obj_t const *args)
 {
     int width = mp_obj_get_int(args[0]);
     int height = mp_obj_get_int(args[1]);
@@ -428,7 +428,7 @@ STATIC mp_obj_t modgint_image_p8_rgb565a(size_t n, mp_obj_t const *args)
         color_count, width, height, stride, data, palette);
 }
 
-STATIC mp_obj_t modgint_image_p4_rgb565(size_t n, mp_obj_t const *args)
+static mp_obj_t modgint_image_p4_rgb565(size_t n, mp_obj_t const *args)
 {
     int width = mp_obj_get_int(args[0]);
     int height = mp_obj_get_int(args[1]);
@@ -440,7 +440,7 @@ STATIC mp_obj_t modgint_image_p4_rgb565(size_t n, mp_obj_t const *args)
         width, height, stride, data, palette);
 }
 
-STATIC mp_obj_t modgint_image_p4_rgb565a(size_t n, mp_obj_t const *args)
+static mp_obj_t modgint_image_p4_rgb565a(size_t n, mp_obj_t const *args)
 {
     int width = mp_obj_get_int(args[0]);
     int height = mp_obj_get_int(args[1]);
@@ -454,7 +454,7 @@ STATIC mp_obj_t modgint_image_p4_rgb565a(size_t n, mp_obj_t const *args)
 
 #endif /* FXCG50 */
 
-STATIC mp_obj_t modgint_dimage(mp_obj_t arg1, mp_obj_t arg2, mp_obj_t arg3)
+static mp_obj_t modgint_dimage(mp_obj_t arg1, mp_obj_t arg2, mp_obj_t arg3)
 {
     mp_int_t x = mp_obj_get_int(arg1);
     mp_int_t y = mp_obj_get_int(arg2);
@@ -466,7 +466,7 @@ STATIC mp_obj_t modgint_dimage(mp_obj_t arg1, mp_obj_t arg2, mp_obj_t arg3)
     return mp_const_none;
 }
 
-STATIC mp_obj_t modgint_dsubimage(size_t n_args, const mp_obj_t *args)
+static mp_obj_t modgint_dsubimage(size_t n_args, const mp_obj_t *args)
 {
     mp_int_t x      = mp_obj_get_int(args[0]);
     mp_int_t y      = mp_obj_get_int(args[1]);
@@ -521,7 +521,7 @@ FUN_BETWEEN(dsubimage, 7, 7);
 // Helper: define small integer constant "I" as "I" in the module
 #define INT(I) {MP_ROM_QSTR(MP_QSTR_ ## I), MP_OBJ_NEW_SMALL_INT(I)}
 
-STATIC const mp_rom_map_elem_t modgint_module_globals_table[] = {
+static const mp_rom_map_elem_t modgint_module_globals_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR_gint) },
     OBJ(__init__),
 
@@ -707,7 +707,7 @@ STATIC const mp_rom_map_elem_t modgint_module_globals_table[] = {
     INT(IMAGE_FLAGS_PALETTE_ALLOC),
 #endif
 };
-STATIC MP_DEFINE_CONST_DICT(
+static MP_DEFINE_CONST_DICT(
   modgint_module_globals, modgint_module_globals_table);
 
 const mp_obj_module_t modgint_module = {

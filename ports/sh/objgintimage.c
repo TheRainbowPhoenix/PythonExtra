@@ -9,7 +9,7 @@
 #include "py/objarray.h"
 #include <string.h>
 
-STATIC mp_obj_t ptr_to_memoryview(void *ptr, int size, int typecode, bool rw)
+static mp_obj_t ptr_to_memoryview(void *ptr, int size, int typecode, bool rw)
 {
     if(ptr == NULL)
         return mp_const_none;
@@ -21,13 +21,13 @@ STATIC mp_obj_t ptr_to_memoryview(void *ptr, int size, int typecode, bool rw)
 #ifdef FX9860G
 
 /* Heuristic to check if the image is read-only or not */
-STATIC bool pointer_is_ro(void *data)
+static bool pointer_is_ro(void *data)
 {
     uintptr_t addr = (uintptr_t)data;
     return !addr || (addr >= 0x00300000 && addr <= 0x00500000);
 }
 
-STATIC int image_data_size(int profile, int width, int height)
+static int image_data_size(int profile, int width, int height)
 {
     int layers = image_layer_count(profile);
     int longwords = (width + 31) >> 5;
@@ -36,7 +36,7 @@ STATIC int image_data_size(int profile, int width, int height)
 
 /* gint.image(profile, width, height, data)
    Keyword labels are allowed but the order must remain the same. */
-STATIC mp_obj_t image_make_new(const mp_obj_type_t *type, size_t n_args,
+static mp_obj_t image_make_new(const mp_obj_type_t *type, size_t n_args,
     size_t n_kw, const mp_obj_t *args)
 {
     enum { ARG_profile, ARG_width, ARG_height, ARG_data };
@@ -109,7 +109,7 @@ mp_obj_t objgintimage_make_from_gint_image(bopti_image_t const *img)
     return MP_OBJ_FROM_PTR(self);
 }
 
-STATIC void image_print(mp_print_t const *print, mp_obj_t self_in,
+static void image_print(mp_print_t const *print, mp_obj_t self_in,
     mp_print_kind_t kind)
 {
     (void)kind;
@@ -131,7 +131,7 @@ STATIC void image_print(mp_print_t const *print, mp_obj_t self_in,
         image_data_size(self->img.profile, self->img.width, self->img.height));
 }
 
-STATIC void image_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest)
+static void image_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest)
 {
     if(dest[0] == MP_OBJ_NULL) {
         mp_obj_gintimage_t *self = MP_OBJ_TO_PTR(self_in);
@@ -156,7 +156,7 @@ STATIC void image_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest)
 
 /* gint.image(format, color_count, width, height, stride, data, palette)
    Keyword labels are allowed but the order must remain the same. */
-STATIC mp_obj_t image_make_new(const mp_obj_type_t *type, size_t n_args,
+static mp_obj_t image_make_new(const mp_obj_type_t *type, size_t n_args,
     size_t n_kw, const mp_obj_t *args)
 {
     enum { ARG_format, ARG_color_count, ARG_width, ARG_height, ARG_stride,
@@ -271,7 +271,7 @@ mp_obj_t objgintimage_make_from_gint_image(bopti_image_t const *img)
     return MP_OBJ_FROM_PTR(self);
 }
 
-STATIC char const *flag_string(int ro, int alloc)
+static char const *flag_string(int ro, int alloc)
 {
     static char const *flag_names[] = {
         "rw", "ro", "alloc-rw", "alloc-ro",
@@ -279,7 +279,7 @@ STATIC char const *flag_string(int ro, int alloc)
     return flag_names[!!ro + 2 * !!alloc];
 }
 
-STATIC void image_print(mp_print_t const *print, mp_obj_t self_in,
+static void image_print(mp_print_t const *print, mp_obj_t self_in,
     mp_print_kind_t kind)
 {
     (void)kind;
@@ -306,7 +306,7 @@ STATIC void image_print(mp_print_t const *print, mp_obj_t self_in,
     mp_printf(print, ">");
 }
 
-STATIC void image_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest)
+static void image_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest)
 {
     if(dest[0] == MP_OBJ_NULL) {
         mp_obj_gintimage_t *self = MP_OBJ_TO_PTR(self_in);

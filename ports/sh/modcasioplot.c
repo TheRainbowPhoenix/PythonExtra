@@ -172,7 +172,7 @@ MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(set_pixel_obj, 2, 3, set_pixel);
 MP_DEFINE_CONST_FUN_OBJ_2(get_pixel_obj, get_pixel);
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(draw_string_obj, 3, 5, draw_string);
 
-STATIC const mp_rom_map_elem_t casioplot_module_globals_table[] = {
+static const mp_rom_map_elem_t casioplot_module_globals_table[] = {
     { MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR_casioplot) },
     { MP_ROM_QSTR(MP_QSTR___init__), MP_ROM_PTR(&init_obj) },
     { MP_ROM_QSTR(MP_QSTR_show_screen), MP_ROM_PTR(&show_screen_obj) },
@@ -181,7 +181,7 @@ STATIC const mp_rom_map_elem_t casioplot_module_globals_table[] = {
     { MP_ROM_QSTR(MP_QSTR_get_pixel), MP_ROM_PTR(&get_pixel_obj) },
     { MP_ROM_QSTR(MP_QSTR_draw_string), MP_ROM_PTR(&draw_string_obj) },
 };
-STATIC MP_DEFINE_CONST_DICT(
+static MP_DEFINE_CONST_DICT(
     casioplot_module_globals, casioplot_module_globals_table);
 
 const mp_obj_module_t casioplot_module = {

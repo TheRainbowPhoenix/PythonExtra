@@ -325,7 +325,7 @@ MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(Kandinsky_draw_string_obj, 3, 5, Kandinsky_d
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(Kandinsky_fill_rect_obj, 5, 5, Kandinsky_fill_rect);
 MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(Kandinsky_color_obj, 3, 3, Kandinsky_color);
 
-STATIC const mp_rom_map_elem_t kandinsky_module_globals_table[] = {
+static const mp_rom_map_elem_t kandinsky_module_globals_table[] = {
     {MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR_kandinsky)},
     {MP_ROM_QSTR(MP_QSTR___init__), MP_ROM_PTR(&Kandinsky_init_obj)},
     {MP_ROM_QSTR(MP_QSTR_fill_rect), MP_ROM_PTR(&Kandinsky_fill_rect_obj)},
@@ -338,7 +338,7 @@ STATIC const mp_rom_map_elem_t kandinsky_module_globals_table[] = {
     {MP_ROM_QSTR(MP_QSTR_CGEXT_Is_Wide_Screen_Enabled), MP_ROM_PTR(&Kandinsky_CGEXT_Is_Wide_Screen_Enabled_obj)},
     {MP_ROM_QSTR(MP_QSTR_CGEXT_Set_Margin_Color), MP_ROM_PTR(&Kandinsky_CGEXT_Set_Margin_Color_obj)},
 };
-STATIC MP_DEFINE_CONST_DICT(kandinsky_module_globals,
+static MP_DEFINE_CONST_DICT(kandinsky_module_globals,
                             kandinsky_module_globals_table);
 
 const mp_obj_module_t kandinsky_module = {

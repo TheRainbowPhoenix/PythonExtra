@@ -85,7 +85,7 @@ int KeyTranslationMap[ 53 ] = { 0x85, 0x86, 0x75, 0x76, 0x91, // gint LEFT, UP, 
 /* END OF KEY TRANSLATION */
 
 
-STATIC mp_obj_t ion_keydown(mp_obj_t arg1) {
+static mp_obj_t ion_keydown(mp_obj_t arg1) {
   mp_int_t key = mp_obj_get_int(arg1);
 
   if (key < KEY_LEFT || key > KEY_EXE )
@@ -110,7 +110,7 @@ MP_DEFINE_CONST_FUN_OBJ_1(ion_keydown_obj, ion_keydown);
 #define INT(I)                                                                 \
   { MP_ROM_QSTR(MP_QSTR_##I), MP_OBJ_NEW_SMALL_INT(I) }
 
-STATIC const mp_rom_map_elem_t ion_module_globals_table[] = {
+static const mp_rom_map_elem_t ion_module_globals_table[] = {
     {MP_OBJ_NEW_QSTR(MP_QSTR___name__), MP_OBJ_NEW_QSTR(MP_QSTR_ion)},
 
     /*Numworks keycodes */
@@ -169,7 +169,7 @@ STATIC const mp_rom_map_elem_t ion_module_globals_table[] = {
 
     { MP_ROM_QSTR(MP_QSTR_keydown), MP_ROM_PTR(&ion_keydown_obj) }
 };
-STATIC MP_DEFINE_CONST_DICT(ion_module_globals, ion_module_globals_table);
+static MP_DEFINE_CONST_DICT(ion_module_globals, ion_module_globals_table);
 
 const mp_obj_module_t ion_module = {
     .base = {&mp_type_module},

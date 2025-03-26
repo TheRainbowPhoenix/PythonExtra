@@ -46,7 +46,7 @@
 int pyexec_system_exit = 0;
 
 #if MICROPY_REPL_INFO
-STATIC bool repl_display_debugging_info = 0;
+static bool repl_display_debugging_info = 0;
 #endif
 
 #define EXEC_FLAG_PRINT_EOF             (1 << 0)
@@ -64,7 +64,7 @@ STATIC bool repl_display_debugging_info = 0;
 // EXEC_FLAG_PRINT_EOF prints 2 EOF chars: 1 after normal output, 1 after exception output
 // EXEC_FLAG_ALLOW_DEBUGGING allows debugging info to be printed after executing the code
 // EXEC_FLAG_IS_REPL is used for REPL inputs (flag passed on to mp_compile)
-STATIC int parse_compile_execute(const void *source, mp_parse_input_kind_t input_kind, mp_uint_t exec_flags) {
+static int parse_compile_execute(const void *source, mp_parse_input_kind_t input_kind, mp_uint_t exec_flags) {
     int ret = 0;
     #if MICROPY_REPL_INFO
     uint32_t start = 0;
@@ -212,7 +212,7 @@ void pyexec_event_repl_init(void) {
     vstr_reset(MP_STATE_VM(repl_line));
 }
 
-STATIC int pyexec_raw_repl_process_char(int c) {
+static int pyexec_raw_repl_process_char(int c) {
     if(c != CHAR_CTRL_D && c != '\r') {
         vstr_add_byte(MP_STATE_VM(repl_line), c);
         return 0;

@@ -191,7 +191,7 @@ static void gc_helper_get_regs(gc_helper_regs_t arr) {
 
 #elif defined(__sh3__)
 
-STATIC void gc_helper_get_regs(gc_helper_regs_t arr) {
+static void gc_helper_get_regs(gc_helper_regs_t arr) {
     register const long r8 asm ("r8");
     register const long r9 asm ("r9");
     register const long r10 asm ("r10");
