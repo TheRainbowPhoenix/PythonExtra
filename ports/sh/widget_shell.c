@@ -10,12 +10,8 @@
 #include <gint/timer.h>
 #include <stdlib.h>
 
-/* Type identified for widget_shell */
-static int widget_shell_id = -1;
-
-/* Events */
-uint16_t WIDGET_SHELL_MOD_CHANGED;
-uint16_t WIDGET_SHELL_INPUT;
+J_DEFINE_WIDGET(widget_shell, csize, layout, render, event, destroy)
+J_DEFINE_EVENTS(WIDGET_SHELL_MOD_CHANGED, WIDGET_SHELL_INPUT)
 
 //=== Modifier states ===//
 
@@ -75,7 +71,7 @@ static int widget_shell_timer_handler(void *s0)
 
 widget_shell *widget_shell_create(console_t *console, void *parent)
 {
-    if(widget_shell_id < 0)
+    if(widget_shell_type_id < 0)
         return NULL;
 
     widget_shell *s = malloc(sizeof *s);
@@ -89,7 +85,8 @@ widget_shell *widget_shell_create(console_t *console, void *parent)
         return NULL;
     }
 
-    jwidget_init(&s->widget, widget_shell_id, parent);
+    jwidget_init(&s->widget, widget_shell_type_id, parent);
+    jwidget_set_focus_policy(s, J_FOCUS_POLICY_ACCEPT);
 
     s->console = console;
     s->font = dfont_default();
@@ -145,7 +142,7 @@ void widget_shell_modifier_info(int shift, int alpha,
 // Polymorphic widget operations
 //---
 
-static void widget_shell_poly_csize(void *s0)
+void widget_shell_poly_csize(void *s0)
 {
     widget_shell *s = s0;
     int row_height = s->font->line_height;
@@ -155,7 +152,7 @@ static void widget_shell_poly_csize(void *s0)
     s->widget.h = row_height * base_rows + s->line_spacing * (base_rows - 1);
 }
 
-static void widget_shell_poly_layout(void *s0)
+void widget_shell_poly_layout(void *s0)
 {
     widget_shell *s = s0;
 
@@ -164,7 +161,7 @@ static void widget_shell_poly_layout(void *s0)
     s->lines = ch / line_height;
 }
 
-static void widget_shell_poly_render(void *s0, int x, int y)
+void widget_shell_poly_render(void *s0, int x, int y)
 {
     widget_shell *s = s0;
     int line_height = s->font->line_height + s->line_spacing;
@@ -196,7 +193,7 @@ static void widget_shell_use_mods(widget_shell *s)
     s->alpha = new_alpha;
 }
 
-static bool widget_shell_poly_event(void *s0, jevent e)
+bool widget_shell_poly_event(void *s0, jevent e)
 {
     widget_shell *s = s0;
 
@@ -269,26 +266,8 @@ static bool widget_shell_poly_event(void *s0, jevent e)
     return false;
 }
 
-static void widget_shell_poly_destroy(void *s0)
+void widget_shell_poly_destroy(void *s0)
 {
     widget_shell *s = s0;
     timer_stop(s->timer_id);
-}
-
-/* widget_shell type definition */
-static jwidget_poly type_widget_shell = {
-    .name    = "widget_shell",
-    .csize   = widget_shell_poly_csize,
-    .layout  = widget_shell_poly_layout,
-    .render  = widget_shell_poly_render,
-    .event   = widget_shell_poly_event,
-    .destroy = widget_shell_poly_destroy,
-};
-
-__attribute__((constructor))
-static void j_register_widget_shell(void)
-{
-    widget_shell_id = j_register_widget(&type_widget_shell, "jwidget");
-    WIDGET_SHELL_MOD_CHANGED = j_register_event();
-    WIDGET_SHELL_INPUT = j_register_event();
 }
