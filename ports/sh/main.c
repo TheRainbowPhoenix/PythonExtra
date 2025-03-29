@@ -268,7 +268,7 @@ static void pe_update_title(void)
    effect on the shell are allowed and the return value is any full line that
    is entered in the shell. Otherwise, the full GUI is available and the return
    value is NULL. */
-static char *pe_handle_event(jevent e, bool shell_bound)
+static char *pe_handle_event(jevent e, bool shell_bound, bool *exit)
 {
     if(e.type == JSCENE_PAINT)
         pe_draw();
@@ -312,6 +312,9 @@ static char *pe_handle_event(jevent e, bool shell_bound)
     }
     if(!shell_bound && e.type == JFILESELECT_LOADED)
         pe_update_title();
+    /* Exit if we BACK out from the file selector */
+    if(!shell_bound && e.type == JFILESELECT_CANCELED && exit)
+        *exit = true;
 
     if(e.type != JWIDGET_KEY || e.key.type == KEYEV_UP)
         return NULL;
@@ -324,11 +327,11 @@ static char *pe_handle_event(jevent e, bool shell_bound)
     if(key == KEY_TAN)
         pe_debug_kmalloc("tan");
 
-    if(!shell_bound && key == KEY_F1) {
+    if(!shell_bound && (key == KEY_F1 || key == KEY_PREVTAB)) {
         jscene_show_and_focus(PE.scene, PE.fileselect);
         jwidget_set_visible(PE.title, true);
     }
-    if(!shell_bound && key == KEY_F2) {
+    if(!shell_bound && (key == KEY_F2 || key == KEY_NEXTTAB)) {
         jscene_show_and_focus(PE.scene, PE.shell);
         jwidget_set_visible(PE.title, PE.show_title_in_shell);
     }
@@ -336,6 +339,11 @@ static char *pe_handle_event(jevent e, bool shell_bound)
         pe_debug_browse_meminfo();
         PE.scene->widget.update = true;
     }
+
+    /* If return-to-menu is not enabled in the scene (default on machines on
+       which there *is no* return-to-menu, leave on HOME */
+    if(!shell_bound && exit && e.key.key == KEY_HOME)
+        *exit = true;
 
     return NULL;
 }
@@ -351,7 +359,7 @@ int pe_readline(vstr_t *line, char const *prompt)
     char *text = NULL;
     while(!text) {
         jevent e = jscene_run(PE.scene);
-        text = pe_handle_event(e, true);
+        text = pe_handle_event(e, true, NULL);
     }
 
     mp_hal_set_interrupt_char(c);
@@ -437,21 +445,29 @@ int main(int argc, char **argv)
     gc_add(py_ram_start, py_ram_end); */
 #endif
 #else
-    /* Get everything from the OS stack (~ 350 kB) */
-    size_t gc_area_size;
-    void *gc_area = kmalloc_max(&gc_area_size, "_ostk");
-    gc_init(gc_area, gc_area + gc_area_size);
+    /* On Math+, we have a loooot of free space in the _ld1 arena. */
+    if(gint[HWCALC] == HWCALC_FXCG100) {
+        size_t gc_area_size;
+        void *gc_area = kmalloc_max(&gc_area_size, "_ld1");
+        gc_init(gc_area, gc_area + gc_area_size);
+    }
+    else {
+        /* Get everything from the OS stack (~ 350 kB) */
+        size_t gc_area_size;
+        void *gc_area = kmalloc_max(&gc_area_size, "_ostk");
+        gc_init(gc_area, gc_area + gc_area_size);
 
-    /* Also get most of _uram; we can try and fit in the remaining ~150 kB */
-    void *uram_area = kmalloc(300000, "_uram");
-    if(uram_area)
-        gc_add(uram_area, uram_area + 300000);
+        /* Also get most of _uram; we try and fit in the remaining ~150 kB */
+        void *uram_area = kmalloc(300000, "_uram");
+        if(uram_area)
+            gc_add(uram_area, uram_area + 300000);
 
-    /* Other options:
-       - All of _uram (leaving the OS heap for the shell/GUI/etc)
-       - The OS' extra VRAM
-       - Memory past the 2 MB boundary on tested OSes */
-    // gc_add(start, end)...
+        /* Other options:
+           - All of _uram (leaving the OS heap for the shell/GUI/etc)
+           - The OS' extra VRAM
+           - Memory past the 2 MB boundary on tested OSes */
+        // gc_add(start, end)...
+    }
 #endif
 
     mp_init();
@@ -518,7 +534,11 @@ int main(int argc, char **argv)
 
     while(1) {
         jevent e = jscene_run(PE.scene);
-        pe_handle_event(e, false);
+        bool exit = false;
+        pe_handle_event(e, false, &exit);
+
+        if(exit)
+            break;
     }
 
     //=== Deinitialization ===//

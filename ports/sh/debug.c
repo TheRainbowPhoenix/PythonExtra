@@ -4,6 +4,7 @@
 #include <gint/kmalloc.h>
 #include <gint/display.h>
 #include <gint/keyboard.h>
+#include <gint/hardware.h>
 #include <gint/timer.h>
 #include <gint/cpu.h>
 #include <stdio.h>
@@ -44,7 +45,8 @@ void pe_debug_get_meminfo(struct pe_debug_meminfo *info)
     info->_uram_used = s->used_memory;
     info->_uram_free = s->free_memory;
 
-    s = kmalloc_get_gint_stats(kmalloc_get_arena("_ostk"));
+    s = kmalloc_get_gint_stats(kmalloc_get_arena(
+        gint[HWCALC] == HWCALC_FXCG100 ? "_ld1":  "_ostk"));
     info->_ostk_used = s->used_memory;
     info->_ostk_free = s->free_memory;
 #endif
@@ -95,10 +97,11 @@ void pe_debug_browse_meminfo(void)
         "main", "console", "upy", "prompt", "ui",
         "now", /* extra element compared to original enum */
     };
+    char const *arena2 = (gint[HWCALC] == HWCALC_FXCG100 ? "_ld1":  "_ostk");
 
     dtext(1, 1, C_BLACK, "Memory info");
     dtext(83, 24, C_BLACK, "_uram");
-    dtext(170, 24, C_BLACK, "_ostk");
+    dtext(190, 24, C_BLACK, arena2);
     dline(10, 36, DWIDTH-11, 36, C_BLACK);
 
     for(int i = 0; i < PE_DEBUG_STARTUP_N + 1; i++) {
@@ -113,7 +116,7 @@ void pe_debug_browse_meminfo(void)
         dtext(10, y, C_BLACK, names[i]);
         dprint(83, y+1, C_BLACK,
             "%d,%d", info->_uram_used, info->_uram_free);
-        dprint(170, y+1, C_BLACK,
+        dprint(190, y+1, C_BLACK,
             "%d,%d", info->_ostk_used, info->_ostk_free);
     }
 #endif
@@ -197,11 +200,12 @@ void pe_debug_kmalloc(char const *prefix)
 #endif
 
 #ifdef FXCG50
-    s2 = kmalloc_get_gint_stats(kmalloc_get_arena("_ostk"));
-    pe_debug_printf("%s: _uram[used=%d free=%d] _ostk[used=%d free=%d]\n",
+    char const *arena2 = (gint[HWCALC] == HWCALC_FXCG100 ? "_ld1":  "_ostk");
+    s2 = kmalloc_get_gint_stats(kmalloc_get_arena(arena2));
+    pe_debug_printf("%s: _uram[used=%d free=%d] %s[used=%d free=%d]\n",
         prefix,
         s1->used_memory, s1->free_memory,
-        s2->used_memory, s2->free_memory);
+        arena2, s2->used_memory, s2->free_memory);
 #endif
 }
 
