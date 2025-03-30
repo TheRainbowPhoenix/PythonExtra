@@ -212,6 +212,8 @@ void linebuf_recycle_oldest_lines(linebuf_t *buf, int count)
 
     for(int nth = 0; nth < count; nth++) {
         console_fline_t *FL = linebuf_get_nth_line(buf, nth);
+        if(!FL) // avoid abort()
+            continue;
         buf->total_rendered -= FL->render_lines;
         if(nth != buf->size - 1)
             buf->total_size_except_last -= FL->size;
@@ -251,6 +253,8 @@ void linebuf_update_render(linebuf_t *buf, int width, bool lazy)
 
     for(int abs = start; abs < end; abs++) {
         console_fline_t *FL = linebuf_get_nth_line(buf, abs - buf->absolute);
+        if(!FL) // avoid abort()
+            continue;
         buf->total_rendered -= FL->render_lines;
         console_fline_update_render_lines(FL, text_w);
         buf->total_rendered += FL->render_lines;
@@ -348,6 +352,8 @@ void console_render(int x, int y0, console_t *cons, int dy,
     /* Normally only frozen lines have a valid size field. Update the size of
        the last line so we don't have to make an exception for it. */
     stredit_t *ed = linebuf_get_last_line(&cons->lines);
+    if(!ed) // avoid abort()
+        return;
     console_fline_t *ed_FL = (console_fline_t *)ed->raw;
     ed_FL->size = ed->size;
 
@@ -404,7 +410,7 @@ bool console_set_cursor(console_t *cons, int pos)
 {
     stredit_t *ed = last_line(cons);
 
-    if(pos < ed->prefix || pos > ed->size)
+    if(!ed || pos < ed->prefix || pos > ed->size)
         return false;
 
     cons->cursor = pos;
@@ -419,6 +425,8 @@ bool console_move_cursor(console_t *cons, int cursor_movement)
 char *console_get_line(console_t *cons, bool copy)
 {
     stredit_t *ed = last_line(cons);
+    if(!ed)
+        return NULL;
     char *str = stredit_data(ed) + ed->prefix;
     return copy ? strdup(str) : str;
 }
@@ -516,6 +524,8 @@ void console_delete_at_cursor(console_t *cons, int n)
 void console_clear_current_line(console_t *cons)
 {
     stredit_t *ed = last_line(cons);
+    if(!ed) // avoid abort()
+        return;
     stredit_delete(ed, ed->prefix, ed->size - ed->prefix);
     cons->cursor = ed->prefix;
     cons->render_needed = true;

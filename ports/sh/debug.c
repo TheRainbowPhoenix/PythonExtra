@@ -32,23 +32,31 @@ void pe_debug_get_meminfo(struct pe_debug_meminfo *info)
 
 #ifdef FX9860G
     s = kmalloc_get_gint_stats(kmalloc_get_arena("_uram"));
-    info->_uram_used = s->used_memory;
-    info->_uram_free = s->free_memory;
+    if(s) {
+        info->_uram_used = s->used_memory;
+        info->_uram_free = s->free_memory;
+    }
 
     s = kmalloc_get_gint_stats(kmalloc_get_arena("pram0"));
-    info->pram0_used = s->used_memory;
-    info->pram0_free = s->free_memory;
+    if(s) {
+        info->pram0_used = s->used_memory;
+        info->pram0_free = s->free_memory;
+    }
 #endif
 
 #ifdef FXCG50
     s = kmalloc_get_gint_stats(kmalloc_get_arena("_uram"));
-    info->_uram_used = s->used_memory;
-    info->_uram_free = s->free_memory;
+    if(s) {
+        info->_uram_used = s->used_memory;
+        info->_uram_free = s->free_memory;
+    }
 
     s = kmalloc_get_gint_stats(kmalloc_get_arena(
         gint[HWCALC] == HWCALC_FXCG100 ? "_ld1":  "_ostk"));
-    info->_ostk_used = s->used_memory;
-    info->_ostk_free = s->free_memory;
+    if(s) {
+        info->_ostk_used = s->used_memory;
+        info->_ostk_free = s->free_memory;
+    }
 #endif
 }
 

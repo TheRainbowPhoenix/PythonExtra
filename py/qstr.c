@@ -259,6 +259,16 @@ static qstr qstr_add(mp_uint_t len, const char *q_ptr) {
     return MP_STATE_VM(last_pool)->total_prev_len + at;
 }
 
+static int my_strncmp(const char *s1, const char *s2, size_t n)
+{
+    if (n == 0)
+        return (0);
+    size_t i = -1;
+    while (++i < n - 1 && s1[i] != '\0' && s2[i] != '\0'
+          && s1[i] == s2[i]) ;
+    return ((unsigned char) s1[i] - (unsigned char) s2[i]);
+}
+
 qstr qstr_find_strn(const char *str, size_t str_len) {
     if (str_len == 0) {
         // strncmp behaviour is undefined for str==NULL.
@@ -279,7 +289,7 @@ qstr qstr_find_strn(const char *str, size_t str_len) {
         if (pool->is_sorted) {
             while (high - low > 1) {
                 size_t mid = (low + high) / 2;
-                int cmp = strncmp(str, pool->qstrs[mid], str_len);
+                int cmp = my_strncmp(str, pool->qstrs[mid], str_len);
                 if (cmp <= 0) {
                     high = mid;
                 } else {

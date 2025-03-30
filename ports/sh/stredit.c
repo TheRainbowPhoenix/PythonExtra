@@ -72,6 +72,8 @@ bool stredit_alloc(stredit_t *ed, int n)
 
 void stredit_set_prefix(stredit_t *ed, int prefix_size)
 {
+    if(!ed)
+        return;
     ed->prefix = min(max(0, prefix_size), (int)ed->size);
 }
 

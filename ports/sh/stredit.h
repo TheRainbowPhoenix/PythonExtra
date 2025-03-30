@@ -46,7 +46,7 @@ bool stredit_init(stredit_t *ed, int init_chars, int reserved_bytes,
 /* Get the data pointer out of an stredit. */
 static inline char *stredit_data(stredit_t *ed)
 {
-    return ed->raw + ed->reserved;
+    return ed ? ed->raw + ed->reserved : NULL;
 }
 
 /* Reset an editable string. This frees and destroys the string. */
@@ -59,7 +59,7 @@ char *stredit_freeze_and_reset(stredit_t *ed);
 /* Number of bytes that can be added before the size limit is reached. */
 static inline int stredit_capacity(stredit_t *ed)
 {
-    return ed->max_size - ed->size;
+    return ed ? ed->max_size - ed->size : 0;
 }
 
 /* Realloc the string to ensure n characters plus a NUL can be written. */

@@ -3,10 +3,11 @@ CROSS_COMPILE := sh-elf-
 include $(TOP)/py/py.mk
 include $(TOP)/extmod/extmod.mk
 
-CFLAGS += -m4-nofpu -mb -fstrict-volatile-bitfields \
+CFLAGS += -m4-nofpu -mb -Wa,--dsp -flto=auto -fstrict-volatile-bitfields \
           -I. -I$(TOP)/ports/sh -I$(BUILD) -I$(TOP) \
           $(SH_CFLAGS) -Os -Wall -Wextra -Wno-unused-parameter
 LIBS += -nostdlib -Wl,--no-warn-rwx-segments $(SH_LDFLAGS) -Wl,-Map=build/map
+LDFLAGS := -Wno-lto-type-mismatch
 
 # Source files
 SRC_C = \
