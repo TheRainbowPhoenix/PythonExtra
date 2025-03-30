@@ -33,10 +33,19 @@ SRC_QSTR += \
     ports/sh/objgintimage.c \
     ports/sh/pyexec.c \
 
+ifeq ($(shell [[ x"$$(git describe)" == x"$$(git describe main)" ]] \
+              && [[ -z "$$(git status -uno --porcelain)" ]] \
+              && echo y),y)
+    BUILDTYPE := RELEASE
+    BUILDTYPE_STR := $(shell echo -e "\x1b[32;1mRelease build\x1b[0m")
+else
+    BUILDTYPE := DEV
+    BUILDTYPE_STR := $(shell echo -e "\x1b[33;1mDevelopment build\x1b[0m")
+endif
 
 ifeq ($(TARGETCASIO),"FXCG50")
-    $(info ************  FXCG50 VERSION ************ )
-    $(info *********  Add Numworks modules ********* )  
+    PE_NAME := fx-CG
+
     SRC_C += \
         ports/sh/numworks/modkandinsky.c \
         ports/sh/numworks/modion.c \
@@ -45,22 +54,16 @@ ifeq ($(TARGETCASIO),"FXCG50")
         ports/sh/numworks/modkandinsky.c \
         ports/sh/numworks/modion.c \
 
+else ifeq ($(TARGETCASIO),"FX9860G")
+    PE_NAME := fx-9860G III
+    PE_EXT_NUMWORKS := 0
 endif
 
-ifeq ($(TARGETCASIO),"FX9860G")
-    $(info ***********  FX9860G  VERSION *********** )
-
-endif
-
-ifeq ($(shell [[ x"$$(git describe)" == x"$$(git describe main)" ]] \
-              && [[ -z "$$(git status -uno --porcelain)" ]] \
-              && echo y),y)
-    $(info * RELEASE BUILD)
-    BUILDTYPE := RELEASE
-else
-    $(info * DEVELOPMENT BUILD)
-    BUILDTYPE := DEV
-endif
+HEADER := PythonExtra for $(PE_NAME)
+HEADER := $(shell echo -e "\x1b[4;1m$(HEADER)\x1b[0m")
+HEADER := $(HEADER) - $(BUILDTYPE_STR)
+HASHES := \#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#\#
+$(info $(HASHES) $(HEADER) $(HASHES))
 
 ASSETS_O := $(SH_ASSETS:%=$(BUILD)/sh_assets/%.o)
 
