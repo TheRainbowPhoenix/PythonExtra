@@ -53,6 +53,9 @@ ifeq ($(TARGETCASIO),"FXCG50")
         ports/sh/numworks/modkandinsky.c \
         ports/sh/numworks/modion.c \
 
+    SRC_ASM += \
+        ports/sh/numworks/syscalls.S \
+
     SRC_QSTR += \
         ports/sh/numworks/modkandinsky.c \
         ports/sh/numworks/modion.c \
@@ -70,7 +73,9 @@ $(info $(HASHES) $(HEADER) $(HASHES))
 
 ASSETS_O := $(SH_ASSETS:%=$(BUILD)/sh_assets/%.o)
 
-OBJ = $(PY_O) $(ASSETS_O) $(addprefix $(BUILD)/, $(SRC_C:.c=.o))
+OBJ = $(PY_O) $(ASSETS_O) \
+      $(addprefix $(BUILD)/, $(SRC_C:.c=.o)) \
+      $(addprefix $(BUILD)/, $(SRC_ASM:.S=.o))
 
 $(BUILD)/firmware.bin: $(BUILD)/firmware.elf
 	$(Q)$(CC:gcc=objcopy) -O binary -R .bss -R .gint_bss $< $@
@@ -86,7 +91,7 @@ $(BUILD)/sh_assets/%.o: % $(SH_METADATA)
 
 ARCHIVE := PythonExtra-$(shell git describe).zip
 
-# Weird rules calling back to fxcg50 and fx9860g3, both of whic include this
+# Weird rules calling back to fxcg50 and fx9860g3, both of which include this
 release:
 	$(MAKE) -C ../fx9860g3
 	$(MAKE) -C ../fxcg50

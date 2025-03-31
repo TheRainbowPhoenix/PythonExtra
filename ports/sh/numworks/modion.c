@@ -8,6 +8,9 @@
 #include "py/objtuple.h"
 #include "py/runtime.h"
 #include <gint/keyboard.h>
+#include <gint/gint.h>
+#include <gint/drivers/r61524.h>
+#include "syscalls.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -81,6 +84,61 @@ int KeyTranslationMap[ 53 ] = { 0x85, 0x86, 0x75, 0x76, 0x91, // gint LEFT, UP, 
                                 0x24, 0x25,   -1, 0x11, 0x12, // gint ADD, SUB, __, 0, DOT
                                 0x95, 0x14, 0x15 };           // gint F5, NEG, EXE
 
+typedef struct
+{
+  int key;
+  mp_obj_t string;
+} key2mp;
+
+static const key2mp keyMapping[] =
+{
+    { 0x85, MP_ROM_QSTR(MP_QSTR_left) },
+    { 0x86, MP_ROM_QSTR(MP_QSTR_up) },
+    { 0x75, MP_ROM_QSTR(MP_QSTR_down) },
+    { 0x76, MP_ROM_QSTR(MP_QSTR_right) },
+    { 0x91, MP_ROM_QSTR(MP_QSTR_OK) },
+    { 0x74, MP_ROM_QSTR(MP_QSTR_back) },
+    { 0x84, MP_ROM_QSTR(MP_QSTR_home) },
+    { 0x07, MP_ROM_QSTR(MP_QSTR_onOff) },
+    { 0x81, MP_ROM_QSTR(MP_QSTR_shift) },
+    { 0x71, MP_ROM_QSTR(MP_QSTR_alpha) },
+    { 0x61, MP_ROM_QSTR(MP_QSTR_xnt) },
+    { 0x83, MP_ROM_QSTR(MP_QSTR_var) },
+    { 0x82, MP_ROM_QSTR(MP_QSTR_toolbox) },
+    { 0x44, MP_ROM_QSTR(MP_QSTR_backspace) },
+    { 0x13, MP_ROM_QSTR(MP_QSTR_exp) },
+    { 0x63, MP_ROM_QSTR(MP_QSTR_ln) },
+    { 0x62, MP_ROM_QSTR(MP_QSTR_log) },
+    { 0x92, MP_ROM_QSTR(MP_QSTR_imaginary) },
+    { 0x55, MP_ROM_QSTR(MP_QSTR_comma) },
+    { 0x73, MP_ROM_QSTR(MP_QSTR_power) },
+    { 0x64, MP_ROM_QSTR(MP_QSTR_sin) },
+    { 0x65, MP_ROM_QSTR(MP_QSTR_cos) },
+    { 0x66, MP_ROM_QSTR(MP_QSTR_tan) },
+    { 0x93, MP_ROM_QSTR(MP_QSTR_pi) },
+    { 0x94, MP_ROM_QSTR(MP_QSTR_sqrt) },
+    { 0x72, MP_ROM_QSTR(MP_QSTR_square) },
+    { 0x41, MP_ROM_QSTR(MP_QSTR_7) },
+    { 0x42, MP_ROM_QSTR(MP_QSTR_8) },
+    { 0x43, MP_ROM_QSTR(MP_QSTR_9) },
+    { 0x53, MP_ROM_QSTR(MP_QSTR__paren_open_) },
+    { 0x54, MP_ROM_QSTR(MP_QSTR__paren_close_) },
+    { 0x31, MP_ROM_QSTR(MP_QSTR_4) },
+    { 0x32, MP_ROM_QSTR(MP_QSTR_5) },
+    { 0x33, MP_ROM_QSTR(MP_QSTR_6) },
+    { 0x34, MP_ROM_QSTR(MP_QSTR__star_) },
+    { 0x35, MP_ROM_QSTR(MP_QSTR__slash_) },
+    { 0x21, MP_ROM_QSTR(MP_QSTR_1) },
+    { 0x22, MP_ROM_QSTR(MP_QSTR_2) },
+    { 0x23, MP_ROM_QSTR(MP_QSTR_3) },
+    { 0x24, MP_ROM_QSTR(MP_QSTR__plus_) },
+    { 0x25, MP_ROM_QSTR(MP_QSTR__hyphen_) },
+    { 0x11, MP_ROM_QSTR(MP_QSTR_0) },
+    { 0x12, MP_ROM_QSTR(MP_QSTR__dot_) },
+    { 0x95, MP_ROM_QSTR(MP_QSTR_EE) },
+    { 0x14, MP_ROM_QSTR(MP_QSTR_Ans) },
+    { 0x15, MP_ROM_QSTR(MP_QSTR_EXE) },
+};
 
 /* END OF KEY TRANSLATION */
 
@@ -102,7 +160,74 @@ static mp_obj_t ion_keydown(mp_obj_t arg1) {
   return mp_obj_new_bool(down);
 }
 
+/* The following function are coming from the Upsilon extension of NW Ion methods */
+
+static mp_obj_t ion_battery( void ) {
+  if (gint[HWCALC] != HWCALC_FXCG100) {
+    int voltage = (int)gint_world_switch(
+      GINT_CALL(CASIOWIN_GetMainBatteryVoltage, 1));
+    float value = ((float) voltage) / 100.0f;
+    return mp_obj_new_float( value );
+  }
+  else return mp_obj_new_float( 0.0f );
+}
+
+static mp_obj_t ion_battery_level( void ) {
+  if (gint[HWCALC] != HWCALC_FXCG100) {
+    int voltage = (int)gint_world_switch(
+      GINT_CALL(CASIOWIN_GetMainBatteryVoltage, 1));
+    if (voltage>=0 && voltage<=360) return mp_obj_new_int(0);
+    else if (voltage>360 && voltage<=370) return mp_obj_new_int(1);
+    else if (voltage>370 && voltage<=380) return mp_obj_new_int(2);
+    else return mp_obj_new_int(3);
+  }
+  else return mp_obj_new_int(0);
+}
+
+static mp_obj_t ion_battery_charging( void ) {
+  /* this function give the charging status of the numworks : if plugged return True and False otherwise */
+  /* as the Casio is not using a battery, always return False */
+  return mp_obj_new_bool( false );
+}
+
+static mp_obj_t ion_get_keys( void ) {
+  mp_obj_t result = mp_obj_new_set(0, NULL);
+  clearevents();
+  for (unsigned i = 0; i < sizeof(keyMapping)/sizeof(key2mp); i++) {
+      if (keydown(keyMapping[i].key) !=0 ) {
+          mp_obj_set_store(result, keyMapping[i].string);
+      }
+  }
+  return result;
+}
+
+static mp_obj_t ion_set_brightness(mp_obj_t arg1) {
+  if (gint[HWCALC] != HWCALC_FXCG100) {
+    mp_int_t level = mp_obj_get_int(arg1);
+
+    if (level<0) level=0;
+    else if (level>240) level=240;
+
+    r61524_set(0x5a1, (level & 0xff) + 6);
+  }
+  return mp_const_none;
+}
+
+static mp_obj_t ion_get_brightness( void ) {
+  if (gint[HWCALC] != HWCALC_FXCG100) {
+      mp_int_t level = r61524_get(0x5a1);
+      return mp_obj_new_int( level );
+  }
+  else return mp_obj_new_int( 0 );
+}
+
 MP_DEFINE_CONST_FUN_OBJ_1(ion_keydown_obj, ion_keydown);
+MP_DEFINE_CONST_FUN_OBJ_0(ion_battery_obj, ion_battery);
+MP_DEFINE_CONST_FUN_OBJ_0(ion_battery_level_obj, ion_battery_level);
+MP_DEFINE_CONST_FUN_OBJ_0(ion_battery_charging_obj, ion_battery_charging);
+MP_DEFINE_CONST_FUN_OBJ_0(ion_get_keys_obj, ion_get_keys);
+MP_DEFINE_CONST_FUN_OBJ_1(ion_set_brightness_obj, ion_set_brightness);
+MP_DEFINE_CONST_FUN_OBJ_0(ion_get_brightness_obj, ion_get_brightness);
 
 /* Module definition */
 
@@ -167,7 +292,15 @@ static const mp_rom_map_elem_t ion_module_globals_table[] = {
     INT(KEY_ANS),
     INT(KEY_EXE), // value 52
 
-    { MP_ROM_QSTR(MP_QSTR_keydown), MP_ROM_PTR(&ion_keydown_obj) }
+    { MP_ROM_QSTR(MP_QSTR_keydown), MP_ROM_PTR(&ion_keydown_obj) },
+
+    /* Upsilon only objects */
+    { MP_ROM_QSTR(MP_QSTR_battery), MP_ROM_PTR(&ion_battery_obj) },
+    { MP_ROM_QSTR(MP_QSTR_battery_level), MP_ROM_PTR(&ion_battery_level_obj) },
+    { MP_ROM_QSTR(MP_QSTR_battery_charging), MP_ROM_PTR(&ion_battery_charging_obj) },
+    { MP_ROM_QSTR(MP_QSTR_get_keys), MP_ROM_PTR(&ion_get_keys_obj) },
+    { MP_ROM_QSTR(MP_QSTR_set_brightness), MP_ROM_PTR(&ion_set_brightness_obj) },
+    { MP_ROM_QSTR(MP_QSTR_get_brightness), MP_ROM_PTR(&ion_get_brightness_obj) },
 };
 static MP_DEFINE_CONST_DICT(ion_module_globals, ion_module_globals_table);
 
