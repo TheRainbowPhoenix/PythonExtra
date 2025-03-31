@@ -14,6 +14,7 @@ SRC_C = \
     ports/sh/main.c \
     ports/sh/console.c \
     ports/sh/debug.c \
+    ports/sh/fdfile.c \
     ports/sh/keymap.c \
     ports/sh/modcasioplot.c \
     ports/sh/modgint.c \
@@ -28,6 +29,7 @@ SRC_C = \
     shared/runtime/interrupt_char.c \
 
 SRC_QSTR += \
+    ports/sh/fdfile.c \
     ports/sh/main.c \
     ports/sh/modcasioplot.c \
     ports/sh/modgint.c \

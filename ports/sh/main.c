@@ -582,21 +582,3 @@ mp_import_stat_t mp_import_stat(const char *path)
     else
         return MP_IMPORT_STAT_FILE;
 }
-
-// TODO: See branch 'posix-open' for a relevant attempt at using the POSIX API
-mp_obj_t mp_builtin_open(size_t n_args, const mp_obj_t *args, mp_map_t *kwargs)
-{
-    mp_obj_t *args_items;
-    size_t len;
-    mp_obj_get_array(*args, &len, &args_items);
-    printf("%d %p\n", (int)len, args_items);
-    if(len != 2)
-        return mp_const_none;
-
-    char const *path = mp_obj_str_get_str(args_items[0]);
-    char const *mode = mp_obj_str_get_str(args_items[1]);
-    printf("'%s' '%s'\n", path, mode);
-
-    return mp_const_none;
-}
-MP_DEFINE_CONST_FUN_OBJ_KW(mp_builtin_open_obj, 1, mp_builtin_open);
