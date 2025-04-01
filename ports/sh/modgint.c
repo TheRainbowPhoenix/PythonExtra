@@ -13,6 +13,7 @@
 #include "py/runtime.h"
 #include "py/objtuple.h"
 #include "objgintimage.h"
+#include "objgintfont.h"
 #include <gint/display.h>
 #include <gint/keyboard.h>
 #include <gint/timer.h>
@@ -382,6 +383,17 @@ static mp_obj_t modgint_dtext(size_t n, mp_obj_t const *args)
     return mp_const_none;
 }
 
+static mp_obj_t modgint_dfont(mp_obj_t new_font)
+{
+    font_t font;
+    objgintfont_get(new_font, &font);
+
+    font_t *old_font = dfont(&font);
+    // TODO : to get the old font pointer instead of None 
+    return mp_const_none;
+}
+
+
 /* fx-CG-specific image constructors */
 #if GINT_RENDER_RGB
 
@@ -503,6 +515,7 @@ FUN_BETWEEN(dellipse, 6, 6);
 FUN_3(dpoly);
 FUN_BETWEEN(dtext_opt, 8, 8);
 FUN_BETWEEN(dtext, 4, 4);
+FUN_1(dfont);
 #if GINT_RENDER_RGB
 FUN_3(image_rgb565);
 FUN_3(image_rgb565a);
@@ -590,6 +603,7 @@ static const mp_rom_map_elem_t modgint_module_globals_table[] = {
     INT(KEY_HELP),
     INT(KEY_LIGHT),
 
+    /* Key codes for the CP-400 */
     INT(KEY_KBD),
     INT(KEY_X),
     INT(KEY_Y),
@@ -597,21 +611,23 @@ static const mp_rom_map_elem_t modgint_module_globals_table[] = {
     INT(KEY_EQUALS),
     INT(KEY_CLEAR),
 
+    /* extra keycodes for fxCG100 - Math+ */
     INT(KEY_ON),
-    INT(KEY_HOME),
-    INT(KEY_PREVTAB),
-    INT(KEY_NEXTTAB),
-    INT(KEY_PAGEUP),
-    INT(KEY_PAGEDOWN),
-    INT(KEY_SETTINGS),
-    INT(KEY_BACK),
-    INT(KEY_OK),
-    INT(KEY_CATALOG),
-    INT(KEY_TOOLS),
-    INT(KEY_FORMAT),
-    INT(KEY_SQRT),
-    INT(KEY_EXPFUN),
+	INT(KEY_HOME),
+	INT(KEY_PREVTAB),
+	INT(KEY_NEXTTAB),
+	INT(KEY_PAGEUP),
+	INT(KEY_PAGEDOWN),
+	INT(KEY_SETTINGS),
+	INT(KEY_BACK),
+	INT(KEY_OK),
+	INT(KEY_CATALOG),
+	INT(KEY_TOOLS),
+	INT(KEY_FORMAT),
+	INT(KEY_SQRT),
+	INT(KEY_EXPFUN),
 
+    /* Key aliases (deprecated--no more will be added) */
     INT(KEY_X2),
     INT(KEY_CARET),
     INT(KEY_SWITCH),
@@ -621,6 +637,7 @@ static const mp_rom_map_elem_t modgint_module_globals_table[] = {
     INT(KEY_TIMES),
     INT(KEY_PLUS),
     INT(KEY_MINUS),
+
 
     /* <gint/keyboard.h> */
 
