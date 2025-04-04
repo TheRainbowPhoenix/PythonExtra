@@ -11,16 +11,15 @@
 #include <string.h>
 #include "objgintutils.h"
 
-STATIC mp_obj_t font_make_new(const mp_obj_type_t *type, size_t n_args,
+static mp_obj_t font_make_new(const mp_obj_type_t *type, size_t n_args,
   size_t n_kw, const mp_obj_t *args)
 {
-  enum { ARG_name, ARG_prop, ARG_line_height, ARG_data_height,
+  enum { ARG_prop, ARG_line_height, ARG_data_height,
          ARG_block_count, ARG_glyph_count, ARG_char_spacing, ARG_line_distance, ARG_blocks, AGRS_data,
          ARG_width, ARG_storage_size, ARG_glyph_index, ARG_glyph_width };
 
   static mp_arg_t const allowed_args[] = {
-      { MP_QSTR_name, MP_ARG_OBJ | MP_ARG_REQUIRED,     // TODO Check the type corresponding to string (seems not to be listed)
-          {.u_rom_obj = MP_ROM_NONE} },
+
       { MP_QSTR_prop, MP_ARG_INT | MP_ARG_REQUIRED,
           {.u_rom_obj = MP_ROM_NONE} },
       { MP_QSTR_line_height, MP_ARG_INT | MP_ARG_REQUIRED,
@@ -55,7 +54,6 @@ STATIC mp_obj_t font_make_new(const mp_obj_type_t *type, size_t n_args,
   mp_arg_parse_all_kw_array(n_args, n_kw, args, MP_ARRAY_SIZE(allowed_args),
       allowed_args, vals);
 
-  mp_obj_t name    = vals[ARG_name].u_obj;
   int prop         = vals[ARG_prop].u_int;
   int line_height  = vals[ARG_line_height].u_int;
   int data_height  = vals[ARG_data_height].u_int;
@@ -70,14 +68,14 @@ STATIC mp_obj_t font_make_new(const mp_obj_type_t *type, size_t n_args,
   {
     int width = vals[ARG_width].u_int;
     int storage_size = vals[ARG_storage_size].u_int;
-    return objgintfont_make_monospaced(type, name, prop, line_height, data_height, block_count, glyph_count, char_spacing,
+    return objgintfont_make_monospaced(type, prop, line_height, data_height, block_count, glyph_count, char_spacing,
                     line_distance, blocks, data, width, storage_size);
   }
   else
   {
     mp_obj_t glyph_index = vals[ARG_glyph_index].u_obj;
     mp_obj_t glyph_width = vals[ARG_glyph_width].u_obj;
-    return objgintfont_make_proportional(type, name, prop, line_height, data_height, block_count, glyph_count, char_spacing,
+    return objgintfont_make_proportional(type, prop, line_height, data_height, block_count, glyph_count, char_spacing,
                     line_distance, blocks, data, glyph_index, glyph_width);
   }
 }
@@ -91,13 +89,12 @@ mp_obj_t objgintfont_make_from_gint_font(font_t const *font)
 
   memcpy(&self->font, font, sizeof *font);
 
-  int name_size = strlen(font->name);
   int block_size = font->block_count; //TODO check if correct (not clear how this size is computed) block size
   int data_size  = font->glyph_count; //TODO check if correct (not clear how this size is computed) data_size
   int gidx_size  = font->glyph_count; //TODO check if correct (not clear how this size is computed) glyph_index_size
   int gwdt_size  = font->glyph_count; //TODO check if correct (not clear how this size is computed) glyph_width_size
 
-  self->name = ptr_to_memoryview(font->name, name_size, 'B', false);          //name is char (=uint8_t) values
+  //self->name = ptr_to_memoryview(font->name, name_size, 'B', false);          //name is char (=uint8_t) values
   self->blocks = ptr_to_memoryview(font->blocks, block_size, 'L', false);     //blocks is uint32_t values
   self->data = ptr_to_memoryview(font->data, data_size, 'L', false);          //data is uint32_t values
 
@@ -112,14 +109,13 @@ mp_obj_t objgintfont_make_from_gint_font(font_t const *font)
 
 
 
-STATIC void font_print(mp_print_t const *print, mp_obj_t self_in,
+static void font_print(mp_print_t const *print, mp_obj_t self_in,
   mp_print_kind_t kind)
 {
 
   (void)kind;
   mp_obj_gintfont_t *self = MP_OBJ_TO_PTR(self_in);
 
-  const char* title = self->font.name;
   int prop = self->font.prop;
   int line_height = self->font.line_height;
   int data_height = self->font.data_height;
@@ -129,7 +125,7 @@ STATIC void font_print(mp_print_t const *print, mp_obj_t self_in,
   int line_distance = self->font.line_distance;
 
   mp_printf( print, "<%s font - flags=%d - height=%d - dat_height=%d - blk_cnt=%d - glp_cnt=%d - chr_spc=%d - lne_dts=%d >",
-      title, prop, line_height, data_height, block_count, glyph_count, char_spacing, line_distance );
+     prop, line_height, data_height, block_count, glyph_count, char_spacing, line_distance );
 
   if (prop) // if proportional is set to one
     mp_printf( print, "<Proportional font>");
@@ -137,14 +133,12 @@ STATIC void font_print(mp_print_t const *print, mp_obj_t self_in,
     mp_printf( print, "<Fixed size font>");
 }
 
-STATIC void font_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest)
+static void font_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest)
 {
 
   if(dest[0] == MP_OBJ_NULL) {
       mp_obj_gintfont_t *self = MP_OBJ_TO_PTR(self_in);
-      if(attr == MP_QSTR_title)
-          dest[0] = MP_OBJ_NEW_QSTR(self->font.name);
-      else if(attr == MP_QSTR_prop)
+      if(attr == MP_QSTR_prop)
           dest[0] = MP_OBJ_NEW_SMALL_INT(self->font.prop);
       else if(attr == MP_QSTR_line_height)
           dest[0] = MP_OBJ_NEW_SMALL_INT(self->font.line_height);
@@ -185,14 +179,13 @@ STATIC void font_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest)
 /* Constructor for fixed_width fonts*/
 /*gint.font(title, flags, line_height, grid_height, block_count, glyph_count,
     char_spacing, line_distance, data_blocks, data_glyphs, grid_width, storage_size ) */
-mp_obj_t objgintfont_make_monospaced(const mp_obj_type_t *type, mp_obj_t name, int prop, int line_height,
+mp_obj_t objgintfont_make_monospaced(const mp_obj_type_t *type, int prop, int line_height,
       int data_height, int block_count, int glyph_count, int char_spacing, int line_distance, mp_obj_t blocks,
       mp_obj_t data, int width, int storage_size)
 {
   // TODO : add verifications here for validity of the font data
 
     mp_obj_gintfont_t *self = mp_obj_malloc(mp_obj_gintfont_t, type);
-    self->name                  = name;
     self->font.name             = NULL;
     self->font.prop             = prop;
     self->font.line_height      = line_height;
@@ -217,14 +210,13 @@ mp_obj_t objgintfont_make_monospaced(const mp_obj_type_t *type, mp_obj_t name, i
   /* Constructor for proportional fonts*/
   /*gint.font(name, flags, line_heignt, grida_height, block_count, glyph_count,
       char_spacing, line_distance, data_blocks, data_glyphs, glyph_index, glyph_width ) */
-mp_obj_t objgintfont_make_proportional(const mp_obj_type_t *type, mp_obj_t name, int prop, int line_height,
+mp_obj_t objgintfont_make_proportional(const mp_obj_type_t *type, int prop, int line_height,
         int data_height, int block_count, int glyph_count, int char_spacing, int line_distance, mp_obj_t blocks,
         mp_obj_t data, mp_obj_t glyph_index, mp_obj_t glyph_width)
 {
     // TODO : add verifications here for validity of the font data
 
     mp_obj_gintfont_t *self = mp_obj_malloc(mp_obj_gintfont_t, type);
-    self->name                  = name;
     self->font.name             = NULL;
     self->font.prop             = prop;
     self->font.line_height      = line_height;
@@ -249,7 +241,7 @@ mp_obj_t objgintfont_make_proportional(const mp_obj_type_t *type, mp_obj_t name,
 void objgintfont_get(mp_obj_t self_in, font_t *font)
 {
   if(!mp_obj_is_type(self_in, &mp_type_gintfont))
-  mp_raise_TypeError(MP_ERROR_TEXT("font must be a gint.font"));
+    mp_raise_TypeError(MP_ERROR_TEXT("font must be a gint.font"));
 
   mp_obj_gintfont_t *self = MP_OBJ_TO_PTR(self_in);
   *font = self->font;
@@ -270,6 +262,8 @@ void objgintfont_get(mp_obj_t self_in, font_t *font)
     font->data = buf.buf;
   }
 
+  // TODO : check for proportional fonts
+/*
   font->glyph_index = NULL;
   if(self->glyph_index != mp_const_none) {
     mp_buffer_info_t buf;
@@ -285,7 +279,7 @@ void objgintfont_get(mp_obj_t self_in, font_t *font)
         mp_raise_TypeError("data_width not a buffer object?!");
     font->glyph_width = buf.buf;
   }
-
+*/
 }
 
 

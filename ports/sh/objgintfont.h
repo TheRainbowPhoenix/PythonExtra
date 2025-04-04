@@ -25,7 +25,6 @@ extern const mp_obj_type_t mp_type_gintfont;
 typedef struct _mp_obj_gintfont_t {
     mp_obj_base_t base;             // required as a first member for every MicroPython object
     font_t font;
-    mp_obj_t name;
     mp_obj_t blocks;
     mp_obj_t data;
     mp_obj_t glyph_index;
@@ -44,14 +43,14 @@ mp_obj_t objgintfont_make_from_gint_font(font_t const *font);
 /* Constructor for fixed_width fonts*/
 /*gint.font(title, flags, line_height, grid_height, block_count, glyph_count,
     char_spacing, line_distance, data_blocks, data_glyphs, grid_width, storage_size ) */
-mp_obj_t objgintfont_make_monospaced(const mp_obj_type_t *type, mp_obj_t name, int prop, int line_height,
+mp_obj_t objgintfont_make_monospaced(const mp_obj_type_t *type, int prop, int line_height,
     int data_height, int block_count, int glyph_count, int char_spacing, int line_distance, mp_obj_t blocks,
     mp_obj_t data, int width, int storage_size);
 
 /* Constructor for proportional fonts*/
 /*gint.font(name, flags, line_height, grid_height, block_count, glyph_count,
     char_spacing, line_distance, data_blocks, data_glyphs, glyph_index, glyph_width ) */
-mp_obj_t objgintfont_make_proportional(const mp_obj_type_t *type, mp_obj_t name, int prop, int line_height,
+mp_obj_t objgintfont_make_proportional(const mp_obj_type_t *type, int prop, int line_height,
     int data_height, int block_count, int glyph_count, int char_spacing, int line_distance, mp_obj_t blocks,
     mp_obj_t data, mp_obj_t glyph_index, mp_obj_t glyph_width);
 

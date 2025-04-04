@@ -388,7 +388,7 @@ static mp_obj_t modgint_dfont(mp_obj_t new_font)
     font_t font;
     objgintfont_get(new_font, &font);
 
-    font_t *old_font = dfont(&font);
+    dfont(&font);
     // TODO : to get the old font pointer instead of None 
     return mp_const_none;
 }
@@ -711,8 +711,12 @@ static const mp_rom_map_elem_t modgint_module_globals_table[] = {
     OBJ(dcircle),
     OBJ(dellipse),
     OBJ(dpoly),
+
+    { MP_ROM_QSTR(MP_QSTR_font), MP_ROM_PTR(&mp_type_gintfont) },   
+    OBJ(dfont),
     OBJ(dtext_opt),
     OBJ(dtext),
+
 
     { MP_ROM_QSTR(MP_QSTR_image), MP_ROM_PTR(&mp_type_gintimage) },
     #ifdef FXCG50
