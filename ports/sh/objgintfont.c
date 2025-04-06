@@ -20,7 +20,6 @@ static mp_obj_t font_make_new(const mp_obj_type_t *type, size_t n_args,
          ARG_width, ARG_storage_size, ARG_glyph_index, ARG_glyph_width };
 
   static mp_arg_t const allowed_args[] = {
-
       { MP_QSTR_prop, MP_ARG_INT | MP_ARG_REQUIRED,
           {.u_rom_obj = MP_ROM_NONE} },
       { MP_QSTR_line_height, MP_ARG_INT | MP_ARG_REQUIRED,
@@ -54,8 +53,7 @@ static mp_obj_t font_make_new(const mp_obj_type_t *type, size_t n_args,
   DEBUG_printf( "I am in make_new() \n ");
 
   mp_arg_val_t vals[MP_ARRAY_SIZE(allowed_args)];
-  mp_arg_parse_all_kw_array(n_args, n_kw, args, MP_ARRAY_SIZE(allowed_args),
-      allowed_args, vals);
+  mp_arg_parse_all_kw_array(n_args, n_kw, args, MP_ARRAY_SIZE(allowed_args), allowed_args, vals);
 
   int prop         = vals[ARG_prop].u_int;
   int line_height  = vals[ARG_line_height].u_int;
@@ -67,16 +65,14 @@ static mp_obj_t font_make_new(const mp_obj_type_t *type, size_t n_args,
   mp_obj_t blocks  = vals[ARG_blocks].u_obj;
   mp_obj_t data    = vals[AGRS_data].u_obj;
 
-  if (prop == 0)
-  {
+  if (prop == 0) {
     DEBUG_printf( " --> Monospaced font \n ");
     int width = vals[ARG_width].u_int;
     int storage_size = vals[ARG_storage_size].u_int;
     return objgintfont_make_monospaced(type, prop, line_height, data_height, block_count, glyph_count, char_spacing,
                     line_distance, blocks, data, width, storage_size);
   }
-  else
-  {
+  else {
     DEBUG_printf( " --> Proportional font \n ");
     mp_obj_t glyph_index = vals[ARG_glyph_index].u_obj;
     mp_obj_t glyph_width = vals[ARG_glyph_width].u_obj;
@@ -89,45 +85,38 @@ static mp_obj_t font_make_new(const mp_obj_type_t *type, size_t n_args,
 /* Build a gint font object from a valid font_t structure. */
 mp_obj_t objgintfont_make_from_gint_font(font_t const *font)
 {
-  
   DEBUG_printf( "I am in make_from_gint_font() \n ");
 
-  mp_obj_gintfont_t *self = mp_obj_malloc(mp_obj_gintfont_t,
-    &mp_type_gintfont);
+  mp_obj_gintfont_t *self = mp_obj_malloc(mp_obj_gintfont_t, &mp_type_gintfont);
 
   memcpy(&self->font, font, sizeof *font);
 
   int block_size=0, data_size=0, gidx_size=0, gwdt_size=0;
 
-
   block_size = font->block_count;   // same size for both type of fonts
-
-  if (font->prop)
-  {
-    // data_size to be computed glyph by glyph
-    // gidx_size to be computed
-    gwdt_size = (font->glyph_count + 7) >> 3;  // one index every 8 glyphs rounded at the closest/highest integer
-  }
-  else
-  {
-    data_size = font->storage_size;  // given by (grid.w * grid.h + 31)/32 in the case of monospaced fonts
-  }
-
   self->blocks = ptr_to_memoryview(font->blocks, block_size, 'L', false);     //blocks is uint32_t values
-  self->data = ptr_to_memoryview(font->data, data_size, 'L', false);          //data is uint32_t values
 
   if (font->prop) {
-    self->glyph_index = ptr_to_memoryview(font->glyph_index, gidx_size, 'H', false);  // glyph_index is uint16_t values
+    gwdt_size = font->glyph_count;             // one byte for each glyph added (encoding of the width of each glyph)
     self->glyph_width = ptr_to_memoryview(font->glyph_width, gwdt_size, 'B', false);  // glyph_width is uint8_t values
+    
+    gidx_size = (font->glyph_count + 7) >> 3;  // one index every 8 glyphs rounded at the closest/highest integer
+    self->glyph_index = ptr_to_memoryview(font->glyph_index, gidx_size, 'H', false);  // glyph_index is uint16_t values
+  
+    // compute data_size, glyph after glyph
+    for(uint32_t g=0; g<font->glyph_count; g++)
+      data_size += (font->glyph_index[g] * font->data_height +31 ) / 32;    // number of uint32_t per glyph
+
   }
+  else data_size = font->storage_size;  // given by (grid.w * grid.h + 31)/32 in the case of monospaced fonts
+
+  self->data = ptr_to_memoryview(font->data, data_size, 'L', false);          //data is uint32_t values
 
   return MP_OBJ_FROM_PTR(self);
 }
 
-static void font_print(mp_print_t const *print, mp_obj_t self_in,
-  mp_print_kind_t kind)
+static void font_print(mp_print_t const *print, mp_obj_t self_in, mp_print_kind_t kind)
 {
-
   DEBUG_printf( "I am in font_print() \n ");
 
   (void)kind;
