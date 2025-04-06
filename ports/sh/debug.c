@@ -58,6 +58,11 @@ void pe_debug_get_meminfo(struct pe_debug_meminfo *info)
         info->_ostk_free = s->free_memory;
     }
 #endif
+
+#ifdef FXCP
+    // No gint arenas
+    (void)s;
+#endif
 }
 
 void pe_debug_browse_meminfo(void)
@@ -127,6 +132,10 @@ void pe_debug_browse_meminfo(void)
         dprint(190, y+1, C_BLACK,
             "%d,%d", info->_ostk_used, info->_ostk_free);
     }
+#endif
+
+#ifdef FXCP
+    dtext(1, 1, C_BLACK, "No memory details on this target");
 #endif
 
     dupdate();
@@ -214,6 +223,10 @@ void pe_debug_kmalloc(char const *prefix)
         prefix,
         s1->used_memory, s1->free_memory,
         arena2, s2->used_memory, s2->free_memory);
+#endif
+
+#ifdef FXCP
+    pe_debug_printf("%s: no memory stats on this target :'-\n");
 #endif
 }
 

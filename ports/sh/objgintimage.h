@@ -10,8 +10,9 @@
 
 #include "py/obj.h"
 #include <gint/display.h>
+#include <gint/config.h>
 
-#ifdef FXCG50
+#if GINT_RENDER_RGB
 #include <gint/image.h>
 #endif
 
@@ -30,7 +31,7 @@ typedef struct _mp_obj_gintimage_t {
     mp_obj_base_t base;
     bopti_image_t img;
     mp_obj_t data;
-#ifdef FXCG50
+#if GINT_RENDER_RGB
     mp_obj_t palette;
 #endif
 } mp_obj_gintimage_t;
@@ -43,10 +44,10 @@ void objgintimage_get(mp_obj_t self_in, bopti_image_t *img);
 mp_obj_t objgintimage_make_from_gint_image(bopti_image_t const *img);
 
 /* Lower-level image object constructor. */
-#if defined(FX9860G)
+#if GINT_RENDER_MONO
 mp_obj_t objgintimage_make(const mp_obj_type_t *type, int profile, int width,
     int height, mp_obj_t data);
-#elif defined(FXCG50)
+#elif GINT_RENDER_RGB
 mp_obj_t objgintimage_make(const mp_obj_type_t *type, int format,
     int color_count, int width, int height, int stride, mp_obj_t data,
     mp_obj_t palette);

@@ -18,7 +18,7 @@ static mp_obj_t ptr_to_memoryview(void *ptr, int size, int typecode, bool rw)
     return mp_obj_new_memoryview(typecode, size, ptr);
 }
 
-#ifdef FX9860G
+#if GINT_RENDER_MONO
 
 /* Heuristic to check if the image is read-only or not */
 static bool pointer_is_ro(void *data)
@@ -150,9 +150,9 @@ static void image_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest)
     }
 }
 
-#endif /* FX9860G */
+#endif /* GINT_RENDER_MONO */
 
-#ifdef FXCG50
+#if GINT_RENDER_RGB
 
 /* gint.image(format, color_count, width, height, stride, data, palette)
    Keyword labels are allowed but the order must remain the same. */
@@ -333,7 +333,7 @@ static void image_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest)
     }
 }
 
-#endif /* FXCG50 */
+#endif /* GINT_RENDER_RGB */
 
 void objgintimage_get(mp_obj_t self_in, bopti_image_t *img)
 {
@@ -351,7 +351,7 @@ void objgintimage_get(mp_obj_t self_in, bopti_image_t *img)
         img->data = buf.buf;
     }
 
-#ifdef FXCG50
+#if GINT_RENDER_RGB
     img->palette = NULL;
     if(self->palette != mp_const_none) {
         mp_buffer_info_t buf;

@@ -63,6 +63,9 @@ ifeq ($(TARGETCASIO),"FXCG50")
 else ifeq ($(TARGETCASIO),"FX9860G")
     PE_NAME := fx-9860G III
     PE_EXT_NUMWORKS := 0
+else ifeq ($(TARGETCASIO),"FXCP")
+    PE_NAME := fx-CP 400
+    PE_EXT_NUMWORKS := 0
 endif
 
 HEADER := PythonExtra for $(PE_NAME)
@@ -95,7 +98,8 @@ ARCHIVE := PythonExtra-$(shell git describe).zip
 release:
 	$(MAKE) -C ../fx9860g3
 	$(MAKE) -C ../fxcg50
-	cd ../sh && zip "$(ARCHIVE)" -j ../fx9860g3/PythonEx.g1a ../fxcg50/PythonExtra.g3a
+	$(MAKE) -C ../fxcp
+	cd ../sh && zip "$(ARCHIVE)" -j ../fx9860g3/PythonEx.g1a ../fxcg50/PythonExtra.g3a ../fxcp/PythonExtra-hh2.bin
 	cd ../sh && zip "$(ARCHIVE)" -r examples modules
 
 .PHONY: release

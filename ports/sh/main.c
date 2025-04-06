@@ -254,9 +254,7 @@ static void pe_update_title(void)
         sprintf(title, "Python[%-13.13s]", folder);
         jlabel_set_text(PE.title, title);
     }
-#endif
-
-#ifdef FXCG50
+#else
     if(!folder)
         jlabel_set_text(PE.title, "PythonExtra");
     else
@@ -327,11 +325,12 @@ static char *pe_handle_event(jevent e, bool shell_bound, bool *exit)
     if(key == KEY_TAN)
         pe_debug_kmalloc("tan");
 
-    if(!shell_bound && (key == KEY_F1 || key == KEY_PREVTAB)) {
+    if(!shell_bound &&
+        (key == KEY_F1 || key == KEY_PREVTAB || key == KEY_EQUALS)) {
         jscene_show_and_focus(PE.scene, PE.fileselect);
         jwidget_set_visible(PE.title, true);
     }
-    if(!shell_bound && (key == KEY_F2 || key == KEY_NEXTTAB)) {
+    if(!shell_bound && (key == KEY_F2 || key == KEY_NEXTTAB || key == KEY_X)) {
         jscene_show_and_focus(PE.scene, PE.shell);
         jwidget_set_visible(PE.title, PE.show_title_in_shell);
     }
@@ -444,6 +443,11 @@ int main(int argc, char **argv)
     void *py_ram_end = (void*)0x8807f000;
     gc_add(py_ram_start, py_ram_end); */
 #endif
+#elif FXCP
+    void *unique_area = malloc(300000);
+    if(!unique_area)
+        abort();
+    gc_init(unique_area, unique_area + 300000);
 #else
     /* On Math+, we have a loooot of free space in the _ld1 arena. */
     if(gint[HWCALC] == HWCALC_FXCG100) {

@@ -39,6 +39,10 @@ struct pe_debug_meminfo {
 };
 #endif
 
+#ifdef FXCP
+struct pe_debug_meminfo {}; // No gint arenas
+#endif
+
 enum {
    /* Just after entering main() */
    PE_DEBUG_STARTUP_MAIN,

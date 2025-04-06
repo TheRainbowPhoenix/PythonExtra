@@ -17,6 +17,7 @@
 #include <gint/keyboard.h>
 #include <gint/timer.h>
 #include <gint/drivers/keydev.h>
+#include <gint/config.h>
 #include <stdlib.h>
 
 extern void pe_enter_graphics_mode(void);
@@ -211,7 +212,7 @@ FUN_1(keycode_digit);
 
 /* <gint/display.h> */
 
-#ifdef FXCG50
+#if GINT_RENDER_RGB
 static mp_obj_t modgint_C_RGB(mp_obj_t arg1, mp_obj_t arg2, mp_obj_t arg3)
 {
     mp_int_t r = mp_obj_get_int(arg1);
@@ -382,7 +383,7 @@ static mp_obj_t modgint_dtext(size_t n, mp_obj_t const *args)
 }
 
 /* fx-CG-specific image constructors */
-#ifdef FXCG50
+#if GINT_RENDER_RGB
 
 static mp_obj_t modgint_image_rgb565(mp_obj_t arg1, mp_obj_t arg2,
     mp_obj_t arg3)
@@ -452,7 +453,7 @@ static mp_obj_t modgint_image_p4_rgb565a(size_t n, mp_obj_t const *args)
         width, height, stride, data, palette);
 }
 
-#endif /* FXCG50 */
+#endif /* GINT_RENDER_RGB */
 
 static mp_obj_t modgint_dimage(mp_obj_t arg1, mp_obj_t arg2, mp_obj_t arg3)
 {
@@ -485,7 +486,7 @@ static mp_obj_t modgint_dsubimage(size_t n_args, const mp_obj_t *args)
 
 FUN_0(__init__);
 
-#ifdef FXCG50
+#if GINT_RENDER_RGB
 FUN_3(C_RGB);
 #endif
 FUN_1(dclear);
@@ -502,7 +503,7 @@ FUN_BETWEEN(dellipse, 6, 6);
 FUN_3(dpoly);
 FUN_BETWEEN(dtext_opt, 8, 8);
 FUN_BETWEEN(dtext, 4, 4);
-#ifdef FXCG50
+#if GINT_RENDER_RGB
 FUN_3(image_rgb565);
 FUN_3(image_rgb565a);
 FUN_BETWEEN(image_p8_rgb565, 4, 4);
@@ -670,11 +671,11 @@ static const mp_rom_map_elem_t modgint_module_globals_table[] = {
     INT(C_BLACK),
     INT(C_INVERT),
     INT(C_NONE),
-#ifdef FX9860G
+#if GINT_RENDER_MONO
     INT(C_LIGHTEN),
     INT(C_DARKEN),
 #endif
-#ifdef FXCG50
+#if GINT_RENDER_RGB
     INT(C_RED),
     INT(C_GREEN),
     INT(C_BLUE),
@@ -710,13 +711,13 @@ static const mp_rom_map_elem_t modgint_module_globals_table[] = {
 
     /* <gint/image.h> */
 
-#ifdef FX9860G
+#if GINT_RENDER_MONO
     INT(IMAGE_MONO),
     INT(IMAGE_MONO_ALPHA),
     INT(IMAGE_GRAY),
     INT(IMAGE_GRAY_ALPHA),
 #endif
-#ifdef FXCG50
+#if GINT_RENDER_RGB
     INT(IMAGE_RGB565),
     INT(IMAGE_RGB565A),
     INT(IMAGE_P8_RGB565),
