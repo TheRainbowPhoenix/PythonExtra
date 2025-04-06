@@ -43,6 +43,7 @@ static mp_obj_t modgint___init__(void)
 {
     pe_enter_graphics_mode();
     dclear(C_WHITE);
+    dfont(NULL);
     return mp_const_none;
 }
 
