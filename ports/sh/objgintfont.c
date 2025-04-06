@@ -97,10 +97,21 @@ mp_obj_t objgintfont_make_from_gint_font(font_t const *font)
 
   memcpy(&self->font, font, sizeof *font);
 
-  int block_size = font->block_count; //TODO check if correct (not clear how this size is computed) block size
-  int data_size  = font->glyph_count; //TODO check if correct (not clear how this size is computed) data_size
-  int gidx_size  = font->glyph_count; //TODO check if correct (not clear how this size is computed) glyph_index_size
-  int gwdt_size  = font->glyph_count; //TODO check if correct (not clear how this size is computed) glyph_width_size
+  int block_size=0, data_size=0, gidx_size=0, gwdt_size=0;
+
+
+  block_size = font->block_count;   // same size for both type of fonts
+
+  if (font->prop)
+  {
+    // data_size to be computed glyph by glyph
+    // gidx_size to be computed
+    gwdt_size = (font->glyph_counts + 7) >> 3;  // one index every 8 glyphs rounded at the closest/highest integer
+  }
+  else
+  {
+    data_size = font->storage_size;  // given by (grid.w * grid.h + 31)/32 in the case of monospaced fonts
+  }
 
   self->blocks = ptr_to_memoryview(font->blocks, block_size, 'L', false);     //blocks is uint32_t values
   self->data = ptr_to_memoryview(font->data, data_size, 'L', false);          //data is uint32_t values
