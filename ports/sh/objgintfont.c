@@ -106,7 +106,7 @@ mp_obj_t objgintfont_make_from_gint_font(font_t const *font)
   {
     // data_size to be computed glyph by glyph
     // gidx_size to be computed
-    gwdt_size = (font->glyph_counts + 7) >> 3;  // one index every 8 glyphs rounded at the closest/highest integer
+    gwdt_size = (font->glyph_count + 7) >> 3;  // one index every 8 glyphs rounded at the closest/highest integer
   }
   else
   {
