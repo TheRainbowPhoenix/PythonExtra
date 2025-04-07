@@ -1,0 +1,22 @@
+from sh_cpct import *
+from nw_cpct import *
+from gint import *
+
+dclear(C_WHITE)
+
+dtext(10,10,C_BLACK,"Hello before changing font - using compacted fonts")
+
+print("TEST : Shmup font (Proportional)")
+dfont(font_shmup)
+dtext(10,30,C_BLUE,"Hello after changing font - Shmup font - Proportional")
+
+print("TEST : Shmup font (Proportional)")
+dfont(font_numworks)
+dtext(10,50,C_RED,"Hello after changing font - Numworks font - Monospaced")
+
+print("TEST : Back to gint's default font")
+dfont(None)
+dtext(10,70,C_GREEN,"Hello after changing font - Back to gint's default font")
+
+dupdate()
+getkey()
