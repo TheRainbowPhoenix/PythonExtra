@@ -386,11 +386,15 @@ static mp_obj_t modgint_dtext(size_t n, mp_obj_t const *args)
 
 static mp_obj_t modgint_dfont(mp_obj_t new_font)
 {
-    font_t font;
-    objgintfont_get(new_font, &font);
+    if (new_font==mp_const_none)
+        dfont(NULL);
+    else {
+        static font_t font;
+        objgintfont_get(new_font, &font);
 
-    dfont(&font);
-    // TODO : to get the old font pointer instead of None 
+        dfont(&font);
+    }
+
     return mp_const_none;
 }
 

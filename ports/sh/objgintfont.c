@@ -50,8 +50,6 @@ static mp_obj_t font_make_new(const mp_obj_type_t *type, size_t n_args,
           {.u_rom_obj = MP_ROM_NONE} },
   };
 
-  DEBUG_printf( "I am in make_new() \n ");
-
   mp_arg_val_t vals[MP_ARRAY_SIZE(allowed_args)];
   mp_arg_parse_all_kw_array(n_args, n_kw, args, MP_ARRAY_SIZE(allowed_args), allowed_args, vals);
 
@@ -66,14 +64,12 @@ static mp_obj_t font_make_new(const mp_obj_type_t *type, size_t n_args,
   mp_obj_t data    = vals[AGRS_data].u_obj;
 
   if (prop == 0) {
-    DEBUG_printf( " --> Monospaced font \n ");
     int width = vals[ARG_width].u_int;
     int storage_size = vals[ARG_storage_size].u_int;
     return objgintfont_make_monospaced(type, prop, line_height, data_height, block_count, glyph_count, char_spacing,
                     line_distance, blocks, data, width, storage_size);
   }
   else {
-    DEBUG_printf( " --> Proportional font \n ");
     mp_obj_t glyph_index = vals[ARG_glyph_index].u_obj;
     mp_obj_t glyph_width = vals[ARG_glyph_width].u_obj;
     return objgintfont_make_proportional(type, prop, line_height, data_height, block_count, glyph_count, char_spacing,
@@ -85,8 +81,6 @@ static mp_obj_t font_make_new(const mp_obj_type_t *type, size_t n_args,
 /* Build a gint font object from a valid font_t structure. */
 mp_obj_t objgintfont_make_from_gint_font(font_t const *font)
 {
-  DEBUG_printf( "I am in make_from_gint_font() \n ");
-
   mp_obj_gintfont_t *self = mp_obj_malloc(mp_obj_gintfont_t, &mp_type_gintfont);
 
   memcpy(&self->font, font, sizeof *font);
@@ -117,8 +111,6 @@ mp_obj_t objgintfont_make_from_gint_font(font_t const *font)
 
 static void font_print(mp_print_t const *print, mp_obj_t self_in, mp_print_kind_t kind)
 {
-  DEBUG_printf( "I am in font_print() \n ");
-
   (void)kind;
   mp_obj_gintfont_t *self = MP_OBJ_TO_PTR(self_in);
 
@@ -186,8 +178,6 @@ mp_obj_t objgintfont_make_monospaced(const mp_obj_type_t *type, int prop, int li
       int data_height, int block_count, int glyph_count, int char_spacing, int line_distance, mp_obj_t blocks,
       mp_obj_t data, int width, int storage_size)
 {
-    DEBUG_printf( "I am in make_monospaced() \n ");
-
     mp_obj_gintfont_t *self = mp_obj_malloc(mp_obj_gintfont_t, type);
     self->font.name             = '\0';
     self->font.prop             = prop;
@@ -217,8 +207,6 @@ mp_obj_t objgintfont_make_proportional(const mp_obj_type_t *type, int prop, int 
         int data_height, int block_count, int glyph_count, int char_spacing, int line_distance, mp_obj_t blocks,
         mp_obj_t data, mp_obj_t glyph_index, mp_obj_t glyph_width)
 {
-    DEBUG_printf( "I am in make_proportional() \n ");
-
     mp_obj_gintfont_t *self = mp_obj_malloc(mp_obj_gintfont_t, type);
     self->font.name             = '\0';
     self->font.prop             = prop;
@@ -245,62 +233,46 @@ mp_obj_t objgintfont_make_proportional(const mp_obj_type_t *type, int prop, int 
    C-API font functions. */
 void objgintfont_get(mp_obj_t self_in, font_t *font)
 {
-  DEBUG_printf( "I am in font_get() \n ");
-
   if(!mp_obj_is_type(self_in, &mp_type_gintfont))
     mp_raise_TypeError(MP_ERROR_TEXT("font must be a gint.font"));
 
-  DEBUG_printf( "  ... getting a pointer to the object \n ");
   mp_obj_gintfont_t *self = MP_OBJ_TO_PTR(self_in);
   *font = self->font;
 
-  DEBUG_printf( "  ... getting block data \n ");
   font->blocks = NULL;
   if(self->blocks != mp_const_none) {
-    DEBUG_printf( "      > Non NULL Data \n ");
     mp_buffer_info_t buf;
     if(!mp_get_buffer(self->blocks, &buf, MP_BUFFER_READ))
         mp_raise_TypeError("data_blocks not a buffer object?!");
     font->blocks = buf.buf;
   }
-  DEBUG_printf( "      > Done \n ");
 
-  DEBUG_printf( "  ... getting glyph data \n ");
   font->data = NULL;
   if(self->data != mp_const_none) {
-    DEBUG_printf( "      > Non NULL Data \n ");
     mp_buffer_info_t buf;
     if(!mp_get_buffer(self->data, &buf, MP_BUFFER_READ))
         mp_raise_TypeError("data_glyphs not a buffer object?!");
     font->data = buf.buf;
   }
-  DEBUG_printf( "      > Done \n ");
 
   if (self->font.prop)
   {
-    DEBUG_printf( "  ... getting glyph_index data \n ");
     font->glyph_index = NULL;
     if(self->glyph_index != mp_const_none) {
-      DEBUG_printf( "      > Non NULL Data \n ");
       mp_buffer_info_t buf;
       if(!mp_get_buffer(self->glyph_index, &buf, MP_BUFFER_READ))
           mp_raise_TypeError("data_index not a buffer object?!");
       font->glyph_index = buf.buf;
     }
-    DEBUG_printf( "      > Done \n ");
 
-    DEBUG_printf( "  ... getting glyph_width data \n ");
     font->glyph_width = NULL;
     if(self->glyph_width != mp_const_none) {
-      DEBUG_printf( "      > Non NULL Data \n ");
       mp_buffer_info_t buf;
       if(!mp_get_buffer(self->glyph_width, &buf, MP_BUFFER_READ))
           mp_raise_TypeError("data_width not a buffer object?!");
       font->glyph_width = buf.buf;
     }
-    DEBUG_printf( "      > Done \n ");
   }
-
 }
 
 MP_DEFINE_CONST_OBJ_TYPE(
