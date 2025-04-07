@@ -13,7 +13,7 @@
 /* Debugging options: PythonExtra debug tools (pretty much required for any
    other one), MicroPython's verbose logging. */
 /* PythonExtra's main debug flag */
-#define PE_DEBUG                          (1)
+#define PE_DEBUG                          (0)
 #define MICROPY_DEBUG_VERBOSE             (0)
 /* Custom flag to remove DEBUG_printf in alloc/GC (very verbose) */
 #define MICROPY_DEBUG_VERBOSE_ALLOC       (0)
