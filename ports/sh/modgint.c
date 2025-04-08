@@ -19,6 +19,9 @@
 #include <gint/drivers/keydev.h>
 #include <gint/config.h>
 #include <stdlib.h>
+#if GINT_RENDER_MONO
+#include <gint/gray.h>
+#endif
 
 extern void pe_enter_graphics_mode(void);
 extern void pe_dupdate(void);
@@ -221,6 +224,40 @@ static mp_obj_t modgint_C_RGB(mp_obj_t arg1, mp_obj_t arg2, mp_obj_t arg3)
     return MP_OBJ_NEW_SMALL_INT(C_RGB(r, g, b));
 }
 #endif
+
+#if GINT_RENDER_MONO
+static mp_obj_t modgint_dgray(mp_obj_t arg)
+{
+    mp_int_t value = mp_obj_get_int(arg);
+    return MP_OBJ_NEW_SMALL_INT(dgray(value));
+}
+
+static mp_obj_t modgint_dgray_enabled(void)
+{
+    return MP_OBJ_NEW_SMALL_INT(dgray_enabled());
+}
+
+static mp_obj_t modgint_dgray_setdelays(mp_obj_t light,mp_obj_t dark)
+{
+    mp_int_t valuelight = mp_obj_get_int(light);
+    mp_int_t valuedark = mp_obj_get_int(dark);
+    dgray_setdelays( valuelight, valuedark );
+    return mp_const_none;
+}
+
+static mp_obj_t modgint_dgray_getdelays( void )
+{
+    uint32_t valuelight, valuedark;
+    dgray_getdelays( &valuelight, &valuedark );
+
+    mp_obj_t tupleretour[2];
+    tupleretour[0] = MP_OBJ_NEW_SMALL_INT(valuelight);
+    tupleretour[1] = MP_OBJ_NEW_SMALL_INT(valuedark);
+    
+    return mp_obj_new_tuple(2, tupleretour);
+}
+#endif
+
 
 static mp_obj_t modgint_dclear(mp_obj_t arg1)
 {
@@ -489,6 +526,12 @@ FUN_0(__init__);
 #if GINT_RENDER_RGB
 FUN_3(C_RGB);
 #endif
+#if GINT_RENDER_MONO
+FUN_1(dgray);
+FUN_0(dgray_enabled);
+FUN_2(dgray_setdelays);
+FUN_0(dgray_getdelays);
+#endif
 FUN_1(dclear);
 FUN_0(dupdate);
 FUN_BETWEEN(drect, 5, 5);
@@ -674,6 +717,11 @@ static const mp_rom_map_elem_t modgint_module_globals_table[] = {
 #if GINT_RENDER_MONO
     INT(C_LIGHTEN),
     INT(C_DARKEN),
+    INT(DGRAY_ON),
+    INT(DGRAY_OFF),
+    INT(DGRAY_PUSH_ON),
+    INT(DGRAY_PUSH_OFF),
+    INT(DGRAY_OFF),
 #endif
 #if GINT_RENDER_RGB
     INT(C_RED),
@@ -681,7 +729,12 @@ static const mp_rom_map_elem_t modgint_module_globals_table[] = {
     INT(C_BLUE),
     OBJ(C_RGB),
 #endif
-
+#if GINT_RENDER_MONO
+    OBJ(dgray),
+    OBJ(dgray_enabled),
+    OBJ(dgray_setdelays),
+    OBJ(dgray_getdelays),
+#endif
     OBJ(dclear),
     OBJ(dupdate),
     OBJ(drect),
