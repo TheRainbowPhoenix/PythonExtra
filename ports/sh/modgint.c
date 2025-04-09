@@ -698,7 +698,7 @@ static const mp_rom_map_elem_t modgint_module_globals_table[] = {
     OBJ(dtext),
 
     { MP_ROM_QSTR(MP_QSTR_image), MP_ROM_PTR(&mp_type_gintimage) },
-    #ifdef FXCG50
+    #if GINT_RENDER_RGB
     OBJ(image_rgb565),
     OBJ(image_rgb565a),
     OBJ(image_p8_rgb565),

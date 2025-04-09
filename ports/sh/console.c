@@ -8,6 +8,7 @@
 #include <gint/display.h>
 #include <gint/kmalloc.h>
 #include <gint/defs/util.h>
+#include <gint/config.h>
 #include <stdlib.h>
 #include <string.h>
 #include "console.h"
@@ -390,7 +391,7 @@ void console_render(int x, int y0, console_t *cons, int dy,
         int y2 = y0 + h * (first_shown + visible_lines) / total_lines;
 
         int color = C_BLACK;
-#ifdef FXCG50
+#if GINT_RENDER_RGB
         if(pos == 0) color = C_RGB(24, 24, 24);
 #endif
         drect(x + text_w + scroll_spacing, y1,
