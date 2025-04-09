@@ -229,12 +229,12 @@ static mp_obj_t modgint_C_RGB(mp_obj_t arg1, mp_obj_t arg2, mp_obj_t arg3)
 static mp_obj_t modgint_dgray(mp_obj_t arg)
 {
     mp_int_t value = mp_obj_get_int(arg);
-    return MP_OBJ_NEW_SMALL_INT(dgray(value));
+    return mp_obj_new_bool(dgray(value) == 0);
 }
 
 static mp_obj_t modgint_dgray_enabled(void)
 {
-    return MP_OBJ_NEW_SMALL_INT(dgray_enabled());
+    return mp_obj_new_bool(dgray_enabled() != 0);
 }
 
 static mp_obj_t modgint_dgray_setdelays(mp_obj_t light,mp_obj_t dark)
@@ -721,7 +721,7 @@ static const mp_rom_map_elem_t modgint_module_globals_table[] = {
     INT(DGRAY_OFF),
     INT(DGRAY_PUSH_ON),
     INT(DGRAY_PUSH_OFF),
-    INT(DGRAY_OFF),
+    INT(DGRAY_POP),
 #endif
 #if GINT_RENDER_RGB
     INT(C_RED),
