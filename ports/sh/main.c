@@ -127,7 +127,13 @@ static bool async_filter(key_event_t ev)
        treats them as handled. Otherwise, we'd run the risk of filling the
        event queue (if the user doesn't read from it) thus preventing the
        driver from handling AC/ON releases, which disables further presses. */
-    if(mp_interrupt_char >= 0 && ev.key == KEY_ACON) {
+#if GINT_OS_CP
+    int interrupt_key = KEY_CLEAR;
+#else
+    int interrupt_key = KEY_ACON;
+#endif
+
+    if(mp_interrupt_char >= 0 && ev.key == interrupt_key) {
         /* This function supports asynchronous calls, by design. */
         if(ev.type == KEYEV_DOWN)
             mp_sched_keyboard_interrupt();
