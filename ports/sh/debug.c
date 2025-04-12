@@ -11,6 +11,10 @@
 #include <stdlib.h>
 #include "py/mpstate.h"
 
+#if GINT_RENDER_MONO
+#include <gint/gray.h>
+#endif
+
 void pe_debug_panic(char const *msg)
 {
     int dy = dfont_default()->line_height + 2;
@@ -233,7 +237,14 @@ void pe_debug_kmalloc(char const *prefix)
 void pe_debug_screenshot(void)
 {
     usb_open_wait();
+#if GINT_RENDER_MONO
+    if(dgray_enabled())
+        usb_fxlink_screenshot_gray(true);
+    else
+        usb_fxlink_screenshot(true);
+#else
     usb_fxlink_screenshot(true);
+#endif
 }
 
 void pe_debug_toggle_videocapture(void)
@@ -245,7 +256,14 @@ void pe_debug_run_videocapture(void)
 {
     if(videocapture) {
         usb_open_wait();
+#if GINT_RENDER_MONO
+        if(dgray_enabled())
+            usb_fxlink_videocapture_gray(true);
+        else
+            usb_fxlink_videocapture(true);
+#else
         usb_fxlink_videocapture(true);
+#endif
     }
 }
 

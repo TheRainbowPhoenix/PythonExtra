@@ -241,14 +241,14 @@ static mp_obj_t modgint_dgray_setdelays(mp_obj_t light,mp_obj_t dark)
 {
     mp_int_t valuelight = mp_obj_get_int(light);
     mp_int_t valuedark = mp_obj_get_int(dark);
-    dgray_setdelays( valuelight, valuedark );
+    dgray_setdelays(valuelight, valuedark);
     return mp_const_none;
 }
 
-static mp_obj_t modgint_dgray_getdelays( void )
+static mp_obj_t modgint_dgray_getdelays(void)
 {
     uint32_t valuelight, valuedark;
-    dgray_getdelays( &valuelight, &valuedark );
+    dgray_getdelays(&valuelight, &valuedark);
 
     mp_obj_t tupleretour[2];
     tupleretour[0] = MP_OBJ_NEW_SMALL_INT(valuelight);
