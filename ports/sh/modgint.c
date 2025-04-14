@@ -423,18 +423,20 @@ static mp_obj_t modgint_dtext(size_t n, mp_obj_t const *args)
 
 static mp_obj_t modgint_dfont(mp_obj_t new_font)
 {
-    if (new_font==mp_const_none)
+    /* This object must survive beyond the call because of course it will keep
+       getting referenced. Having only one, however, means every dfont() call
+       overrides it so we can't use the stack-style feature of getting the old
+       font back out dfont() to restore it later. */
+    static font_t font;
+    if (new_font == mp_const_none)
         dfont(NULL);
     else {
-        static font_t font;
         objgintfont_get(new_font, &font);
-
         dfont(&font);
     }
 
     return mp_const_none;
 }
-
 
 /* fx-CG-specific image constructors */
 #if GINT_RENDER_RGB
@@ -659,21 +661,21 @@ static const mp_rom_map_elem_t modgint_module_globals_table[] = {
     INT(KEY_EQUALS),
     INT(KEY_CLEAR),
 
-    /* extra keycodes for fxCG100 - Math+ */
+    /* Key codes for the fx-CG 100 / Graph Math+ */
     INT(KEY_ON),
-	INT(KEY_HOME),
-	INT(KEY_PREVTAB),
-	INT(KEY_NEXTTAB),
-	INT(KEY_PAGEUP),
-	INT(KEY_PAGEDOWN),
-	INT(KEY_SETTINGS),
-	INT(KEY_BACK),
-	INT(KEY_OK),
-	INT(KEY_CATALOG),
-	INT(KEY_TOOLS),
-	INT(KEY_FORMAT),
-	INT(KEY_SQRT),
-	INT(KEY_EXPFUN),
+    INT(KEY_HOME),
+    INT(KEY_PREVTAB),
+    INT(KEY_NEXTTAB),
+    INT(KEY_PAGEUP),
+    INT(KEY_PAGEDOWN),
+    INT(KEY_SETTINGS),
+    INT(KEY_BACK),
+    INT(KEY_OK),
+    INT(KEY_CATALOG),
+    INT(KEY_TOOLS),
+    INT(KEY_FORMAT),
+    INT(KEY_SQRT),
+    INT(KEY_EXPFUN),
 
     /* Key aliases (deprecated--no more will be added) */
     INT(KEY_X2),
@@ -685,7 +687,6 @@ static const mp_rom_map_elem_t modgint_module_globals_table[] = {
     INT(KEY_TIMES),
     INT(KEY_PLUS),
     INT(KEY_MINUS),
-
 
     /* <gint/keyboard.h> */
 
@@ -774,7 +775,6 @@ static const mp_rom_map_elem_t modgint_module_globals_table[] = {
     OBJ(dfont),
     OBJ(dtext_opt),
     OBJ(dtext),
-
 
     { MP_ROM_QSTR(MP_QSTR_image), MP_ROM_PTR(&mp_type_gintimage) },
     #if GINT_RENDER_RGB
