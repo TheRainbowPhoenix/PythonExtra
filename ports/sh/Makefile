@@ -41,10 +41,14 @@ ifeq ($(shell [[ x"$$(git describe)" == x"$$(git describe main)" ]] \
               && echo y),y)
     BUILDTYPE := RELEASE
     BUILDTYPE_STR := $(shell echo -e "\x1b[32;1mRelease build\x1b[0m")
+    PE_BUILD := $(shell git describe)
 else
     BUILDTYPE := DEV
     BUILDTYPE_STR := $(shell echo -e "\x1b[33;1mDevelopment build\x1b[0m")
+    PE_BUILD := $(shell git rev-parse --short HEAD)
 endif
+
+CFLAGS += -DPE_BUILD='"$(PE_BUILD)"'
 
 ifeq ($(TARGETCASIO),"FXCG50")
     PE_NAME := fx-CG

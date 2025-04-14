@@ -37,6 +37,12 @@
 #include "debug.h"
 #include "resources.h"
 
+HH2_NAME("PythonExtra " PE_BUILD)
+HH2_DESCRIPTION("Python application based on MicroPython "
+                MICROPY_VERSION_STRING_BASE " and gint.")
+HH2_AUTHOR("Lephe, SlyVTT & Planete Casio contributors")
+HH2_VERSION(PE_BUILD)
+
 //=== Application globals ===//
 
 struct pe_globals {
