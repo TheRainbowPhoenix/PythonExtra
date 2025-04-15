@@ -18,10 +18,12 @@
 #include <gint/keyboard.h>
 #include <gint/kmalloc.h>
 #include <gint/fs.h>
+#include <gint/config.h>
 
 #include <justui/jscene.h>
 #include <justui/jlabel.h>
 #include <justui/jfkeys.h>
+#include <justui/jbutton.h>
 #include <justui/jfileselect.h>
 #include <justui/jpainted.h>
 
@@ -57,6 +59,8 @@ struct pe_globals {
     /* Title widget and whether to show it in the shell. */
     jlabel *title;
     bool show_title_in_shell;
+    /* Bottom buttons (only on fx-CP). */
+    jbutton *button_files, *button_shell, *button_exit;
 };
 
 // TODO: Put pe_globals in a header for use by the loop hook in mpconfigport.h
@@ -215,8 +219,8 @@ void pe_draw(void)
     dsubimage(118, 58, &img_modifier_states, 9*icon+1, 1, 8, 6,
         DIMAGE_NONE);
 #else
-    dsubimage(DWIDTH - 19, DHEIGHT - 17, &img_modifier_states, 16*icon, 0, 15,
-        14, DIMAGE_NONE);
+    dsubimage(DWIDTH - 19, DHEIGHT - 17 - 25*GINT_HW_CP, &img_modifier_states,
+        16*icon, 0, 15, 14, DIMAGE_NONE);
 #endif
     pe_dupdate();
 }
@@ -274,6 +278,26 @@ static void pe_update_title(void)
 #endif
 }
 
+static void pe_show_files(void)
+{
+    jscene_show_and_focus(PE.scene, PE.fileselect);
+    jwidget_set_visible(PE.title, true);
+#if GINT_HW_CP
+    jbutton_set_disabled(PE.button_files, true);
+    jbutton_set_disabled(PE.button_shell, false);
+#endif
+}
+
+static void pe_show_shell(void)
+{
+    jscene_show_and_focus(PE.scene, PE.shell);
+    jwidget_set_visible(PE.title, PE.show_title_in_shell);
+#if GINT_HW_CP
+    jbutton_set_disabled(PE.button_files, false);
+    jbutton_set_disabled(PE.button_shell, true);
+#endif
+}
+
 /* Handle a GUI event. If `shell_bound` is true, only actions that have an
    effect on the shell are allowed and the return value is any full line that
    is entered in the shell. Otherwise, the full GUI is available and the return
@@ -302,9 +326,7 @@ static char *pe_handle_event(jevent e, bool shell_bound, bool *exit)
         char const *path = jfileselect_selected_file(PE.fileselect);
         char *module = path_to_module(path);
         if(module) {
-            jscene_show_and_focus(PE.scene, PE.shell);
-            jwidget_set_visible(PE.title, PE.show_title_in_shell);
-
+            pe_show_shell();
             pe_reset_micropython();
             pe_draw();
 
@@ -322,8 +344,14 @@ static char *pe_handle_event(jevent e, bool shell_bound, bool *exit)
     }
     if(!shell_bound && e.type == JFILESELECT_LOADED)
         pe_update_title();
-    /* Exit if we BACK out from the file selector */
-    if(!shell_bound && e.type == JFILESELECT_CANCELED && exit)
+
+    if(!shell_bound && e.type == JBUTTON_TRIGGERED &&
+       e.source == PE.button_files)
+        pe_show_files();
+    if(!shell_bound && e.type == JBUTTON_TRIGGERED &&
+       e.source == PE.button_shell)
+        pe_show_shell();
+    if(exit && e.type == JBUTTON_TRIGGERED && e.source == PE.button_exit)
         *exit = true;
 
     if(e.type != JWIDGET_KEY || e.key.type == KEYEV_UP)
@@ -338,14 +366,10 @@ static char *pe_handle_event(jevent e, bool shell_bound, bool *exit)
         pe_debug_kmalloc("tan");
 
     if(!shell_bound &&
-        (key == KEY_F1 || key == KEY_PREVTAB || key == KEY_EQUALS)) {
-        jscene_show_and_focus(PE.scene, PE.fileselect);
-        jwidget_set_visible(PE.title, true);
-    }
-    if(!shell_bound && (key == KEY_F2 || key == KEY_NEXTTAB || key == KEY_X)) {
-        jscene_show_and_focus(PE.scene, PE.shell);
-        jwidget_set_visible(PE.title, PE.show_title_in_shell);
-    }
+        (key == KEY_F1 || key == KEY_PREVTAB || key == KEY_EQUALS))
+        pe_show_files();
+    if(!shell_bound && (key == KEY_F2 || key == KEY_NEXTTAB || key == KEY_X))
+        pe_show_shell();
     if(!shell_bound && key == KEY_VARS && e.key.shift) {
         pe_debug_browse_meminfo();
         PE.scene->widget.update = true;
@@ -353,7 +377,7 @@ static char *pe_handle_event(jevent e, bool shell_bound, bool *exit)
 
     /* If return-to-menu is not enabled in the scene (default on machines on
        which there *is no* return-to-menu, leave on HOME */
-    if(!shell_bound && exit && e.key.key == KEY_HOME)
+    if(!shell_bound && exit && (e.key.key == KEY_HOME))
         *exit = true;
 
     return NULL;
@@ -508,8 +532,23 @@ int main(int argc, char **argv)
     PE.scene = jscene_create_fullscreen(NULL);
     PE.title = jlabel_create("<temp>", PE.scene);
     jwidget *stack = jwidget_create(PE.scene);
-    jfkeys *fkeys = jfkeys_create2(_(&img_fkeys_main, NULL), "/FILES;/SHELL", PE.scene);
-    (void)fkeys;
+#if GINT_HW_CP
+    jwidget *buttons = jwidget_create(PE.scene);
+    jlayout_set_hbox(buttons)->spacing = 6;
+    jwidget_set_stretch(buttons, 1, 0, false);
+    jwidget_set_padding(buttons, 6, 6, 0, 6);
+    PE.button_files = jbutton_create("FILES", buttons);
+    jwidget_set_padding(PE.button_files, 8, 12, 8, 12);
+    jbutton_set_disabled(PE.button_files, true);
+    PE.button_shell = jbutton_create("SHELL", buttons);
+    jwidget_set_padding(PE.button_shell, 8, 12, 8, 12);
+    jwidget *spacer = jwidget_create(buttons);
+    jwidget_set_stretch(spacer, 1, 0, false);
+    PE.button_exit = jbutton_create("EXIT", buttons);
+    jwidget_set_padding(PE.button_exit, 8, 12, 8, 12);
+#else
+    jfkeys_create2(_(&img_fkeys_main, NULL), "/FILES;/SHELL", PE.scene);
+#endif
 
     jwidget_set_stretch(PE.title, 1, 0, false);
 
@@ -533,10 +572,11 @@ int main(int argc, char **argv)
     jwidget_set_padding(PE.title, 0, 0, 1, 0);
     widget_shell_set_font(PE.shell, &font_4x6);
 #else
+    int padding_y = GINT_HW_CP ? 5 : 3;
     PE.show_title_in_shell = true;
     jwidget_set_background(PE.title, C_BLACK);
     jlabel_set_text_color(PE.title, C_WHITE);
-    jwidget_set_padding(PE.title, 3, 6, 3, 6);
+    jwidget_set_padding(PE.title, padding_y, 6, padding_y, 6);
     jwidget_set_padding(stack, 0, 6, 0, 6);
 #endif
 
