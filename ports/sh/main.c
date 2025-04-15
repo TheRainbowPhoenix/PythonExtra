@@ -215,8 +215,8 @@ void pe_draw(void)
     dsubimage(118, 58, &img_modifier_states, 9*icon+1, 1, 8, 6,
         DIMAGE_NONE);
 #else
-    dsubimage(377, 207, &img_modifier_states, 16*icon, 0, 15, 14,
-        DIMAGE_NONE);
+    dsubimage(DWIDTH - 19, DHEIGHT - 17, &img_modifier_states, 16*icon, 0, 15,
+        14, DIMAGE_NONE);
 #endif
     pe_dupdate();
 }
