@@ -59,19 +59,39 @@ static qstr const key_event_fields[] = {
     MP_QSTR_alpha,
     MP_QSTR_type,
     MP_QSTR_key,
+    MP_QSTR_x,
+    MP_QSTR_y,
 };
 
 static mp_obj_t mk_key_event(key_event_t ev)
 {
-    mp_obj_t items[] = {
-        mp_obj_new_int(ev.time),
-        mp_obj_new_bool(ev.mod),
-        mp_obj_new_bool(ev.shift),
-        mp_obj_new_bool(ev.alpha),
-        mp_obj_new_int(ev.type),
-        mp_obj_new_int(ev.key),
-    };
-    return mp_obj_new_attrtuple(key_event_fields, 6, items);
+    if(ev.type == KEYEV_TOUCH_DOWN || ev.type == KEYEV_TOUCH_DRAG ||
+       ev.type == KEYEV_TOUCH_UP) {
+        mp_obj_t items[] = {
+            mp_obj_new_int(ev.time),
+            mp_obj_new_bool(false),
+            mp_obj_new_bool(false),
+            mp_obj_new_bool(false),
+            mp_obj_new_int(ev.type),
+            mp_obj_new_int(0),
+            mp_obj_new_int(ev.x),
+            mp_obj_new_int(ev.y),
+        };
+        return mp_obj_new_attrtuple(key_event_fields, 8, items);
+    }
+    else {
+        mp_obj_t items[] = {
+            mp_obj_new_int(ev.time),
+            mp_obj_new_bool(ev.mod),
+            mp_obj_new_bool(ev.shift),
+            mp_obj_new_bool(ev.alpha),
+            mp_obj_new_int(ev.type),
+            mp_obj_new_int(ev.key),
+            mp_obj_new_int(0),
+            mp_obj_new_int(0),
+        };
+        return mp_obj_new_attrtuple(key_event_fields, 8, items);
+    }
 }
 
 static mp_obj_t modgint_pollevent(void)
@@ -694,6 +714,9 @@ static const mp_rom_map_elem_t modgint_module_globals_table[] = {
     INT(KEYEV_DOWN),
     INT(KEYEV_UP),
     INT(KEYEV_HOLD),
+    INT(KEYEV_TOUCH_DOWN),
+    INT(KEYEV_TOUCH_DRAG),
+    INT(KEYEV_TOUCH_UP),
 
     INT(GETKEY_MOD_SHIFT),
     INT(GETKEY_MOD_ALPHA),
