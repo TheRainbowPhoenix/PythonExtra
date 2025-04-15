@@ -216,14 +216,14 @@ Reference headers: [`<gint/display.h>`](https://gitea.planet-casio.com/Lephenixn
 ```py
 C_WHITE: int    # White
 C_BLACK: int    # Black
-C_LIGHT: int    # Light gray (on B&W: gray engine)
-C_DARK: int     # Dark gray (on B&W: gray engine)
+C_LIGHT: int    # Light gray (on B&W: gray mode)
+C_DARK: int     # Dark gray (on B&W: gray mode)
 C_NONE: int     # Transparent
 C_INVERT: int   # Function: inverse
 
 # Black-and-white (B&W) models only:
-C_LIGHTEN: int  # Function: lighten (gray engine)
-C_DARKEN: int   # Function: darken (gray engine)
+C_LIGHTEN: int  # Function: lighten (gray mode)
+C_DARKEN: int   # Function: darken (gray mode)
 
 # fx-CG models only:
 C_RED: int      # Pure red
@@ -234,12 +234,11 @@ C_RGB(r: int, g: int, b: int) -> int
 
 Colors are all integers (manipulating `(r,g,b)` tuples is excruciatingly slow and requires memory allocations all over the place). A few default colors are provided.
 
+On black-and-white models (fx-9750 and fx-9860 series), the base colors are `C_WHITE` and `C_BLACK`, unless the [gray mode](#gray-mode) (see below) is used, in which case all four gray levels are available.
+
 On the fx-CG series, the `C_RGB()` function can be used to create colors from three components ranging from 0 to 31.
 
-TODO: Explain the gray engine.
-
 ### Basic rendering functions
-
 
 ```py
 DWIDTH: int
@@ -329,7 +328,7 @@ image:
 image(profile: IMAGE_*, width: int, height: int, data: buffer-like) -> image
 ```
 
-Images on black-and-white models have either 2 or 4 colors (when the gray engine is enabled). Each image has a `.profile` field indicating the image format (the name "profile" comes from old gint versions), two fields `.width` and `.height` specifying its size, and a `.data` field providing direct access to pixel data.
+Images on black-and-white models have either 2 or 4 colors (when [gray mode](#gray-mode) is enabled). Each image has a `.profile` field indicating the image format (the name "profile" comes from old gint versions), two fields `.width` and `.height` specifying its size, and a `.data` field providing direct access to pixel data.
 
 The table below lists the four available formats.
 
@@ -424,10 +423,65 @@ _Exemple ([`cg_image.py`](../../ports/sh/examples/cg_image.py))._
 
 ![](images/modgint-image-cg.png)
 
+### Gray mode
+
+On black-and-white models, gint supports a visual trick called the _gray mode_ where flipping two images at the right speed gives an illusion of gray. The gray mode can be turned on and off at any time, and enables the use of 4 colors. The illusion is imperfect, and can flicker, so there is an art to using it to its full effect.
+
+```py
+DGRAY_ON: int
+DGRAY_OFF: int
+DGRAY_PUSH_ON: int
+DGRAY_PUSH_OFF: int
+DGRAY_POP: int
+
+dgray(mode: int) -> bool
+dgray_enabled() -> bool
+dgray_getdelays() -> (int, int)
+dgray_setdelays(light: int, dark: int) -> None
+```
+
+`dgray()` controls whether the gray mode is active. `dgray(DGRAY_ON)` will turn the mode on; this sets up the rendering system so that rendering functions can accept gray-mode colors. The display does not immediately transition to 4-color graphics after calling `dgray()` however, instead it transitions after the next `dupdate()`, so that the program has a chance to draw its first gray-colored frame first.
+
+`dgray(DGRAY_OFF)` will turn the mode off. This reconfigures the rendering system so that rendering functions go back to accepting only black-and-white colors. As with `DGRAY_ON`, this doesn't transition back to 2-color graphics immediately, instead waiting for the first 2-color frame to be supplied by the program with `dupdate()`.
+
+`dgray_enabled()` indicates whether gray mode is enabled, that is, whether gint is currently using 4-color rendering. This is true between the calls to `dgray(DGRAY_ON)` and `dgray(DGRAY_OFF)`, ignoring the transition period where the mode is waiting for the next `dupdate()`.
+
+_Example ([`fx_gray.py`](../../ports/sh/examples/fx_gray.py)). Fair warning: doesn't look as clean on the calculator._
+
+![](images/modgint-gray-fx.png)
+
+Sometimes it is desirable for a function to temporarily enable/disable the gray mode and later restore it to whatever state it was when the function started. This can be done with `dgray_enabled()`, but is a bit clumsy:
+
+```py
+def gray_func_1():
+    was_enabled = dgray_enabled()
+    dgray(DGRAY_ON)
+    dclear(C_LIGHT)
+    dupdate()
+    if not was_enabled:
+        dgray(DGRAY_OFF)
+```
+
+Instead one can use the `DGRAY_PUSH_ON` and `DGRAY_PUSH_OFF` parameters to `dgray()`, which enable/disable the mode but also remember the previous state internally. The previous state can be restored with `DGRAY_POP`. Note that a `DGRAY_PUSH_*` must _always_ be matched with exactly one `DGRAY_POP`!
+
+```py
+def gray_func_2():
+    dgray(DGRAY_PUSH_ON)
+    dclear(C_LIGHT)
+    dupdate()
+    dgray(DGRAY_POP)
+```
+
+The program can also control the look of the gray illusion through two delay values called the _light delay_ and _dark delay_. These are exposed by `dgray_getdelays()` and `dgray_setdelays()`.
+
+⚠️ Which delay values look good heavily depends on the calculator and display models. The default is generally the best known on the platform and it's not recommended to change it.
+
 ## Differences with gint's C API
 
 - `dsubimage()` doesn't have its final parameter `int flags`. The flags are only minor optimizations and could be removed in future gint versions.
 - Image constructors`image()` and `image_<format>()` don't exist in the C API.
 - Asynchronous volatile-flag-based timeouts are replaced with synchronous millisecond delays (integer value or `None`).
+- `dfont()` doesn't return the old font.
+- `dgray()` returns a boolean rather than an integer, since gint doesn't specify a meaning of the error codes.
 
 TODO: There are more.

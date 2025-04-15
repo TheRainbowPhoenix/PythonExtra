@@ -218,14 +218,14 @@ Les en-têtes de référence sont [`<gint/display.h>`](https://gitea.planet-casi
 ```py
 C_WHITE: int    # Blanc
 C_BLACK: int    # Noir
-C_LIGHT: int    # Gris clair (sur mono: moteur de gris)
-C_DARK: int     # Gris foncé (sur mono: moteur de gris)
+C_LIGHT: int    # Gris clair (sur mono: mode gris)
+C_DARK: int     # Gris foncé (sur mono: mode gris)
 C_NONE: int     # Transparent
 C_INVERT: int   # Inverseur de couleur
 
 # Graph mono uniquement :
-C_LIGHTEN: int  # Éclaircisseur de couleur (moteur de gris)
-C_DARKEN: int   # Assombrisseur de couleur (moteur de gris)
+C_LIGHTEN: int  # Éclaircisseur de couleur (mode gris)
+C_DARKEN: int   # Assombrisseur de couleur (mode gris)
 
 # Graph 90+E uniquement :
 C_RED: int      # Rouge pur
@@ -236,9 +236,9 @@ C_RGB(r: int, g: int, b: int) -> int
 
 Les couleurs sont toutes des nombres entiers (manipuler des tuples `(r,g,b)` est atrocement lent par comparaison et requiert des allocations mémoire dans tous les sens). Une poignée de couleurs est fournie par défaut.
 
-Sur Graph 90+E, la fonction `C_RGB()` peut être utilisée pour créer des couleurs à partir de trois composantes de valeur 0 à 31.
+Sur les modèles monochromes, les coouleurs de bases sont `C_WHITE` et `C_BLACK`, sauf si le [mode gris](#mode-gris) (voir ci-dessous) est utilisé, auquel cas les quatre niveaux de gris sont disponibles.
 
-TODO: Expliquer le moteur de gris.
+Sur Graph 90+E, la fonction `C_RGB()` peut être utilisée pour créer des couleurs à partir de trois composantes de valeur 0 à 31.
 
 ### Fonctions de dessin basiques
 
@@ -330,7 +330,7 @@ image:
 image(profile: IMAGE_*, width: int, height: int, data: buffer-like) -> image
 ```
 
-Les images sur Graph mono sont en noir-et-blanc ou 4 couleurs (quand le moteur de gris est utilisé). Chaque image a un champ `.profile` indiquant le format d'image (le nom "profile" est hérité d'anciennes versions de gint), deux champs `.width` et `.height` indiquant sa taille, et un champ `.data` donnant accès aux données brutes.
+Les images sur Graph mono sont en noir-et-blanc ou 4 couleurs (quand le mode gris est actif). Chaque image a un champ `.profile` indiquant le format d'image (le nom "profile" est hérité d'anciennes versions de gint), deux champs `.width` et `.height` indiquant sa taille, et un champ `.data` donnant accès aux données brutes.
 
 Les quatre formats disponibles sont les suivants.
 
@@ -425,10 +425,66 @@ _Exemple ([`cg_image.py`](../../ports/sh/examples/cg_image.py))._
 
 ![](images/modgint-image-cg.png)
 
+### Mode gris
+
+Sur les modèles monochromes, gint supporte une astuce visuelle appelée _mode gris_ ou _moteur de gris_ consistant à alterner rapidement deux images à la bonne vitesse pour produire une illusion de gris. Le mode gris peut être activé et désactivé à tout moment et permet de dessiner en 4 couleurs. L'illusion est imparfaite et peut clignoter, donc c'est un peu un art de s'en tirer son plein potentiel.
+
+```py
+DGRAY_ON: int
+DGRAY_OFF: int
+DGRAY_PUSH_ON: int
+DGRAY_PUSH_OFF: int
+DGRAY_POP: int
+
+dgray(mode: int) -> bool
+dgray_enabled() -> bool
+dgray_getdelays() -> (int, int)
+dgray_setdelays(light: int, dark: int) -> None
+```
+
+`dgray()` contrôle si le mode gris est actif. `dgray(DGRAY_ON)` active le mode, ce qui reconfigure le système de rendu de sorte que les fonctions de dessin acceptent les couleurs grises. Toutefois l'écran ne transitionne pas immédiatement en mode 4 couleurs après l'appel à `dgray()` ; il ne transitionne qu'après le prochain `dupdate()` pour que le programme ait le temps de dessiner sa première image en gris d'abord.
+
+`dgray(DGRAY_OFF)` désactive le mode, ce qui reconfigure le système de rendu pour repasser en dessin en noir et blanc. Comme avec `DGRAY_ON`, l'écran ne transitionne pas immédiatement en mode monochrome mais attend que le programme soumette sa première image en noir et blanc avec `dupdate()`.
+
+`dgray_enabled()` indique si le mode gris est activé, c'est-à-dire si gint fait actuellement du dessin en 4 couleurs. Cette fonction renvoie `True` entre les appels à `dgray(DGRAY_ON)` et `dgray(DGRAY_OFF)` indépendamment de la période de transition durant l'attente du premier `dupdate()`.
+
+_Exemple ([`fx_gray.py`](../../ports/sh/examples/fx_gray.py)). Attention : n'est pas aussi propre sur la calculatrice._
+
+![](images/modgint-gray-fx.png)
+
+Parfois on veut qu'une fonction puisse activer/désactiver temporairement le mode gris et plus tard revenir à l'état initial de quand la fonction a démarré. On peut le faire avec `dgray_enabled()`, mais ce n'est pas très pratique :
+
+```py
+def gray_func_1():
+    was_enabled = dgray_enabled()
+    dgray(DGRAY_ON)
+    dclear(C_LIGHT)
+    dupdate()
+    if not was_enabled:
+        dgray(DGRAY_OFF)
+```
+
+À la la place on peut spécifier `DGRAY_PUSH_ON` ou `DGRAY_PUSH_OFF` comme paramètre à `dgray()`, ce qui active/désactive le mode gris mais se souvient en même temps de l'état précédent (en interne). L'état précédent peut ensuite être restoré avec `DGRAY_POP`. Faites bien attention à ce qu'on `DGRAY_PUSH_*` soit _toujours_ associé à ni plus ni moins qu'un `DGRAY_POP` !
+
+
+```py
+def gray_func_2():
+    dgray(DGRAY_PUSH_ON)
+    dclear(C_LIGHT)
+    dupdate()
+    dgray(DGRAY_POP)
+```
+
+Le programme peut également contrôler l'apprence de l'illusion de gris en modifiant deux délais qu'on appelle _délai clair_ et _délai sombre_. Ces valeurs sont exposées par `dgray_getdelays()` et modifiables avec `dgray_setdelays()`.
+
+⚠️ Quelles valeurs donnent un effet joli dépend fortement du modèle de calculatrice et d'écran. La valeur par défaut est généralement la meilleure connue, et il n'est pas conseillé de la changer.
+
 ## Différences avec l'API C de gint
 
 - `dsubimage()` n'a pas de paramètre `int flags`. Les flags en question ne ont que des optimisations mineures et pourraient disparaître dans une version future de gint.
 - Les constructeurs d'image `image()` et `image_<format>()` n'existent pas dans l'API C.
 - Les timeouts asynchrones à base d'entiers volatiles sont remplacés par des timeouts synchrones avec des durées optionnelles en millisecondes (entier ou `None`).
+- `dfont()` ne renvoie pas de pointeur vers la police précédente.
+- `dgray()` renvoie un booléen et non un entier puisque gint ne spécifie pas la signification des codes d'erreur.
 
 TODO : Il y en a d'autres.
