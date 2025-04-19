@@ -419,7 +419,7 @@ puzzle = gint.image(6, 16, 64, 32, 32,
 ```
 The option `--py-compact` is recommended to reduce code size; please see details in the black-and-white section above.
 
-_Exemple ([`cg_image.py`](../../ports/sh/examples/cg_image.py))._
+_Example ([`cg_image.py`](../../ports/sh/examples/cg_image.py))._
 
 ![](images/modgint-image-cg.png)
 
@@ -475,6 +475,96 @@ def gray_func_2():
 The program can also control the look of the gray illusion through two delay values called the _light delay_ and _dark delay_. These are exposed by `dgray_getdelays()` and `dgray_setdelays()`.
 
 ⚠️ Which delay values look good heavily depends on the calculator and display models. The default is generally the best known on the platform and it's not recommended to change it.
+
+## font management
+
+```py
+dfont( fnt : font ) -> None
+dfont( None ) -> None
+```
+
+```py
+font:
+    .prop	        -> int	    # 0 = monospaced, 1 = proportional
+    .line_height	-> int	    # Total vertical space for each line
+    .data_height	-> int	    # Pixel height of glyphs
+    .block_count	-> int	    # Number of glyph encoding blocks
+    .glyph_count	-> int	    # Total number of characters
+    .char_spacing	-> int	    # Space between characters
+    .line_distance	-> int	    # Additional line spacing
+    .blocks	        -> bytes	# Glyph block map
+    .data	        -> bytes	# Glyph bitmap data
+    .width	        -> int	    # (Monospaced only, 0 otherwize) Width of each character
+    .storage_size	-> int	    # (Monospaced only, 0 otherwize) Size of bitmap data
+    .glyph_index	-> bytes	# (Proportional only, None otherwise) Glyph lookup table
+    .glyph_width	-> bytes	# (Proportional only, None otherwise) Per-glyph widths
+
+#constructor
+font( prop : int, line_height : int, data_height : int, block_count : int, glyph_count : int, char_spacing : int, line_distance : int, blocks : bytes, data : bytes,
+        width : int or 0, storage_size : int or 0, glyph_index : bytes or None, glyph_width : bytes or None  ) -> font
+```
+
+As for images, font can be converted into a Python file with fxconv.
+
+**Proportional fonts**
+
+for example for the proportional font Shmup [`font_shmup.png`](./images/font_shmup.png) :
+
+```bash
+% fxconv --font font_shmup.png -o shmup.py --py name:font_shmup charset:print grid.size:10x13 grid.padding:0 grid.border:0 proportional:true title:"Shmup"
+```
+
+```py
+import gint
+font_shmup = gint.font(1, 13, 13, 1, 95, 1, 14, 
+    b'\x00\x02\x00_', b'\x00\x00\x00\x00\x00\x00\x00\x00m\xb7\xb6\x1b\x00\x00\x00\x00f\ ...', #code has  intentionnaly been reduced
+    0, 0, b'\x00\x00\x00\x18\...', b'\x03\x03\x07\n\x07\...', 'Shmup')                        #code has  intentionnaly been reduced
+
+```
+
+The option `--py-compact` is recommended to reduce code size; please see details in the black-and-white section above.
+
+
+**Polices à chasse fixe (monospaced)**
+
+Par exemple pour la font monospaced Numworks [`Numworks.png`](./images/numworks.png) (code abrégé) :
+
+```bash
+% fxconv --font numworks.png -o numworks.py --py name:font_numworks charset:print grid.size:10x16 grid.padding:0 grid.border:0 proportional:false title:"Numworks"
+```
+
+```py
+import gint
+font_numworks = gint.font(0, 16, 16, 1, 95, 1, 17, b'\x00\x02\x00_', 
+    b'\x00\x00\x00\x00\x00\x00...', 10, 5, None, None, 'Numworks')      #code has  intentionnaly been reduced
+
+```
+
+The option `--py-compact` is recommended to reduce code size; please see details in the black-and-white section above.
+
+**Usage**
+
+`dfont()` allows switching to another font. If `None` is given as argument, gint's default font is restored.
+
+
+Example: requires [`shmup.py`](../../ports/sh/examples/fonts/shmup.py)
+
+```py
+from shmup import *
+from gint import *
+
+dclear(C_WHITE)
+
+dtext(10,10,C_BLUE,"Hello before changing font")
+
+print("TEST : Shmup font (Proportional)")
+dfont(font_shmup)
+dtext(10,50,C_RED,"Hello after changing font")
+
+dupdate()
+getkey()
+```
+
 
 ## Differences with gint's C API
 

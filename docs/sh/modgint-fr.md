@@ -479,6 +479,97 @@ Le programme peut également contrôler l'apprence de l'illusion de gris en modi
 
 ⚠️ Quelles valeurs donnent un effet joli dépend fortement du modèle de calculatrice et d'écran. La valeur par défaut est généralement la meilleure connue, et il n'est pas conseillé de la changer.
 
+## Gestion des polices de caractères
+
+```py
+dfont( fnt : font ) -> None
+dfont( None ) -> None
+```
+
+```py
+font:
+    .prop	        -> int	    # 0 = monospaced, 1 = proportional
+    .line_height	-> int	    # Total vertical space for each line
+    .data_height	-> int	    # Pixel height of glyphs
+    .block_count	-> int	    # Number of glyph encoding blocks
+    .glyph_count	-> int	    # Total number of characters
+    .char_spacing	-> int	    # Space between characters
+    .line_distance	-> int	    # Additional line spacing
+    .blocks	        -> bytes	# Glyph block map
+    .data	        -> bytes	# Glyph bitmap data
+    .width	        -> int	    # (Monospaced only, 0 otherwize) Width of each character
+    .storage_size	-> int	    # (Monospaced only, 0 otherwize) Size of bitmap data
+    .glyph_index	-> bytes	# (Proportional only, None otherwise) Glyph lookup table
+    .glyph_width	-> bytes	# (Proportional only, None otherwise) Per-glyph widths
+
+#constructeur
+font( prop : int, line_height : int, data_height : int, block_count : int, glyph_count : int, char_spacing : int, line_distance : int, blocks : bytes, data : bytes,
+        width : int or 0, storage_size : int or 0, glyph_index : bytes or None, glyph_width : bytes or None  ) -> font
+```
+
+Comme pour les images, les fonts peuvent être converties avec fxconv.
+
+**Polices proportionnelles**
+
+Par exemple pour la font proportionnelle Shmup [`font_shmup.png`](./images/font_shmup.png) :
+
+```bash
+% fxconv --font font_shmup.png -o shmup.py --py name:font_shmup charset:print grid.size:10x13 grid.padding:0 grid.border:0 proportional:true title:"Shmup"
+```
+
+```py
+import gint
+font_shmup = gint.font(1, 13, 13, 1, 95, 1, 14, 
+    b'\x00\x02\x00_', b'\x00\x00\x00\x00\x00\x00\x00\x00m\xb7\xb6\x1b\x00\x00\x00\x00f\ ...', #code volontairement tronqué
+    0, 0, b'\x00\x00\x00\x18\...', b'\x03\x03\x07\n\x07\...', 'Shmup')                        #code volontairement tronqué
+
+```
+
+L'option `--py-compact` est recommandée pour réduire la taille du code.
+
+
+**Polices à chasse fixe (monospaced)**
+
+Par exemple pour la font monospaced Numworks [`Numworks.png`](./images/numworks.png) :
+
+```bash
+% fxconv --font numworks.png -o numworks.py --py name:font_numworks charset:print grid.size:10x16 grid.padding:0 grid.border:0 proportional:false title:"Numworks"
+```
+
+```py
+import gint
+font_numworks = gint.font(0, 16, 16, 1, 95, 1, 17, b'\x00\x02\x00_', 
+    b'\x00\x00\x00\x00\x00\x00...', 10, 5, None, None, 'Numworks')      #Code vontontairement tronqué
+
+```
+
+L'option `--py-compact` est recommandée pour réduire la taille du code.
+
+
+**Utilisation**
+
+
+`dfont()` permet de changer la fonte courante en lui passant en paramètre une fonte. Si `None` est passé en argument, la fonte par défaut de gint est restituée.
+
+
+Exemple de programme: nécessite [`shmup.py`](../../ports/sh/examples/fonts/shmup.py)
+
+```py
+from shmup import *
+from gint import *
+
+dclear(C_WHITE)
+
+dtext(10,10,C_BLUE,"Hello before changing font")
+
+print("TEST : Shmup font (Proportional)")
+dfont(font_shmup)
+dtext(10,50,C_RED,"Hello after changing font")
+
+dupdate()
+getkey()
+```
+
 ## Différences avec l'API C de gint
 
 - `dsubimage()` n'a pas de paramètre `int flags`. Les flags en question ne ont que des optimisations mineures et pourraient disparaître dans une version future de gint.
