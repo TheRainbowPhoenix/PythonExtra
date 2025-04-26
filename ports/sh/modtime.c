@@ -11,7 +11,7 @@
 static mp_obj_t time_monotonic(void) {
     // TODO: Use libprof instead
     uint64_t ms = ((uint64_t)clock() * 1000000000) / CLOCKS_PER_SEC;
-    return mp_obj_new_float((double)ms);
+    return mp_obj_new_float((double)ms/1000.0f);
 }
 MP_DEFINE_CONST_FUN_OBJ_0(mp_time_monotonic_obj, time_monotonic);
 
