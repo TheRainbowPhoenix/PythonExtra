@@ -18,7 +18,7 @@
 	// "workspaceFolder": "/srv",
 
 	// Uncomment the next line to run commands after the container is created.
-	"postCreateCommand": "cd /workspaces/${RepositoryName}",
+	"postCreateCommand": "cd /workspaces/${RepositoryName} && git submodule update --init --recursive",
 
 	// Configure tool-specific properties.
 	// "customizations": {},
