@@ -16,7 +16,7 @@ RUN echo "dev:dev" | chpasswd \
 # Optional: prevent sudo from asking for a password
 RUN echo "dev ALL=(ALL) NOPASSWD:ALL" >> /etc/sudoers
 
-RUN apt install -y python3-venv python3-venv
+RUN apt install -y python3-pip
 
 WORKDIR /workspace
 
