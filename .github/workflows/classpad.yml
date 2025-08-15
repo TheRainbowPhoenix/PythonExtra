@@ -1,5 +1,5 @@
 # .github/workflows/build.yml
-name: Build (gint-docker)
+name: Build (fx-cp)
 
 on:
   push:
@@ -31,10 +31,10 @@ jobs:
         run: |
           make
 
-      - name: Upload artifact (ports/fxcp/build)
+      - name: Upload PythonExtra-hh2.bin
         uses: actions/upload-artifact@v4
         with:
-          name: fxcp-build
-          path: ports/fxcp/build/
+          name: PythonExtra-hh2.bin
+          path: ports/fxcp/PythonExtra-hh2.bin
           if-no-files-found: error
           retention-days: 14

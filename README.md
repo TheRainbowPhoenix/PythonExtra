@@ -4,7 +4,46 @@
 
 This is a MicroPython port for fx-CG 50, fx-9860G III and related CASIO calculators.
 
-**Build instructions**
+
+## **Build instructions**
+
+### For ClassPad
+
+
+1. Ensure you have the `fxSDK` installed and its repository set to a compatible branch (often `dev`) along with related dependencies:
+
+   * `gint`, `fxlibc`, and `JustUI`
+  
+   Building from the Docker image `ghcr.io/therainbowphoenix/gint-docker:main` will allows you to save toolchain compile times. It is recommended to use it.
+
+2. Initialize and update submodules:
+
+   ```bash
+   git submodule update --init --recursive
+   ```
+
+3. Navigate to the ClassPad port:
+
+   ```bash
+   cd ports/fxcp
+   ```
+
+4. Build the firmware:
+
+   ```bash
+   make
+   ```
+
+5. When the build finishes, locate your binary:
+
+   ```
+   PythonExtra-hh2.bin
+   ```
+
+Congrats ! You can now deploy your own PythonExtra !
+
+
+### For Others/Manual
 
 Requires the [fxSDK](/Lephenixnoir/fxsdk). Go to `ports/fxcg50` or `ports/fx9860g3` and run `make`. If it doesn't build, first try to use the `dev` branches for [fxSDK](/Lephenixnoir/fxSDK), [gint](/Lephenixnoir/gint), [fxlibc](/Lephenixnoir/fxlib) and [JustUI](/Lephenixnoir/JustUI). Rebuilds don't always work especially when checking out other commits (maybe my fault), so try to delete `build` if you think that's related.
 
