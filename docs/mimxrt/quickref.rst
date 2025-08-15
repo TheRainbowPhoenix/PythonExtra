@@ -20,7 +20,7 @@ working with this board it may be useful to get an overview of the microcontroll
    pinout.rst
 
 
-Installing MicroPython
+Installing PythonExtra
 ----------------------
 
 See the corresponding section of tutorial: :ref:`mimxrt_intro`. It also includes
@@ -29,7 +29,7 @@ a troubleshooting subsection.
 General board control
 ---------------------
 
-The MicroPython REPL is on the USB port, configured in VCP mode.
+The PythonExtra REPL is on the USB port, configured in VCP mode.
 Tab-completion is useful to find out what methods an object has.
 Paste mode (ctrl-E) is useful to paste a large slab of Python code into
 the REPL.
@@ -458,7 +458,7 @@ See :ref:`machine.SDCard <machine.SDCard>`::
     vfs.umount('/sd')    # eject
 
 Note: The i.mx-rt 1011 and 1015 based boards do not support the ``machine.SDCard``
-class.  For these, the SPI based driver ``sdcard.py`` from the MicroPython drivers
+class.  For these, the SPI based driver ``sdcard.py`` from the PythonExtra drivers
 can be used.  When using it, you have to overdrive the CS pin of the SPI hardware
 module.  Example::
 
@@ -551,5 +551,5 @@ Transferring files
 
 Files can be transferred to the i.MXRT devices for instance with the ``mpremote``
 tool or using an SD card.  If Ethernet is available, you can also use ftp.
-See the MicroPython forum for the FTP server or other community-supported
+See the PythonExtra forum for the FTP server or other community-supported
 alternatives to transfer files to an i.MXRT board, like rshell or Thonny.

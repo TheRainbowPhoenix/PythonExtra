@@ -7,7 +7,7 @@ has 32 registers known as ``s0-s31`` each of which can hold a single
 precision float. Data can be passed between the FPU registers and the
 ARM core registers with the ``vmov`` instruction.
 
-Note that MicroPython doesn't support passing floats to
+Note that PythonExtra doesn't support passing floats to
 assembler functions, nor can you put a float into ``r0`` and expect a
 reasonable result. There are two ways to overcome this. The first is to
 use arrays, and the second is to pass and/or return integers and convert

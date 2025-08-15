@@ -1,7 +1,7 @@
 Reset and Boot Sequence
 =======================
 
-A device running MicroPython follows a particular boot sequence to start up and
+A device running PythonExtra follows a particular boot sequence to start up and
 initialise itself after a reset.
 
 .. _hard_reset:
@@ -12,9 +12,9 @@ Hard reset
 Booting from hard reset is what happens when a board is first powered up, a cold
 boot. This is a complete reset of the MCU hardware.
 
-The MicroPython port code initialises all essential hardware (including embedded
+The PythonExtra port code initialises all essential hardware (including embedded
 clocks and power regulators, internal serial UART, etc), and then starts the
-MicroPython environment. Existing :doc:`RTC </library/machine.RTC>`
+PythonExtra environment. Existing :doc:`RTC </library/machine.RTC>`
 configuration may be retained after a hard reset, but all other hardware state
 is cleared.
 
@@ -35,12 +35,12 @@ further determine the cause of a reset.
 Soft Reset
 ----------
 
-When MicroPython is already running, it's possible to trigger a soft reset by
+When PythonExtra is already running, it's possible to trigger a soft reset by
 :ref:`typing Ctrl-D in the REPL <repl_soft_reset>` or executing
 :func:`machine.soft_reset()`.
 
 A soft reset clears the Python interpreter, frees all Python memory, and starts
-the MicroPython environment again.
+the PythonExtra environment again.
 
 State which is cleared by a soft reset includes:
 
@@ -79,21 +79,21 @@ Some system state remains the same after a soft reset, including:
 Boot Sequence
 -------------
 
-When MicroPython boots following either a hard or soft reset, it follows this
+When PythonExtra boots following either a hard or soft reset, it follows this
 boot sequence in order:
 
 _boot.py
 ^^^^^^^^
 
-This is an internal script :doc:`frozen into the MicroPython firmware
-<manifest>`. It is provided by MicroPython on many ports to do essential
+This is an internal script :doc:`frozen into the PythonExtra firmware
+<manifest>`. It is provided by PythonExtra on many ports to do essential
 initialisation.
 
 For example, on most ports ``_boot.py`` will detect the first boot of a new
 device and format the :doc:`internal flash filesystem <filesystem>` ready for
 use.
 
-Unless you're creating a custom MicroPython build or adding a new port then you
+Unless you're creating a custom PythonExtra build or adding a new port then you
 probably don't need to worry about ``_boot.py``. It's best not to change the
 contents unless you really know what you're doing.
 
@@ -170,7 +170,7 @@ Some tips for ``main.py`` usage:
         # block to always reset, instead.
         machine.reset()
 
-  Otherwise MicroPython will drop to the REPL following any crash or if main
+  Otherwise PythonExtra will drop to the REPL following any crash or if main
   exits (see below).
 
 - Any global variables that were set in ``boot.py`` will still be set in the
@@ -182,7 +182,7 @@ Some tips for ``main.py`` usage:
   instead.
 - ``main.py`` execution is skipped when a soft reset is initiated from :ref:`raw
   REPL mode <raw_repl>` (for example, when :doc:`mpremote <mpremote>` or another
-  program is interacting directly with MicroPython).
+  program is interacting directly with PythonExtra).
 
 Interactive Interpreter (REPL)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -204,7 +204,7 @@ The REPL continues executing until Python code triggers a hard or soft reset.
 Soft Bricking (failure to boot)
 ---------------------------------
 
-It is rare but possible for MicroPython to become unresponsive during startup, a
+It is rare but possible for PythonExtra to become unresponsive during startup, a
 state sometimes called "soft bricked". For example:
 
 - If ``boot.py`` execution gets stuck and the native USB serial port
@@ -250,12 +250,12 @@ The specific process(es) are different on each port:
 - :doc:`wipy port instructions </wipy/tutorial/reset>`
 
 For ports without specific instructions linked above, the factory reset process
-involves erasing the board's entire flash and then flashing MicroPython again
+involves erasing the board's entire flash and then flashing PythonExtra again
 from scratch. Usually this will involve the same tool(s) that were originally
-used to install MicroPython. Consult the installation docs for your board, or
+used to install PythonExtra. Consult the installation docs for your board, or
 ask on the `GitHub Discussions`_ if you're not sure.
 
-.. warning:: Re-flashing the MicroPython firmware without erasing the entire
+.. warning:: Re-flashing the PythonExtra firmware without erasing the entire
              flash first will usually not recover from soft bricking, as a
              firmware update usually preserves the contents of the filesystem.
 

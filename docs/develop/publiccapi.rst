@@ -17,7 +17,7 @@ The following is an example of public API functions from ``obj.h``:
    void mp_obj_list_get(mp_obj_t self_in, size_t *len, mp_obj_t **items);
 
 At its core, any functions and macros in header files make up the public
-API and can be used to access very low-level details of MicroPython. Static
+API and can be used to access very low-level details of PythonExtra. Static
 inline functions in header files are fine too, such functions will be
 inlined in the code when used.
 

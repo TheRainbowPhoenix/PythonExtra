@@ -76,7 +76,7 @@ Methods
    Cancel a running alarm.
 
    The mimxrt port also exposes this function as ``RTC.cancel(alarm_id=0)``, but this is
-   scheduled to be removed in MicroPython 2.0.
+   scheduled to be removed in PythonExtra 2.0.
 
 .. method:: RTC.irq(*, trigger, handler=None, wake=machine.IDLE)
 

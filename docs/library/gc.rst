@@ -29,7 +29,7 @@ Functions
    .. admonition:: Difference to CPython
       :class: attention
 
-      This function is MicroPython extension.
+      This function is PythonExtra extension.
 
 .. function:: mem_free()
 
@@ -39,7 +39,7 @@ Functions
    .. admonition:: Difference to CPython
       :class: attention
 
-      This function is MicroPython extension.
+      This function is PythonExtra extension.
 
 .. function:: threshold([amount])
 
@@ -61,6 +61,6 @@ Functions
    .. admonition:: Difference to CPython
       :class: attention
 
-      This function is a MicroPython extension. CPython has a similar
+      This function is a PythonExtra extension. CPython has a similar
       function - ``set_threshold()``, but due to different GC
       implementations, its signature and semantics are different.

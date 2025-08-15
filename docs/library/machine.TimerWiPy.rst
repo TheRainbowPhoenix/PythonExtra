@@ -13,7 +13,7 @@ class TimerWiPy -- control hardware timers
 
 Hardware timers deal with timing of periods and events. Timers are perhaps
 the most flexible and heterogeneous kind of hardware in MCUs and SoCs,
-differently greatly from a model to a model. MicroPython's Timer class
+differently greatly from a model to a model. PythonExtra's Timer class
 defines a baseline operation of executing a callback with a given period
 (or once after some delay), and allow specific boards to define more
 non-standard behaviour (which thus won't be portable to other boards).

@@ -52,14 +52,14 @@ help:
 	@echo "  pseudoxml  to make pseudoxml-XML files for display purposes"
 	@echo "  linkcheck  to check all external links for integrity"
 	@echo "  doctest    to run all doctests embedded in the documentation (if enabled)"
-	@echo "  cpydiff    to generate the MicroPython differences from CPython"
+	@echo "  cpydiff    to generate the PythonExtra differences from CPython"
 
 clean:
 	rm -rf $(BUILDDIR)/*
 	rm -f $(GENRSTDIR)/*
 
 cpydiff:
-	@echo "Generating MicroPython Differences."
+	@echo "Generating PythonExtra Differences."
 	rm -f $(GENRSTDIR)/*
 	cd $(CPYDIFFDIR) && $(PYTHON) $(CPYDIFF)
 
@@ -99,17 +99,17 @@ qthelp:
 	@echo
 	@echo "Build finished; now you can run "qcollectiongenerator" with the" \
 	      ".qhcp project file in $(BUILDDIR)/qthelp, like this:"
-	@echo "# qcollectiongenerator $(BUILDDIR)/qthelp/MicroPython.qhcp"
+	@echo "# qcollectiongenerator $(BUILDDIR)/qthelp/PythonExtra.qhcp"
 	@echo "To view the help file:"
-	@echo "# assistant -collectionFile $(BUILDDIR)/qthelp/MicroPython.qhc"
+	@echo "# assistant -collectionFile $(BUILDDIR)/qthelp/PythonExtra.qhc"
 
 devhelp:
 	$(SPHINXBUILD) -b devhelp $(ALLSPHINXOPTS) $(BUILDDIR)/devhelp
 	@echo
 	@echo "Build finished."
 	@echo "To view the help file:"
-	@echo "# mkdir -p $$HOME/.local/share/devhelp/MicroPython"
-	@echo "# ln -s $(BUILDDIR)/devhelp $$HOME/.local/share/devhelp/MicroPython"
+	@echo "# mkdir -p $$HOME/.local/share/devhelp/PythonExtra"
+	@echo "# ln -s $(BUILDDIR)/devhelp $$HOME/.local/share/devhelp/PythonExtra"
 	@echo "# devhelp"
 
 epub:

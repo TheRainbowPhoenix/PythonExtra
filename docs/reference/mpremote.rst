@@ -1,10 +1,10 @@
 .. _mpremote:
 
-MicroPython remote control: mpremote
+PythonExtra remote control: mpremote
 ====================================
 
 The ``mpremote`` command line tool provides an integrated set of utilities to
-remotely interact with, manage the filesystem on, and automate a MicroPython
+remotely interact with, manage the filesystem on, and automate a PythonExtra
 device over a serial connection.
 
 To use mpremote, first install it via ``pip``:
@@ -42,7 +42,7 @@ Commands
 --------
 
 ``mpremote`` supports being given a series of commands given at the command line
-which will perform various actions in sequence on a remote MicroPython device.
+which will perform various actions in sequence on a remote PythonExtra device.
 See the :ref:`examples section <mpremote_examples>` below to get an idea of how
 this works and for some common combinations of commands.
 
@@ -169,7 +169,7 @@ The full list of supported commands are:
   exit.
 
   **Note:** The name "REPL" here reflects that the common usage of this command
-  to access the Read Eval Print Loop that is running on the MicroPython
+  to access the Read Eval Print Loop that is running on the PythonExtra
   device. Strictly, the ``repl`` command is just functioning as a terminal
   (or "serial monitor") to access the device. Because this command does not
   trigger the :ref:`auto-reset behavior <mpremote_reset>`, this means that if

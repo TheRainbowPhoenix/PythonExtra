@@ -3,7 +3,7 @@
 Python 3.5
 ==========
 
-Below is a list of finalised/accepted PEPs for Python 3.5 grouped into their impact to MicroPython.
+Below is a list of finalised/accepted PEPs for Python 3.5 grouped into their impact to PythonExtra.
 
 .. table::
   :widths: 30 50 20
@@ -190,4 +190,4 @@ Changes to built-in modules:
 
 .. rubric:: Notes
 
-.. [#fth] The MicroPython parser correct ignores all type hints. However, the ``typing`` module is not built-in.
+.. [#fth] The PythonExtra parser correct ignores all type hints. However, the ``typing`` module is not built-in.

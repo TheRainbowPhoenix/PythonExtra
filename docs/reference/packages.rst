@@ -120,7 +120,7 @@ Writing & publishing packages
 -----------------------------
 
 Publishing to :term:`micropython-lib` is the easiest way to make your package
-broadly accessible to MicroPython users, and automatically available via
+broadly accessible to PythonExtra users, and automatically available via
 ``mip`` and ``mpremote`` and compiled to bytecode. See
 https://github.com/micropython/micropython-lib for more information.
 
@@ -185,7 +185,7 @@ still ends up in RAM.
 
 For low-memory devices, or for large applications, it can be advantageous to
 instead run the bytecode from ROM (i.e. flash memory). This can be done
-by "freezing" the bytecode into the MicroPython firmware, which is then flashed
+by "freezing" the bytecode into the PythonExtra firmware, which is then flashed
 to the device. The runtime performance is the same (although importing is
 faster), but it can free up significant amounts of RAM for your program to
 use.

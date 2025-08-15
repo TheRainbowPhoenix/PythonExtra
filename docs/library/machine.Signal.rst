@@ -10,7 +10,7 @@ can be only in "absolute" 0 and 1 states, a Signal can be in "asserted"
 not. In other words, it adds logical inversion support to Pin functionality.
 While this may seem a simple addition, it is exactly what is needed to
 support wide array of simple digital devices in a way portable across
-different boards, which is one of the major MicroPython goals. Regardless
+different boards, which is one of the major PythonExtra goals. Regardless
 of whether different users have an active-high or active-low LED, a normally
 open or normally closed relay - you can develop a single, nicely looking
 application which works with each of them, and capture hardware
@@ -56,7 +56,7 @@ Following is the guide when Signal vs Pin should be used:
   with more complex devices.
 
 The split between Pin and Signal come from the use cases above and the
-architecture of MicroPython: Pin offers the lowest overhead, which may
+architecture of PythonExtra: Pin offers the lowest overhead, which may
 be important when bit-banging protocols. But Signal adds additional
 flexibility on top of Pin, at the cost of minor overhead (much smaller
 than if you implemented active-high vs active-low device differences in

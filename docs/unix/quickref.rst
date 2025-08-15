@@ -23,10 +23,10 @@ Invocation options:
 
 .. option:: <script>
 
-   Runs the file ``<script>``. The script must be a valid MicroPython source
+   Runs the file ``<script>``. The script must be a valid PythonExtra source
    code file.
 
-If none of the 3 options above are given, then MicroPython is run in an
+If none of the 3 options above are given, then PythonExtra is run in an
 interactive REPL mode.
 
 
@@ -44,7 +44,7 @@ General options:
 
 .. option:: -i
 
-    Enables inspection. When this flag is set, MicroPython will enter the
+    Enables inspection. When this flag is set, PythonExtra will enter the
     interactive REPL mode after the command, module or script has finished.
     This can be useful for debugging the state after an unhandled exception.
     Also see the :envvar:`MICROPYINSPECT` environment variable.
@@ -59,7 +59,7 @@ General options:
 
     Increases the verbosity level. This option can be given multiple times.
     This option only has an effect if ``MICROPY_DEBUG_PRINTERS`` was enabled
-    when MicroPython itself was compiled.
+    when PythonExtra itself was compiled.
 
 .. option:: -X <option>
 
@@ -68,7 +68,7 @@ General options:
     - ``-X compile-only`` compiles the command, module or script but does not
       run it.
     - ``-X emit={bytecode,native,viper}`` sets the default code emitter. Native
-      emitters may not be available depending on the settings when MicroPython
+      emitters may not be available depending on the settings when PythonExtra
       itself was compiled.
     - ``-X heapsize=<n>[w][K|M]`` sets the heap size for the garbage collector.
       The suffix ``w`` means words instead of bytes. ``K`` means x1024 and ``M``
@@ -83,12 +83,12 @@ Environment variables
 
 .. envvar:: MICROPYPATH
 
-    Overrides the default search path for MicroPython libraries. ``MICROPYPATH``
+    Overrides the default search path for PythonExtra libraries. ``MICROPYPATH``
     should be set to a colon (semicolon for Windows port) separated list of
     directories. If ``MICROPYPATH`` is not defined, the search path will be
     ``~/.micropython/lib:/usr/lib/micropython`` (``~/.micropython/lib`` for Windows port)
     or the value of the ``MICROPY_PY_SYS_PATH_DEFAULT`` option if it was set
-    when MicroPython itself was compiled.
+    when PythonExtra itself was compiled.
 
 .. envvar:: MICROPYINSPECT
 

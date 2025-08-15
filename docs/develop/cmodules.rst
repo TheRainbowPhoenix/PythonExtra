@@ -1,9 +1,9 @@
 .. _cmodules:
 
-MicroPython external C modules
+PythonExtra external C modules
 ==============================
 
-When developing modules for use with MicroPython you may find you run into
+When developing modules for use with PythonExtra you may find you run into
 limitations with the Python environment, often due to an inability to access
 certain hardware resources or Python speed limitations.
 
@@ -12,13 +12,13 @@ writing some or all of your module in C (and/or C++ if implemented for your port
 is a viable option.
 
 If your module is designed to access or work with commonly available
-hardware or libraries please consider implementing it inside the MicroPython
+hardware or libraries please consider implementing it inside the PythonExtra
 source tree alongside similar modules and submitting it as a pull request.
 If however you're targeting obscure or proprietary systems it may make
-more sense to keep this external to the main MicroPython repository.
+more sense to keep this external to the main PythonExtra repository.
 
 This chapter describes how to compile such external modules into the
-MicroPython executable or firmware image.  Both Make and CMake build
+PythonExtra executable or firmware image.  Both Make and CMake build
 tools are supported, and when writing an external module it's a good idea to
 add the build files for both of these tools so the module can be used on all
 ports.  But when compiling a particular port you will only need to use one
@@ -26,21 +26,21 @@ method of building, either Make or CMake.
 
 An alternative approach is to use :ref:`natmod` which allows writing custom C
 code that is placed in a .mpy file, which can be imported dynamically in to
-a running MicroPython system without the need to recompile the main firmware.
+a running PythonExtra system without the need to recompile the main firmware.
 
 
 Structure of an external C module
 ---------------------------------
 
-A MicroPython user C module is a directory with the following files:
+A PythonExtra user C module is a directory with the following files:
 
 * ``*.c`` / ``*.cpp`` / ``*.h`` source code files for your module.
 
   These will typically include the low level functionality being implemented and
-  the MicroPython binding functions to expose the functions and module(s).
+  the PythonExtra binding functions to expose the functions and module(s).
 
   Currently the best reference for writing these functions/modules is
-  to find similar modules within the MicroPython tree and use them as examples.
+  to find similar modules within the PythonExtra tree and use them as examples.
 
 * ``micropython.mk`` contains the Makefile fragment for this module.
 
@@ -52,7 +52,7 @@ A MicroPython user C module is a directory with the following files:
   Your ``micropython.mk`` must add your modules source files to the
   ``SRC_USERMOD_C`` or ``SRC_USERMOD_LIB_C`` variables. The former will be
   processed for ``MP_QSTR_`` and ``MP_REGISTER_MODULE`` definitions, the latter
-  will not (e.g. helpers and library code that isn't MicroPython-specific).
+  will not (e.g. helpers and library code that isn't PythonExtra-specific).
   These paths should include your expanded copy of ``$(USERMOD_DIR)``, e.g.::
 
     SRC_USERMOD_C += $(EXAMPLE_MOD_DIR)/modexample.c
@@ -100,7 +100,7 @@ The ``cexample`` module provides examples for a function and a class. The
 the result. The ``cexample.Timer()`` type creates timers that can be used to
 measure the elapsed time since the object is instantiated.
 
-The module can be found in the MicroPython source tree
+The module can be found in the PythonExtra source tree
 `in the examples directory <https://github.com/micropython/micropython/tree/master/examples/usercmodule/cexample>`_
 and has a source file and a Makefile fragment with content as described above::
 
@@ -116,13 +116,13 @@ and has a source file and a Makefile fragment with content as described above::
 Refer to the comments in these files for additional explanation.
 Next to the ``cexample`` module there's also ``cppexample`` which
 works in the same way but shows one way of mixing C and C++ code
-in MicroPython.
+in PythonExtra.
 
 
-Compiling the cmodule into MicroPython
+Compiling the cmodule into PythonExtra
 --------------------------------------
 
-To build such a module, compile MicroPython (see `getting started
+To build such a module, compile PythonExtra (see `getting started
 <https://github.com/micropython/micropython/wiki/Getting-Started>`_),
 applying 2 modifications:
 
@@ -136,7 +136,7 @@ applying 2 modifications:
    1.  This is only needed if the modules you are building are not
    automatically enabled.
 
-For building the example modules which come with MicroPython,
+For building the example modules which come with PythonExtra,
 set ``USER_C_MODULES`` to the ``examples/usercmodule`` directory for Make,
 or to ``examples/usercmodule/micropython.cmake`` for CMake.
 
@@ -175,7 +175,7 @@ The contents of the top-level ``micropython.cmake`` can be used to control which
 modules are enabled.
 
 For your own projects it's more convenient to keep custom code out of the main
-MicroPython source tree, so a typical project directory structure will look
+PythonExtra source tree, so a typical project directory structure will look
 like this::
 
       my_project/
@@ -264,10 +264,10 @@ structures.  If not done correctly it will compile but importing will
 fail to find the module.
 
 
-Module usage in MicroPython
+Module usage in PythonExtra
 ---------------------------
 
-Once built into your copy of MicroPython, the module
+Once built into your copy of PythonExtra, the module
 can now be accessed in Python just like any other builtin module, e.g.
 
 .. code-block:: python

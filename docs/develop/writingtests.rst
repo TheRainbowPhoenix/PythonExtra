@@ -3,7 +3,7 @@
 Writing tests
 =============
 
-Tests in MicroPython are located at the path ``tests/``. The following is a listing of
+Tests in PythonExtra are located at the path ``tests/``. The following is a listing of
 key directories and the run-tests.py runner script:
 
 .. code-block:: bash

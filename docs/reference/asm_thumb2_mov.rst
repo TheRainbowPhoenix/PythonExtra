@@ -23,5 +23,5 @@ It does not affect the contents of the bottom halfword.
 
 * movwt(Rd, imm32) ``Rd = imm32``
 
-movwt is a pseudo-instruction: the MicroPython assembler emits a ``movw`` followed
+movwt is a pseudo-instruction: the PythonExtra assembler emits a ``movw`` followed
 by a ``movt`` to move a 32-bit value into Rd.

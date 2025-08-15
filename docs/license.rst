@@ -1,4 +1,4 @@
-MicroPython license information
+PythonExtra license information
 ===============================
 
 The MIT License (MIT)

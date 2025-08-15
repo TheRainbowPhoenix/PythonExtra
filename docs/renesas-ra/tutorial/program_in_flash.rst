@@ -7,7 +7,7 @@ Internal file system
 --------------------
 
 The FAT file system is created and initialized in the RA MCU's internal
-flash when the MicroPython starts at the first time on the board.
+flash when the PythonExtra starts at the first time on the board.
 The file system is mounted as "/flash", so you can access this flash system
 and create a program file into the /flash directory.
 
@@ -34,7 +34,7 @@ Write a program in the internal file system
 -------------------------------------------
 
 You can write a program in main.py which is executed automatically
-when the MicroPython starts. For example, you can write LED blinking
+when the PythonExtra starts. For example, you can write LED blinking
 program like below::
 
     import os
@@ -54,7 +54,7 @@ program like below::
     print(f.read())
     f.close()
 
-Entering CTRL-D for software reset, the MicroPython reboots, displays
+Entering CTRL-D for software reset, the PythonExtra reboots, displays
 following messages::
 
     MPY: sync filesystems

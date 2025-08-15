@@ -7,12 +7,12 @@ Resetting the board
 -------------------
 
 If something goes wrong, you can reset the board in two ways. The first is
-to press CTRL-D at the MicroPython prompt, which performs a soft reset.
+to press CTRL-D at the PythonExtra prompt, which performs a soft reset.
 You will see a message something like ::
 
     MPY: sync filesystems
     MPY: soft reboot
-    MicroPython v1.18-293-g339aa09b8-dirty on 2022-03-26; RA6M2_EK with RA6M2
+    PythonExtra v1.18-293-g339aa09b8-dirty on 2022-03-26; RA6M2_EK with RA6M2
     Type "help()" for more information.
     >>>
 
@@ -49,5 +49,5 @@ on the board:
   * For factory file system boot mode, release the USER SW1 after LED1 flashes 3 times.
 
 You have created the main.py which executes LED1 blinking in the previous part.
-If you change the boot mode to safe boot mode, the MicroPython starts without
+If you change the boot mode to safe boot mode, the PythonExtra starts without
 the execution of main.py.

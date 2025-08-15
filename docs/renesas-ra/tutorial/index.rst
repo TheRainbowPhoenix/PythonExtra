@@ -1,9 +1,9 @@
 .. _renesas-ra_tutorial:
 
-MicroPython tutorial for Renesas RA port
+PythonExtra tutorial for Renesas RA port
 ========================================
 
-This tutorial is intended to get you started using MicroPython on the Renesas RA port.
+This tutorial is intended to get you started using PythonExtra on the Renesas RA port.
 
 .. toctree::
    :maxdepth: 1

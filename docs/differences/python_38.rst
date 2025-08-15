@@ -102,7 +102,7 @@ Changes to built-in modules:
   | `gc <https://docs.python.org/3/whatsnew/3.8.html#gc>`_                                                                   |
   +------------------------------------------------------------------------------------------------------------+-------------+
   | *get_objects()* can now receive an optional generation parameter indicating a generation to get objects    |             |
-  | from. (Note, though, that while *gc* is a built-in, *get_objects()* is not implemented for MicroPython)    |             |
+  | from. (Note, though, that while *gc* is a built-in, *get_objects()* is not implemented for PythonExtra)    |             |
   +------------------------------------------------------------------------------------------------------------+-------------+
   | `math <https://docs.python.org/3/whatsnew/3.8.html#math>`_                                                               |
   +------------------------------------------------------------------------------------------------------------+-------------+

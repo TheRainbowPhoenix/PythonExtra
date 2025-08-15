@@ -1,14 +1,14 @@
-MicroPython Internals
+PythonExtra Internals
 =====================
 
-This chapter covers a tour of MicroPython from the perspective of a developer, contributing
-to MicroPython. It acts as a comprehensive resource on the implementation details of MicroPython
+This chapter covers a tour of PythonExtra from the perspective of a developer, contributing
+to PythonExtra. It acts as a comprehensive resource on the implementation details of PythonExtra
 for both novice and expert contributors.
 
-Development around MicroPython usually involves modifying the core runtime, porting or
+Development around PythonExtra usually involves modifying the core runtime, porting or
 maintaining a new library. This guide describes at great depth, the implementation
-details of MicroPython including a getting started guide, compiler internals, porting
-MicroPython to a new platform and implementing a core MicroPython library.
+details of PythonExtra including a getting started guide, compiler internals, porting
+PythonExtra to a new platform and implementing a core PythonExtra library.
 
 .. toctree::
    :maxdepth: 3

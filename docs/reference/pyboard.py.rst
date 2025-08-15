@@ -5,14 +5,14 @@ The pyboard.py tool
 
 This is a standalone Python tool that runs on your PC that provides a way to:
 
-* Quickly run a Python script or command on a MicroPython device. This is useful
-  while developing MicroPython programs to quickly test code without needing to
+* Quickly run a Python script or command on a PythonExtra device. This is useful
+  while developing PythonExtra programs to quickly test code without needing to
   copy files to/from the device.
 
 * Access the filesystem on a device. This allows you to deploy your code to the
   device (even if the board doesn't support USB MSC).
 
-Despite the name, ``pyboard.py`` works on all MicroPython ports that support the
+Despite the name, ``pyboard.py`` works on all PythonExtra ports that support the
 raw REPL (including STM32, ESP32, ESP8266, NRF).
 
 You can download the latest version from `GitHub
@@ -85,7 +85,7 @@ will be displayed.
 
 If the program app.py does not finish then you'll need to stop ``pyboard.py``,
 eg with Ctrl-C. The program ``app.py`` will still continue to run on the
-MicroPython device.
+PythonExtra device.
 
 Filesystem access
 -----------------
@@ -134,7 +134,7 @@ Using the pyboard library
 -------------------------
 
 You can also use ``pyboard.py`` as a library for scripting interactions with a
-MicroPython board.
+PythonExtra board.
 
 .. code-block:: python
 

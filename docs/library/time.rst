@@ -16,7 +16,7 @@ measuring time intervals, and for delays.
 **Maintaining actual calendar date/time**: This requires a
 Real Time Clock (RTC). On systems with underlying OS (including some
 RTOS), an RTC may be implicit. Setting and maintaining actual calendar
-time is responsibility of OS/RTOS and is done outside of MicroPython,
+time is responsibility of OS/RTOS and is done outside of PythonExtra,
 it just uses OS API to query date/time. On baremetal ports however
 system time depends on ``machine.RTC()`` object. The current calendar time
 may be set using ``machine.RTC().datetime(tuple)`` function, and maintained
@@ -29,7 +29,7 @@ by following means:
   RTC time across hard resets, though some may require setting it again
   in such case).
 
-If actual calendar time is not maintained with a system/MicroPython RTC,
+If actual calendar time is not maintained with a system/PythonExtra RTC,
 functions below which require reference to current absolute time may
 behave not as expected.
 
@@ -224,7 +224,7 @@ Functions
    underlying RTC is set and maintained as described above. If an RTC is not set, this
    function returns number of seconds since a port-specific reference point in time (for
    embedded boards without a battery-backed RTC, usually since power up or reset). If you
-   want to develop portable MicroPython application, you should not rely on this function
+   want to develop portable PythonExtra application, you should not rely on this function
    to provide higher than second precision.  If you need higher precision, absolute
    timestamps, use `time_ns()`.  If relative times are acceptable then use the
    `ticks_ms()` and `ticks_us()` functions.  If you need calendar time, `gmtime()` or
@@ -235,7 +235,7 @@ Functions
 
       In CPython, this function returns number of
       seconds since Unix epoch, 1970-01-01 00:00 UTC, as a floating-point,
-      usually having microsecond precision. With MicroPython, only Unix port
+      usually having microsecond precision. With PythonExtra, only Unix port
       uses the same Epoch, and if floating-point precision allows,
       returns sub-second precision. Embedded hardware usually doesn't have
       floating-point precision to represent both long time ranges and subsecond

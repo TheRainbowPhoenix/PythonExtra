@@ -3,7 +3,7 @@
 Optimizations
 =============
 
-MicroPython uses several optimizations to save RAM but also ensure the efficient
+PythonExtra uses several optimizations to save RAM but also ensure the efficient
 execution of programs. This chapter discusses some of these optimizations.
 
 .. note::
@@ -13,10 +13,10 @@ execution of programs. This chapter discusses some of these optimizations.
 Frozen bytecode
 ---------------
 
-When MicroPython loads Python code from the filesystem, it first has to parse the file into
+When PythonExtra loads Python code from the filesystem, it first has to parse the file into
 a temporary in-memory representation, and then generate bytecode for execution, both of which
 are stored in the heap (in RAM). This can lead to significant amounts of memory being used.
-The MicroPython cross compiler can be used to generate
+The PythonExtra cross compiler can be used to generate
 a ``.mpy`` file, containing the pre-compiled bytecode for a Python module. This will still
 be loaded into RAM, but it avoids the additional overhead of the parsing stage.
 
@@ -30,7 +30,7 @@ See :ref:`manifest` for more information.
 Variables
 ---------
 
-MicroPython processes local and global variables differently. Global variables
+PythonExtra processes local and global variables differently. Global variables
 are stored and looked up from a global dictionary that is allocated on the heap
 (note that each module has its own separate dict, so separate namespace).
 Local variables on the other hand are stored on the Python value stack, which may
@@ -42,7 +42,7 @@ are stored in RAM. The shorter the identifier, the less memory is used.
 
 The other aspect is that ``const`` variables that start with an underscore are treated as
 proper constants and are not allocated or added in a dictionary, hence saving some memory.
-These variables use ``const()`` from the MicroPython library. Therefore:
+These variables use ``const()`` from the PythonExtra library. Therefore:
 
 .. code-block:: python
 
@@ -62,7 +62,7 @@ Compiles to:
 Allocation of memory
 --------------------
 
-Most of the common MicroPython constructs are not allocated on the heap.
+Most of the common PythonExtra constructs are not allocated on the heap.
 However the following are:
 
 - Dynamic data structures like lists, mappings, etc;
@@ -71,4 +71,4 @@ However the following are:
 - First-time assignment of global variables (to create the slot in the global dict).
 
 For a detailed discussion on a more user-centric perspective on optimization,
-see `Maximising MicroPython speed <https://docs.micropython.org/en/latest/reference/speed_python.html>`_
+see `Maximising PythonExtra speed <https://docs.micropython.org/en/latest/reference/speed_python.html>`_

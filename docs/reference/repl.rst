@@ -1,7 +1,7 @@
-The MicroPython Interactive Interpreter Mode (aka REPL)
+The PythonExtra Interactive Interpreter Mode (aka REPL)
 =======================================================
 
-This section covers some characteristics of the MicroPython Interactive
+This section covers some characteristics of the PythonExtra Interactive
 Interpreter Mode. A commonly used term for this is REPL (read-eval-print-loop)
 which will be used to refer to this interactive prompt.
 
@@ -149,14 +149,14 @@ Soft reset
 ----------
 
 A :ref:`soft_reset` will reset the python interpreter, but tries not to reset the
-method by which you're connected to the MicroPython board (USB-serial, or Wifi).
+method by which you're connected to the PythonExtra board (USB-serial, or Wifi).
 
 You can perform a soft reset from the REPL by pressing Ctrl-D, or from your python
 code by executing: ::
 
     machine.soft_reset()
 
-For example, if you reset your MicroPython board, and you execute a dir()
+For example, if you reset your PythonExtra board, and you execute a dir()
 command, you'd see something like this:
 
     >>> dir()
@@ -178,7 +178,7 @@ variables no longer exist:
 
     MPY: sync filesystems
     MPY: soft reboot
-    MicroPython v1.5-51-g6f70283-dirty on 2015-10-30; PYBv1.0 with STM32F405RG
+    PythonExtra v1.5-51-g6f70283-dirty on 2015-10-30; PYBv1.0 with STM32F405RG
     Type "help()" for more information.
     >>> dir()
     ['__name__', 'pyb']
@@ -191,7 +191,7 @@ The special variable _ (underscore)
 -----------------------------------
 
 When you use the REPL, you may perform computations and see the results.
-MicroPython stores the results of the previous statement in the variable _ (underscore).
+PythonExtra stores the results of the previous statement in the variable _ (underscore).
 So you can use the underscore to save the result in a variable. For example:
 
     >>> 1 + 2 + 3 + 4 + 5
@@ -304,4 +304,4 @@ is sent.  So this means up to 256 bytes can be written to begin with before
 waiting or checking for more incoming flow-control characters.
 
 The ``tools/pyboard.py`` program uses the raw REPL, including raw-paste mode, to
-execute Python code on a MicroPython-enabled board.
+execute Python code on a PythonExtra-enabled board.

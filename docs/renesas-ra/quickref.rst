@@ -18,7 +18,7 @@ working with this board, it may be useful to get an overview of the microcontrol
    general.rst
    tutorial/index.rst
 
-Installing MicroPython
+Installing PythonExtra
 ----------------------
 
 See the corresponding section of tutorial: :ref:`renesas-ra_intro`. It also includes a troubleshooting subsection.
@@ -26,7 +26,7 @@ See the corresponding section of tutorial: :ref:`renesas-ra_intro`. It also incl
 General board control
 ---------------------
 
-The MicroPython REPL is accessed via the USB serial port. Tab-completion is useful to find out what methods an object has. Paste mode (ctrl-E) is useful to paste a large slab of Python code into the REPL.  Some of features are not implemented for Renesas RA boards yet, please refer to the tutorial for more details.
+The PythonExtra REPL is accessed via the USB serial port. Tab-completion is useful to find out what methods an object has. Paste mode (ctrl-E) is useful to paste a large slab of Python code into the REPL.  Some of features are not implemented for Renesas RA boards yet, please refer to the tutorial for more details.
 
 The :mod:`machine` module::
 

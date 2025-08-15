@@ -9,12 +9,12 @@ SD cards come in a variety of sizes and physical form factors. MMC cards are
 similar removable storage devices while eMMC devices are electrically similar
 storage devices designed to be embedded into other systems. All three form
 share a common protocol for communication with their host system and high-level
-support looks the same for them all. As such in MicroPython they are implemented
+support looks the same for them all. As such in PythonExtra they are implemented
 in a single class called :class:`machine.SDCard` .
 
 Both SD and MMC interfaces support being accessed with a variety of bus widths.
 When being accessed with a 1-bit wide interface they can be accessed using the
-SPI protocol. Different MicroPython hardware platforms support different widths
+SPI protocol. Different PythonExtra hardware platforms support different widths
 and pin configurations but for most platforms there is a standard configuration
 for any given hardware. In general constructing an ``SDCard`` object with without
 passing any parameters will initialise the interface to the default card slot

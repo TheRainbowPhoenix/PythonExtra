@@ -3,10 +3,10 @@
 Writing interrupt handlers
 ==========================
 
-On suitable hardware MicroPython offers the ability to write interrupt handlers in Python. Interrupt handlers
+On suitable hardware PythonExtra offers the ability to write interrupt handlers in Python. Interrupt handlers
 - also known as interrupt service routines (ISR's) - are defined as callback functions. These are executed
 in response to an event such as a timer trigger or a voltage change on a pin. Such events can occur at any point
-in the execution of the program code. This carries significant consequences, some specific to the MicroPython
+in the execution of the program code. This carries significant consequences, some specific to the PythonExtra
 language. Others are common to all systems capable of responding to real time events. This document covers
 the language specific issues first, followed by a brief introduction to real time programming for those new to it.
 
@@ -29,13 +29,13 @@ This summarises the points detailed below and lists the principal recommendation
 * Allocate an emergency exception buffer (see below).
 
 
-MicroPython issues
+PythonExtra issues
 ------------------
 
 The emergency exception buffer
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If an error occurs in an ISR, MicroPython is unable to produce an error report unless a special buffer is created
+If an error occurs in an ISR, PythonExtra is unable to produce an error report unless a special buffer is created
 for the purpose. Debugging is simplified if the following code is included in any program using interrupts.
 
 .. code:: python
@@ -56,7 +56,7 @@ has to be done immediately after the event which caused it: operations which can
 to the main program loop. Typically an ISR will deal with the hardware device which caused the interrupt, making
 it ready for the next interrupt to occur. It will communicate with the main loop by updating shared data to indicate
 that the interrupt has occurred, and it will return. An ISR should return control to the main loop as quickly
-as possible. This is not a specific MicroPython issue so is covered in more detail :ref:`below <ISR>`.
+as possible. This is not a specific PythonExtra issue so is covered in more detail :ref:`below <ISR>`.
 
 Communication between an ISR and the main program
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -69,7 +69,7 @@ are commonly used for this purpose along with arrays (from the array module) whi
 The use of object methods as callbacks
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-MicroPython supports this powerful technique which enables an ISR to share instance variables with the underlying
+PythonExtra supports this powerful technique which enables an ISR to share instance variables with the underlying
 code. It also enables a class implementing a device driver to support multiple device instances. The following
 example causes two LED's to flash at different rates.
 
@@ -99,7 +99,7 @@ then maintain independent counts of the number of times each LED had changed sta
 Creation of Python objects
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-ISR's cannot create instances of Python objects. This is because MicroPython needs to allocate memory for the
+ISR's cannot create instances of Python objects. This is because PythonExtra needs to allocate memory for the
 object from a store of free memory block called the heap. This is not permitted in an interrupt handler because
 heap allocation is not re-entrant. In other words the interrupt might occur when the main program is part way
 through performing an allocation - to maintain the integrity of the heap the interpreter disallows memory
@@ -113,7 +113,7 @@ One way to avoid this issue is for the ISR to use pre-allocated buffers. For exa
 creates a ``bytearray`` instance and a boolean flag. The ISR method assigns data to locations in the buffer and sets
 the flag. The memory allocation occurs in the main program code when the object is instantiated rather than in the ISR.
 
-The MicroPython library I/O methods usually provide an option to use a pre-allocated buffer. For
+The PythonExtra library I/O methods usually provide an option to use a pre-allocated buffer. For
 example ``pyb.i2c.recv()`` can accept a mutable buffer as its first argument: this enables its use in an ISR.
 
 A means of creating an object without employing a class or globals is as follows:
@@ -182,7 +182,7 @@ may occur. Internally globals are implemented as a dictionary. Consequently the 
 necessary globals before starting a process that generates hard interrupts. Application code should also avoid
 deleting globals.
 
-MicroPython supports integers of arbitrary precision. Values between 2**30 -1 and -2**30 will be stored in
+PythonExtra supports integers of arbitrary precision. Values between 2**30 -1 and -2**30 will be stored in
 a single machine word. Larger values are stored as Python objects. Consequently changes to long integers cannot
 be considered atomic. The use of long integers in ISR's is unsafe because memory allocation may be
 attempted as the variable's value changes.
@@ -372,7 +372,7 @@ A critical section can comprise a single line of code and a single variable. Con
 
 This example illustrates a subtle source of bugs. The line ``count += 1`` in the main loop carries a specific race
 condition hazard known as a read-modify-write. This is a classic cause of bugs in real time systems. In the main loop
-MicroPython reads the value of ``count``, adds 1 to it, and writes it back. On rare occasions the  interrupt occurs
+PythonExtra reads the value of ``count``, adds 1 to it, and writes it back. On rare occasions the  interrupt occurs
 after the read and before the write. The interrupt modifies ``count`` but its change is overwritten by the main
 loop when the ISR returns. In a real system this could lead to rare, unpredictable failures.
 

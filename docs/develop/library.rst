@@ -3,18 +3,18 @@
 Implementing a Module
 =====================
 
-This chapter details how to implement a core module in MicroPython.
-MicroPython modules can be one of the following:
+This chapter details how to implement a core module in PythonExtra.
+PythonExtra modules can be one of the following:
 
-- Built-in module: A general module that is be part of the MicroPython repository.
+- Built-in module: A general module that is be part of the PythonExtra repository.
 - User module: A module that is useful for your specific project that you maintain
   in your own repository or private codebase.
 - Dynamic module: A module that can be deployed and imported at runtime to your device.
 
-A module in MicroPython can be implemented in one of the following locations:
+A module in PythonExtra can be implemented in one of the following locations:
 
 - py/: A core library that mirrors core CPython functionality.
-- extmod/: A CPython or MicroPython-specific module that is shared across multiple ports.
+- extmod/: A CPython or PythonExtra-specific module that is shared across multiple ports.
 - ports/<port>/: A port-specific module.
 
 .. note::
@@ -25,7 +25,7 @@ A module in MicroPython can be implemented in one of the following locations:
 Implementing a core module
 --------------------------
 
-Like CPython, MicroPython has core builtin modules that can be accessed through import statements.
+Like CPython, PythonExtra has core builtin modules that can be accessed through import statements.
 An example is the ``gc`` module discussed in :ref:`memorymanagement`.
 
 .. code-block:: bash
@@ -34,7 +34,7 @@ An example is the ``gc`` module discussed in :ref:`memorymanagement`.
    >>> gc.enable()
    >>>
 
-MicroPython has several other builtin standard/core modules like ``io``, ``array`` etc.
+PythonExtra has several other builtin standard/core modules like ``io``, ``array`` etc.
 Adding a new core module involves several modifications.
 
 First, create the ``C`` file in the ``py/`` directory. In this example we are adding a
@@ -73,7 +73,7 @@ functions to the module's global table in ``mp_module_subsystem_globals_table``.
 creates the module object with ``mp_module_subsystem``.  The module is then registered with
 the wider system via the ``MP_REGISTER_MODULE`` macro.
 
-After building and running the modified MicroPython, the module should now be importable:
+After building and running the modified PythonExtra, the module should now be importable:
 
 .. code-block:: bash
 

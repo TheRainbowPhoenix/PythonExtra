@@ -1,11 +1,11 @@
 .. _mimxrt_intro:
 
-Getting started with MicroPython on the i.MXRT
+Getting started with PythonExtra on the i.MXRT
 ==============================================
 
-Using MicroPython is a great way to get the most of your i.MXRT board.  And
-vice versa, the i.MXRT chip is a great platform for using MicroPython.  This
-tutorial will guide you through setting up MicroPython, getting a prompt, using
+Using PythonExtra is a great way to get the most of your i.MXRT board.  And
+vice versa, the i.MXRT chip is a great platform for using PythonExtra.  This
+tutorial will guide you through setting up PythonExtra, getting a prompt, using
 the hardware peripherals, and controlling some external components.
 
 Let's get started!
@@ -13,7 +13,7 @@ Let's get started!
 Requirements
 ------------
 
-The first thing you need is a board with an i.MXRT chip.  The MicroPython
+The first thing you need is a board with an i.MXRT chip.  The PythonExtra
 software supports the i.MXRT chip itself and any board should work.  The main
 characteristic of a board is how the GPIO pins are connected to the outside
 world, and whether it includes a built-in USB-serial converter to make the
@@ -34,22 +34,22 @@ Getting the firmware
 --------------------
 
 Firmware versions are provided at the
-`MicroPython download page <https://micropython.org/download/?port=mimxrt>`_.
-You can download the most recent MicroPython firmware .hex or .bin file to load
+`PythonExtra download page <https://micropython.org/download/?port=mimxrt>`_.
+You can download the most recent PythonExtra firmware .hex or .bin file to load
 onto your i.MXRT device.  From that download page you have two main choices:
 
 * stable firmware builds
 * daily firmware builds
 
-If you are just starting with MicroPython, the best bet is to go for the stable
-firmware builds. If you are an advanced, experienced MicroPython i.MXRT user
+If you are just starting with PythonExtra, the best bet is to go for the stable
+firmware builds. If you are an advanced, experienced PythonExtra i.MXRT user
 who would like to follow development closely and help with testing new
 features, there are daily builds.
 
 Deploying the firmware
 ----------------------
 
-Once you have the MicroPython firmware you need to load it onto your
+Once you have the PythonExtra firmware you need to load it onto your
 i.MXRT device.  The exact procedure for these steps is highly dependent
 on the particular board and you will need to refer to its documentation
 for details.

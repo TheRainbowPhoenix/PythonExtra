@@ -1,12 +1,12 @@
 .. _manifest:
 
-MicroPython manifest files
+PythonExtra manifest files
 ==========================
 
 Summary
 -------
 
-MicroPython has a feature that allows Python code to be "frozen" into the
+PythonExtra has a feature that allows Python code to be "frozen" into the
 firmware, as an alternative to loading code from the filesystem.
 
 This has the following benefits:
@@ -51,7 +51,7 @@ resolve to absolute paths.
 - ``$(BOARD_DIR)`` -- path to the current board
   (e.g. ``ports/stm32/boards/PYBV11``)
 
-Custom manifest files should not live in the main MicroPython repository. You
+Custom manifest files should not live in the main PythonExtra repository. You
 should keep them in version control with the rest of your project.
 
 Typically a manifest used for compiling firmware will need to include the port

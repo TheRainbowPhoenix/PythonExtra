@@ -131,4 +131,4 @@ Changes to built-in modules:
 
 .. rubric:: Notes
 
-.. [#pep584] PEP 584 ``dict`` union operator is only available on MicroPython builds with ``MICROPY_CPYTHON_COMPAT`` enabled.
+.. [#pep584] PEP 584 ``dict`` union operator is only available on PythonExtra builds with ``MICROPY_CPYTHON_COMPAT`` enabled.

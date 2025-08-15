@@ -19,10 +19,10 @@ Terminology
 -----------
 
 - A "Runtime" USB device interface or driver is one which is defined using this
-  Python API after MicroPython initially starts up.
+  Python API after PythonExtra initially starts up.
 
 - A "Built-in" USB device interface or driver is one that is compiled into the
-  MicroPython firmware, and is always available. Examples are USB-CDC (serial
+  PythonExtra firmware, and is always available. Examples are USB-CDC (serial
   port) which is usually enabled by default. Built-in USB-MSC (Mass Storage) is an
   option on some ports.
 
@@ -30,12 +30,12 @@ Lifecycle
 ---------
 
 Managing a runtime USB interface can be tricky, especially if you are communicating
-with MicroPython over a built-in USB-CDC serial port that's part of the same USB
+with PythonExtra over a built-in USB-CDC serial port that's part of the same USB
 device.
 
-- A MicroPython :ref:`soft reset <soft_reset>` will always clear all runtime USB
+- A PythonExtra :ref:`soft reset <soft_reset>` will always clear all runtime USB
   interfaces, which results in the entire USB device disconnecting from the
-  host. If MicroPython is also providing a built-in USB-CDC serial port then
+  host. If PythonExtra is also providing a built-in USB-CDC serial port then
   this will re-appear after the soft reset.
 
   This means some functions (like ``mpremote run``) that target the USB-CDC
@@ -272,7 +272,7 @@ Constants
 .. data:: USBDevice.BUILTIN_CDC_MSC
 
           These constant objects hold the built-in descriptor data which is
-          compiled into the MicroPython firmware. ``USBDevice.BUILTIN_NONE`` and
+          compiled into the PythonExtra firmware. ``USBDevice.BUILTIN_NONE`` and
           ``USBDevice.BUILTIN_DEFAULT`` are always present. Additional objects may be present
           depending on the firmware build configuration and the actual built-in drivers.
 

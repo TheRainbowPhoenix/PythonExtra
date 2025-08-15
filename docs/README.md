@@ -1,7 +1,7 @@
-MicroPython Documentation
+PythonExtra Documentation
 =========================
 
-The MicroPython documentation can be found at:
+The PythonExtra documentation can be found at:
 http://docs.micropython.org/en/latest/
 
 The documentation you see there is generated from the files in the docs tree:

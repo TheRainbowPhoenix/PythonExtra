@@ -1,21 +1,21 @@
 .. _micropython2_migration:
 
-MicroPython 2.0 Migration Guide
+PythonExtra 2.0 Migration Guide
 ===============================
 
-MicroPython 2.0 is the (currently in development, not yet available) next major
-release of MicroPython.
+PythonExtra 2.0 is the (currently in development, not yet available) next major
+release of PythonExtra.
 
 After maintaining API compatibility for almost a decade with the ``1.x`` series, in
-order to unblock some project-wide improvements MicroPython 2.0 will introduce a
+order to unblock some project-wide improvements PythonExtra 2.0 will introduce a
 small number of breaking API changes that will require some programs to be
 updated. This guide explains how to update your Python code to accommodate these
 changes.
 
-This document is a work-in-progress. As more work is done on MicroPython 2.0,
+This document is a work-in-progress. As more work is done on PythonExtra 2.0,
 more items will be added to the lists below.
 
-**Note:** There are currently no MicroPython 2.0 firmware builds available for
+**Note:** There are currently no PythonExtra 2.0 firmware builds available for
 download. You can build it yourself by enabling the ``MICROPY_PREVIEW_VERSION_2``
 config option. As it gets closer to being ready for release, builds will be
 provided for both ``1.x.y`` and ``2.0.0-preview``.
@@ -61,11 +61,11 @@ CPython compatibility
 Overview
 ~~~~~~~~
 
-The goal is to improve compatibility with CPython by removing MicroPython
+The goal is to improve compatibility with CPython by removing PythonExtra
 extensions from CPython APIs. In most cases this means moving existing
-MicroPython-specific functions or classes to new modules.
+PythonExtra-specific functions or classes to new modules.
 
-This makes it easier to write code that works on both CPython and MicroPython,
+This makes it easier to write code that works on both CPython and PythonExtra,
 which is useful for development and testing.
 
 Changes

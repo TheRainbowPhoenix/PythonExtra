@@ -5,12 +5,12 @@ Getting Started
 
 This guide covers a step-by-step process on setting up version control, obtaining and building
 a copy of the source code for a port, building the documentation, running tests, and a description of the
-directory structure of the MicroPython code base.
+directory structure of the PythonExtra code base.
 
 Source control with git
 -----------------------
 
-MicroPython is hosted on `GitHub <https://github.com/micropython/micropython>`_ and uses
+PythonExtra is hosted on `GitHub <https://github.com/micropython/micropython>`_ and uses
 `Git <https://git-scm.com>`_ for source control. The workflow is such that
 code is pulled and pushed to and from the main repository. Install the respective version
 of Git for your operating system to follow through the rest of the steps.
@@ -29,7 +29,7 @@ of Git for your operating system to follow through the rest of the steps.
 Get the code
 ------------
 
-It is recommended that you maintain a fork of the MicroPython repository for your development purposes.
+It is recommended that you maintain a fork of the PythonExtra repository for your development purposes.
 The process of obtaining the source code includes the following:
 
 #. Fork the repository https://github.com/micropython/micropython
@@ -41,7 +41,7 @@ The process of obtaining the source code includes the following:
    $ git clone https://github.com/<your-user-name>/micropython
 
 Then, `configure the remote repositories <https://git-scm.com/book/en/v2/Git-Basics-Working-with-Remotes>`_ to be able to
-collaborate on the MicroPython project.
+collaborate on the PythonExtra project.
 
 Configure remote upstream:
 
@@ -53,7 +53,7 @@ Configure remote upstream:
 It is common to configure ``upstream`` and ``origin`` on a forked repository
 to assist with sharing code changes. You can maintain your own mapping but
 it is recommended that ``origin`` maps to your fork and ``upstream`` to the main
-MicroPython repository.
+PythonExtra repository.
 
 After the above configuration, your setup should be similar to this:
 
@@ -73,15 +73,15 @@ to work on a development branch.
 
     $ git checkout -b dev-branch
 
-You can give it any name. You will have to compile MicroPython whenever you change
+You can give it any name. You will have to compile PythonExtra whenever you change
 to a different branch.
 
 Compile and build the code
 --------------------------
 
-When compiling MicroPython, you compile a specific :term:`port`, usually
+When compiling PythonExtra, you compile a specific :term:`port`, usually
 targeting a specific :ref:`board <glossary>`. Start by installing the required dependencies.
-Then build the MicroPython cross-compiler before you can successfully compile and build.
+Then build the PythonExtra cross-compiler before you can successfully compile and build.
 This applies specifically when using Linux to compile.
 The Windows instructions are provided in a later section.
 
@@ -120,7 +120,7 @@ Check that you have Python available on your system:
 All supported ports have different dependency requirements, see their respective
 `readme files <https://github.com/micropython/micropython/tree/master/ports>`_.
 
-Building the MicroPython cross-compiler
+Building the PythonExtra cross-compiler
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Almost all ports require building ``mpy-cross`` first to perform pre-compilation
@@ -149,11 +149,11 @@ If it built successfully, you should see a message similar to this:
    without moving to the ``mpy-cross`` directory otherwise, you will need
    to do ``cd ..`` for the next steps.
 
-Building the Unix port of MicroPython
+Building the Unix port of PythonExtra
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-The Unix port is a version of MicroPython that runs on Linux, macOS, and other Unix-like operating systems.
-It's extremely useful for developing MicroPython as it avoids having to deploy your code to a device to test it.
+The Unix port is a version of PythonExtra that runs on Linux, macOS, and other Unix-like operating systems.
+It's extremely useful for developing PythonExtra as it avoids having to deploy your code to a device to test it.
 In many ways, it works a lot like CPython's python binary.
 
 To build for the Unix port, make sure all Linux related dependencies are installed as detailed in the
@@ -176,7 +176,7 @@ below but other unixes ought to work with little modification:
    $ make submodules
    $ make
 
-If MicroPython built correctly, you should see the following:
+If PythonExtra built correctly, you should see the following:
 
 .. code-block:: bash
 
@@ -189,7 +189,7 @@ Now run it:
 .. code-block:: bash
 
    $ ./micropython
-   MicroPython v1.13-38-gc67012d-dirty on 2020-09-13; linux version
+   PythonExtra v1.13-38-gc67012d-dirty on 2020-09-13; linux version
    Use Ctrl-D to exit, Ctrl-E for paste mode
    >>> print("hello world")
    hello world
@@ -237,7 +237,7 @@ for the available boards. e.g. "PYBV11" or "NUCLEO_WB55".
 Building the documentation
 --------------------------
 
-MicroPython documentation is created using ``Sphinx``. If you have already
+PythonExtra documentation is created using ``Sphinx``. If you have already
 installed Python, then install ``Sphinx`` using ``pip``. It is recommended
 that you use a virtual environment:
 
@@ -294,11 +294,11 @@ py
 
 mpy-cross
 
-  Has the MicroPython cross-compiler which pre-compiles the Python scripts to bytecode.
+  Has the PythonExtra cross-compiler which pre-compiles the Python scripts to bytecode.
 
 ports
 
-  Code for all the versions of MicroPython for the supported ports.
+  Code for all the versions of PythonExtra for the supported ports.
 
 lib
 
@@ -327,4 +327,4 @@ tools
 
 examples
 
-  Example code for building MicroPython as a library as well as native modules.
+  Example code for building PythonExtra as a library as well as native modules.

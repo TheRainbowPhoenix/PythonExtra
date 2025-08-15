@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 #
-# MicroPython documentation build configuration file, created by
+# PythonExtra documentation build configuration file, created by
 # sphinx-quickstart on Sun Sep 21 11:42:03 2014.
 #
 # This file is execfile()d with the current directory set to its
@@ -37,7 +37,7 @@ html_context = {
 }
 
 # Authors used in various parts of the documentation.
-micropy_authors = "MicroPython authors and contributors"
+micropy_authors = "PythonExtra authors and contributors"
 
 
 # -- General configuration ------------------------------------------------
@@ -70,8 +70,8 @@ source_suffix = ".rst"
 master_doc = "index"
 
 # General information about the project.
-project = "MicroPython"
-copyright = "- The MicroPython Documentation is Copyright © 2014-2025, " + micropy_authors
+project = "PythonExtra"
+copyright = "- The PythonExtra Documentation is Copyright © 2014-2025, " + micropy_authors
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -245,8 +245,8 @@ latex_elements = {
 latex_documents = [
     (
         master_doc,
-        "MicroPython.tex",
-        "MicroPython Documentation",
+        "PythonExtra.tex",
+        "PythonExtra Documentation",
         micropy_authors,
         "manual",
     ),
@@ -283,7 +283,7 @@ man_pages = [
     (
         "index",
         "micropython",
-        "MicroPython Documentation",
+        "PythonExtra Documentation",
         [micropy_authors],
         1,
     ),
@@ -301,10 +301,10 @@ man_pages = [
 texinfo_documents = [
     (
         master_doc,
-        "MicroPython",
-        "MicroPython Documentation",
+        "PythonExtra",
+        "PythonExtra Documentation",
         micropy_authors,
-        "MicroPython",
+        "PythonExtra",
         "One line description of project.",
         "Miscellaneous",
     ),

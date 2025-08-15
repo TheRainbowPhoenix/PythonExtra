@@ -22,7 +22,7 @@ General functions
         * ``sysname`` -- the name of the underlying system
         * ``nodename`` -- the network name (can be the same as ``sysname``)
         * ``release`` -- the version of the underlying system
-        * ``version`` -- the MicroPython version and build date
+        * ``version`` -- the PythonExtra version and build date
         * ``machine`` -- an identifier for the underlying hardware (eg board, CPU)
 
 .. function:: urandom(n)
@@ -114,7 +114,7 @@ Terminal redirection and duplication
 
 .. function:: dupterm(stream_object, index=0, /)
 
-   Duplicate or switch the MicroPython terminal (the REPL) on the given `stream`-like
+   Duplicate or switch the PythonExtra terminal (the REPL) on the given `stream`-like
    object. The *stream_object* argument must be a native stream object, or derive
    from ``io.IOBase`` and implement the ``readinto()`` and
    ``write()`` methods.  The stream should be in non-blocking mode and
@@ -138,7 +138,7 @@ Filesystem mounting
 
 The following functions and classes have been moved to the :mod:`vfs` module.
 They are provided in this module only for backwards compatibility and will be
-removed in version 2 of MicroPython.
+removed in version 2 of PythonExtra.
 
 .. function:: mount(fsobj, mount_point, *, readonly)
 

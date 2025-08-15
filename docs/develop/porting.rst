@@ -1,9 +1,9 @@
 .. _porting_to_a_board:
 
-Porting MicroPython
+Porting PythonExtra
 ===================
 
-The MicroPython project contains several ports to different microcontroller families and
+The PythonExtra project contains several ports to different microcontroller families and
 architectures. The project repository has a `ports <https://github.com/micropython/micropython/tree/master/ports>`_
 directory containing a subdirectory for each supported port.
 
@@ -11,7 +11,7 @@ A port will typically contain definitions for multiple "boards", each of which i
 hardware that that port can run on, e.g. a development kit or device.
 
 The `minimal port <https://github.com/micropython/micropython/tree/master/ports/minimal>`_ is
-available as a simplified reference implementation of a MicroPython port.  It can run on both the
+available as a simplified reference implementation of a PythonExtra port.  It can run on both the
 host system and an STM32F4xx MCU.
 
 In general, starting a port requires:
@@ -22,11 +22,11 @@ In general, starting a port requires:
 - Performing the board-specific configurations.
 - Implementing the port-specific modules.
 
-Minimal MicroPython firmware
+Minimal PythonExtra firmware
 ----------------------------
 
-The best way to start porting MicroPython to a new board is by integrating a minimal
-MicroPython interpreter.  For this walkthrough, create a subdirectory for the new
+The best way to start porting PythonExtra to a new board is by integrating a minimal
+PythonExtra interpreter.  For this walkthrough, create a subdirectory for the new
 port in the ``ports`` directory:
 
 .. code-block:: bash
@@ -34,7 +34,7 @@ port in the ``ports`` directory:
    $ cd ports
    $ mkdir example_port
 
-The basic MicroPython firmware is implemented in the main port file, e.g ``main.c``:
+The basic PythonExtra firmware is implemented in the main port file, e.g ``main.c``:
 
 .. code-block:: c
 
@@ -46,11 +46,11 @@ The basic MicroPython firmware is implemented in the main port file, e.g ``main.
    #include "shared/runtime/gchelper.h"
    #include "shared/runtime/pyexec.h"
 
-   // Allocate memory for the MicroPython GC heap.
+   // Allocate memory for the PythonExtra GC heap.
    static char heap[4096];
 
    int main(int argc, char **argv) {
-       // Initialise the MicroPython runtime.
+       // Initialise the PythonExtra runtime.
        mp_stack_ctrl_init();
        gc_init(heap, heap + sizeof(heap));
        mp_init();
@@ -131,10 +131,10 @@ We also need a Makefile at this point for the port:
 
 Remember to use proper tabs to indent the Makefile.
 
-MicroPython Configurations
+PythonExtra Configurations
 --------------------------
 
-After integrating the minimal code above, the next step is to create the MicroPython
+After integrating the minimal code above, the next step is to create the PythonExtra
 configuration files for the port. The compile-time configurations are specified in
 ``mpconfigport.h`` and additional hardware-abstraction functions, such as time keeping,
 in ``mphalport.h``.
@@ -176,7 +176,7 @@ The following is an example of an ``mpconfigport.h`` file:
    #define MP_STATE_PORT MP_STATE_VM
 
 This configuration file contains machine-specific configurations including aspects like if different
-MicroPython features should be enabled e.g. ``#define MICROPY_ENABLE_GC (1)``. Making this Setting
+PythonExtra features should be enabled e.g. ``#define MICROPY_ENABLE_GC (1)``. Making this Setting
 ``(0)`` disables the feature.
 
 Other configurations include type definitions, root pointers, board name, microcontroller name
@@ -191,7 +191,7 @@ Similarly, an minimal example ``mphalport.h`` file looks like this:
 Support for standard input/output
 ---------------------------------
 
-MicroPython requires at least a way to output characters, and to have a REPL it also
+PythonExtra requires at least a way to output characters, and to have a REPL it also
 requires a way to input characters. Functions for this can be implemented in the file
 ``mphalport.c``, for example:
 
@@ -240,11 +240,11 @@ To get a functional REPL you may need to first configure the terminal to raw mod
    $ stty raw opost -echo
    $ ./build/firmware.elf
 
-That should give a MicroPython REPL.  You can then run commands like:
+That should give a PythonExtra REPL.  You can then run commands like:
 
 .. code-block:: bash
 
-   MicroPython v1.13 on 2021-01-01; example-board with unknown-cpu
+   PythonExtra v1.13 on 2021-01-01; example-board with unknown-cpu
    >>> import sys
    >>> sys.implementation
    ('micropython', (1, 13, 0))

@@ -76,16 +76,16 @@ Functions and types
 
    .. classmethod:: from_bytes(bytes, byteorder)
 
-      In MicroPython, `byteorder` parameter must be positional (this is
+      In PythonExtra, `byteorder` parameter must be positional (this is
       compatible with CPython).
 
    .. method:: to_bytes(size, byteorder)
 
-      In MicroPython, `byteorder` parameter must be positional (this is
+      In PythonExtra, `byteorder` parameter must be positional (this is
       compatible with CPython).
 
       .. note:: The optional ``signed`` kwarg from CPython is not supported.
-                MicroPython currently converts negative integers as signed,
+                PythonExtra currently converts negative integers as signed,
                 and positive as unsigned. (:ref:`Details <cpydiff_types_int_to_bytes>`.)
 
 .. function:: isinstance()
@@ -199,10 +199,10 @@ Exceptions
     |see_cpython| `python:SystemExit`.
 
     On non-embedded ports (i.e. Windows and Unix), an unhandled ``SystemExit``
-    exits the MicroPython process in a similar way to CPython.
+    exits the PythonExtra process in a similar way to CPython.
 
     On embedded ports, an unhandled ``SystemExit`` currently causes a
-    :ref:`soft_reset` of MicroPython.
+    :ref:`soft_reset` of PythonExtra.
 
 .. exception:: TypeError
 

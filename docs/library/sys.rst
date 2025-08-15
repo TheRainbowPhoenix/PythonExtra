@@ -16,7 +16,7 @@ Functions
    value given as an argument to `SystemExit`.
 
    On embedded ports (i.e. all ports but Windows and Unix), an unhandled
-   `SystemExit` currently causes a :ref:`soft_reset` of MicroPython.
+   `SystemExit` currently causes a :ref:`soft_reset` of PythonExtra.
 
 .. function:: atexit(func)
 
@@ -28,7 +28,7 @@ Functions
    .. admonition:: Difference to CPython
       :class: attention
 
-      This function is a MicroPython extension intended to provide similar
+      This function is a PythonExtra extension intended to provide similar
       functionality to the :mod:`atexit` module in CPython.
 
 .. function:: print_exception(exc, file=sys.stdout, /)
@@ -51,7 +51,7 @@ Functions
    Enable tracing of bytecode execution.  For details see the `CPython
    documentation <https://docs.python.org/3/library/sys.html#sys.settrace>`_.
 
-   This function requires a custom MicroPython build as it is typically not
+   This function requires a custom PythonExtra build as it is typically not
    present in pre-built firmware (due to it affecting performance).  The relevant
    configuration option is *MICROPY_PY_SYS_SETTRACE*.
 
@@ -69,16 +69,16 @@ Constants
 .. data:: implementation
 
    Object with information about the current Python implementation. For
-   MicroPython, it has following attributes:
+   PythonExtra, it has following attributes:
 
    * *name* - string "micropython"
    * *version* - tuple (major, minor, micro, releaselevel), e.g. (1, 22, 0, '')
    * *_machine* - string describing the underlying machine
    * *_mpy* - supported mpy file-format version (optional attribute)
    * *_build* - string that can help identify the configuration that
-     MicroPython was built with
+     PythonExtra was built with
 
-   This object is the recommended way to distinguish MicroPython from other
+   This object is the recommended way to distinguish PythonExtra from other
    Python implementations (note that it still may not exist in the very
    minimal ports).
 
@@ -99,13 +99,13 @@ Constants
       :class: attention
 
       CPython mandates more attributes for this object, but the actual useful
-      bare minimum is implemented in MicroPython.
+      bare minimum is implemented in PythonExtra.
 
 .. data:: maxsize
 
    Maximum value which a native integer type can hold on the current platform,
-   or maximum value representable by MicroPython integer type, if it's smaller
-   than platform max value (that is the case for MicroPython ports without
+   or maximum value representable by PythonExtra integer type, if it's smaller
+   than platform max value (that is the case for PythonExtra ports without
    long int support).
 
    This attribute is useful for detecting "bitness" of a platform (32-bit vs
@@ -138,18 +138,18 @@ Constants
    .. admonition:: Difference to CPython
       :class: attention
 
-      On MicroPython, an entry with the value ``".frozen"`` will indicate that import
+      On PythonExtra, an entry with the value ``".frozen"`` will indicate that import
       should search :term:`frozen modules <frozen module>` at that point in the search.
       If no frozen module is found then search will *not* look for a directory called
       ``.frozen``, instead it will continue with the next entry in ``sys.path``.
 
 .. data:: platform
 
-   The platform that MicroPython is running on. For OS/RTOS ports, this is
+   The platform that PythonExtra is running on. For OS/RTOS ports, this is
    usually an identifier of the OS, e.g. ``"linux"``. For baremetal ports it
-   is an identifier of a board, e.g. ``"pyboard"`` for the original MicroPython
+   is an identifier of a board, e.g. ``"pyboard"`` for the original PythonExtra
    reference board. It thus can be used to distinguish one board from another.
-   If you need to check whether your program runs on MicroPython (vs other
+   If you need to check whether your program runs on PythonExtra (vs other
    Python implementation), use `sys.implementation` instead.
 
 .. data:: ps1

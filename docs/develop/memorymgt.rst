@@ -3,7 +3,7 @@
 Memory Management
 =================
 
-Unlike programming languages such as C/C++, MicroPython hides memory management
+Unlike programming languages such as C/C++, PythonExtra hides memory management
 details from the developer by supporting automatic memory management.
 Automatic memory management is a technique used by operating systems or applications to automatically manage
 the allocation and deallocation of memory. This eliminates challenges such as forgetting to
@@ -16,12 +16,12 @@ The garbage collector usually has two responsibilities;
 #. Allocate new objects in available memory.
 #. Free unused memory.
 
-There are many GC algorithms but MicroPython uses the
+There are many GC algorithms but PythonExtra uses the
 `Mark and Sweep <https://en.wikipedia.org/wiki/Tracing_garbage_collection#Basic_algorithm>`_
 policy for managing memory. This algorithm has a mark phase that traverses the heap marking all
 live objects while the sweep phase goes through the heap reclaiming all unmarked objects.
 
-Garbage collection functionality in MicroPython is available through the ``gc`` built-in
+Garbage collection functionality in PythonExtra is available through the ``gc`` built-in
 module:
 
 .. code-block:: bash
@@ -45,13 +45,13 @@ Even when ``gc.disable()`` is invoked, collection can be triggered with ``gc.col
 The object model
 ----------------
 
-All MicroPython objects are referred to by the ``mp_obj_t`` data type.
+All PythonExtra objects are referred to by the ``mp_obj_t`` data type.
 This is usually word-sized (i.e. the same size as a pointer on the target architecture),
 and can be typically 32-bit (STM32, nRF, ESP32, Unix x86) or 64-bit (Unix x64).
 It can also be greater than a word-size for certain object representations, for
 example ``OBJ_REPR_D`` has a 64-bit sized ``mp_obj_t`` on a 32-bit architecture.
 
-An ``mp_obj_t`` represents a MicroPython object, for example an integer, float, type, dict or
+An ``mp_obj_t`` represents a PythonExtra object, for example an integer, float, type, dict or
 class instance. Some objects, like booleans and small integers, have their value stored directly
 in the ``mp_obj_t`` value and do not require additional memory. Other objects have their value
 store elsewhere in memory (for example on the garbage-collected heap) and their ``mp_obj_t`` contains
@@ -69,7 +69,7 @@ the lower 2 bits will be zero:
 
 These bits are reserved for purposes of storing a tag. The tag stores extra information as
 opposed to introducing a new field to store that information in the object, which may be
-inefficient.  In MicroPython the tag tells if we are dealing with a small integer, interned
+inefficient.  In PythonExtra the tag tells if we are dealing with a small integer, interned
 (small) string or a concrete object, and different semantics apply to each of these.
 
 For small integers the mapping is this:

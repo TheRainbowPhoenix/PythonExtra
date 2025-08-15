@@ -6,9 +6,9 @@ Trouble Shooting
 Flash file system
 -------------------
 
-* MicroPython REPL prompt is not displayed.
+* PythonExtra REPL prompt is not displayed.
 
-  - Re-program the MicroPython image file.
+  - Re-program the PythonExtra image file.
 
   - Confirm serial port connection.
     The connection must be crossed that the board TXD pin is connected with

@@ -179,7 +179,7 @@ Miscellaneous functions
    Returns a byte string with a unique identifier of a board/SoC. It will vary
    from a board/SoC instance to another, if underlying hardware allows. Length
    varies by hardware (so use substring of a full value if you expect a short
-   ID). In some MicroPython ports, ID corresponds to the network MAC address.
+   ID). In some PythonExtra ports, ID corresponds to the network MAC address.
 
 .. function:: time_pulse_us(pin, pulse_level, timeout_us=1000000, /)
 

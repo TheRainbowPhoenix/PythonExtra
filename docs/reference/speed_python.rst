@@ -1,13 +1,13 @@
 .. _speed_python:
 
-Maximising MicroPython speed
+Maximising PythonExtra speed
 ============================
 
 .. contents::
 
-This tutorial describes ways of improving the performance of MicroPython code.
+This tutorial describes ways of improving the performance of PythonExtra code.
 Optimisations involving other languages are covered elsewhere, namely the use
-of modules written in C and the MicroPython inline assembler.
+of modules written in C and the PythonExtra inline assembler.
 
 The process of developing high performance code comprises the following stages
 which should be performed in the order listed.
@@ -37,13 +37,13 @@ Algorithms
 
 The most important aspect of designing any routine for performance is ensuring that
 the best algorithm is employed. This is a topic for textbooks rather than for a
-MicroPython guide but spectacular performance gains can sometimes be achieved
+PythonExtra guide but spectacular performance gains can sometimes be achieved
 by adopting algorithms known for their efficiency.
 
 RAM allocation
 ~~~~~~~~~~~~~~
 
-To design efficient MicroPython code it is necessary to have an understanding of the
+To design efficient PythonExtra code it is necessary to have an understanding of the
 way the interpreter allocates RAM. When an object is created or grows in size
 (for example where an item is appended to a list) the necessary RAM is allocated
 from a block known as the heap. This takes a significant amount of time;
@@ -66,7 +66,7 @@ An example of the above is the common case where a buffer is required, such as o
 used for communication with a device. A typical driver will create the buffer in the
 constructor and use it in its I/O methods which will be called repeatedly.
 
-The MicroPython libraries typically provide support for pre-allocated buffers. For
+The PythonExtra libraries typically provide support for pre-allocated buffers. For
 example, objects which support stream interface (e.g., file or UART) provide ``read()``
 method which allocates new buffer for read data, but also a ``readinto()`` method
 to read data into an existing buffer.
@@ -81,7 +81,7 @@ Some useful classes for creating reusable buffer objects:
 Floating point
 ~~~~~~~~~~~~~~
 
-Some MicroPython ports allocate floating point numbers on heap. Some other ports
+Some PythonExtra ports allocate floating point numbers on heap. Some other ports
 may lack dedicated floating-point coprocessor, and perform arithmetic operations
 on them in "software" at considerably lower speed than on integers. Where
 performance is important, use integer operations and restrict the use of floating
@@ -135,9 +135,9 @@ of buffer and pass it to ``readinto()``.
 Strings vs Bytes
 ~~~~~~~~~~~~~~~~
 
-MicroPython uses :ref:`string interning <qstr>` to save space when there are
+PythonExtra uses :ref:`string interning <qstr>` to save space when there are
 multiple identical strings. Each time a new string is allocated at runtime (for
-example, when two other strings are concatenated), MicroPython checks whether
+example, when two other strings are concatenated), PythonExtra checks whether
 the new string can be interned to save RAM.
 
 If you have code which performs performance-critical string operations then
@@ -154,7 +154,7 @@ Identifying the slowest section of code
 
 This is a process known as profiling and is covered in textbooks and
 (for standard Python) supported by various software tools. For the type of
-smaller embedded application likely to be running on MicroPython platforms
+smaller embedded application likely to be running on PythonExtra platforms
 the slowest function or method can usually be established by judicious use
 of the timing ``ticks`` group of functions documented in `time`.
 Code execution time can be measured in ms, us, or CPU cycles.
@@ -174,13 +174,13 @@ The following enables any function or method to be timed by adding an
             return result
         return new_func
 
-MicroPython code improvements
+PythonExtra code improvements
 -----------------------------
 
 The const() declaration
 ~~~~~~~~~~~~~~~~~~~~~~~
 
-MicroPython provides a ``const()`` declaration. This works in a similar way
+PythonExtra provides a ``const()`` declaration. This works in a similar way
 to ``#define`` in C in that when the code is compiled to bytecode the compiler
 substitutes the numeric value for the identifier. This avoids a dictionary
 lookup at runtime. The argument to ``const()`` may be anything which, at
@@ -212,7 +212,7 @@ in the body of the method ``bar()``.
 Controlling garbage collection
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-When memory allocation is required, MicroPython attempts to locate an adequately
+When memory allocation is required, PythonExtra attempts to locate an adequately
 sized block on the heap. This may fail, usually because the heap is cluttered
 with objects which are no longer referenced by code. If a failure occurs, the
 process known as garbage collection reclaims the memory used by these redundant
@@ -230,8 +230,8 @@ non-recoverable allocation failures.
 The Native code emitter
 -----------------------
 
-This causes the MicroPython compiler to emit native CPU opcodes rather than
-bytecode. It covers the bulk of the MicroPython functionality, so most functions will require
+This causes the PythonExtra compiler to emit native CPU opcodes rather than
+bytecode. It covers the bulk of the PythonExtra functionality, so most functions will require
 no adaptation (but see below). It is invoked by means of a function decorator:
 
 .. code:: python
@@ -352,7 +352,7 @@ Accessing hardware directly
 .. note::
 
     Code examples in this section are given for the Pyboard. The techniques
-    described however may be applied to other MicroPython ports too.
+    described however may be applied to other PythonExtra ports too.
 
 This comes into the category of more advanced programming and involves some knowledge
 of the target MCU. Consider the example of toggling an output pin on the Pyboard. The

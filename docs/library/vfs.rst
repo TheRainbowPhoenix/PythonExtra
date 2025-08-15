@@ -108,9 +108,9 @@ Block devices
 -------------
 
 A block device is an object which implements the block protocol. This enables a
-device to support MicroPython filesystems. The physical hardware is represented
+device to support PythonExtra filesystems. The physical hardware is represented
 by a user defined class. The :class:`AbstractBlockDev` class is a template for
-the design of such a class: MicroPython does not actually provide that class,
+the design of such a class: PythonExtra does not actually provide that class,
 but an actual block device class must implement the methods described below.
 
 A concrete implementation of this class will usually allow access to the

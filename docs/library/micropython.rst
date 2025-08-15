@@ -1,8 +1,8 @@
-:mod:`micropython` -- access and control MicroPython internals
+:mod:`micropython` -- access and control PythonExtra internals
 ==============================================================
 
 .. module:: micropython
-   :synopsis: access and control MicroPython internals
+   :synopsis: access and control PythonExtra internals
 
 Functions
 ---------
@@ -22,9 +22,9 @@ Functions
    begins with an underscore then it is hidden, it is not available as a global
    variable, and does not take up any memory during execution.
 
-   This `const` function is recognised directly by the MicroPython parser and is
+   This `const` function is recognised directly by the PythonExtra parser and is
    provided as part of the :mod:`micropython` module mainly so that scripts can be
-   written which run under both CPython and MicroPython, by following the above
+   written which run under both CPython and PythonExtra, by following the above
    pattern.
 
 .. function:: opt_level([level])
@@ -117,7 +117,7 @@ Functions
 
    Schedule the function *func* to be executed "very soon".  The function
    is passed the value *arg* as its single argument.  "Very soon" means that
-   the MicroPython runtime will do its best to execute the function at the
+   the PythonExtra runtime will do its best to execute the function at the
    earliest possible time, given that it is also trying to be efficient, and
    that the following conditions hold:
 

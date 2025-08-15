@@ -7,7 +7,7 @@ For quick help information, please enter::
 
     help()
 
-You can access RA MCU's peripherals using MicroPython modules.
+You can access RA MCU's peripherals using PythonExtra modules.
 To list supported modules, please enter::
 
     help('modules')

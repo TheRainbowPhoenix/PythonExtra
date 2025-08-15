@@ -1,9 +1,9 @@
 .. _renesas-ra_intro:
 
-Getting started with MicroPython on the Renesas RA
+Getting started with PythonExtra on the Renesas RA
 ==================================================
 
-This tutorial will guide you through setting up MicroPython,
+This tutorial will guide you through setting up PythonExtra,
 getting a prompt, using the hardware peripherals, using internal
 flash file system, reset and boot modes, and Factory reset the
 internal file system.
@@ -18,12 +18,12 @@ You need a USB-Serial conversion cable to connect the board and your PC.
 Please get a type with separate signal pins so that you can connect to
 the UART TX and RX pins on the board.
 
-Flashing the MicroPython image with J-Link OB
+Flashing the PythonExtra image with J-Link OB
 ---------------------------------------------
 
 The board has a builtin programmer interface called J-Link OB.
 Using the J-Link Software, you can flash the binary image "firmware.hex"
-of MicroPython on the board via J-Link OB.
+of PythonExtra on the board via J-Link OB.
 
 You can download the J-Link Software and Documentation pack from https://www.segger.com/downloads/jlink/.
 
@@ -41,7 +41,7 @@ After installing J-Link Software, start J-Flash-Lite program.  Then specify foll
 
 Select a firmware hex file in Data File of J-Link-Lite, and push Program Device button to flash the firmware.
 
-Getting a prompt of MicroPython
+Getting a prompt of PythonExtra
 -------------------------------
 
 Cross connect USB-Serial conversion cable RX/TX/GND pins to TX/RX/GND pins on the board.
@@ -56,12 +56,12 @@ Cross connect USB-Serial conversion cable RX/TX/GND pins to TX/RX/GND pins on th
  RA4M1 CLICKER        P401             P402
 ===============  ===============  ===============
 
-Access the MicroPython REPL (the Python prompt) via USB serial or UART with 115200 baud rate, 1 stop bit and no parity bit using your favorite terminal software, picocom on Linux or Tera Term on Windows.  You can try on Linux::
+Access the PythonExtra REPL (the Python prompt) via USB serial or UART with 115200 baud rate, 1 stop bit and no parity bit using your favorite terminal software, picocom on Linux or Tera Term on Windows.  You can try on Linux::
 
       $ picocom /dev/ttyACM0
 
-You can see the MicroPython REPL prompt like below::
+You can see the PythonExtra REPL prompt like below::
 
-   MicroPython v1.20.0 on 2023-04-27; EK-RA6M2 with RA6M2
+   PythonExtra v1.20.0 on 2023-04-27; EK-RA6M2 with RA6M2
    Type "help()" for more information.
    >>>

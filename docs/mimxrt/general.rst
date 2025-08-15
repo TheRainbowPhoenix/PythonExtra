@@ -11,7 +11,7 @@ Multitude of boards
 -------------------
 
 There is a multitude of modules and boards from different sources which carry
-an i.MXRT chip.  MicroPython aims to provide a generic port which runs on
+an i.MXRT chip.  PythonExtra aims to provide a generic port which runs on
 as many boards/modules as possible, but there may be limitations.  The
 NXP IMXRT1020-EVK and the Teensy 4.0 and Teensy 4.1 development boards are taken
 as reference for the port (for example, testing is performed on them).
@@ -58,7 +58,7 @@ following design and implementation decision were made:
 * GPIO pin numbering is based on the board numbering as well as on the
   MCU numbering.  Please have the manual/pin diagram of your board at hand
   to find correspondence between your board pins and actual i.MXRT pins.
-* All MCU pins are supported by MicroPython but not all are usable on any given board.
+* All MCU pins are supported by PythonExtra but not all are usable on any given board.
 
 Technical specifications and SoC datasheets
 -------------------------------------------

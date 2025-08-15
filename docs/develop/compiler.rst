@@ -3,9 +3,9 @@
 The Compiler
 ============
 
-The compilation process in MicroPython involves the following steps:
+The compilation process in PythonExtra involves the following steps:
 
-* The lexer converts the stream of text that makes up a MicroPython program into tokens.
+* The lexer converts the stream of text that makes up a PythonExtra program into tokens.
 * The parser then converts the tokens into an abstract syntax (parse tree).
 * Then bytecode or native code is emitted based on the parse tree.
 
@@ -23,9 +23,9 @@ The ``add1`` statement takes an integer as argument and adds ``1`` to it.
 Adding a grammar rule
 ----------------------
 
-MicroPython's grammar is based on the `CPython grammar <https://docs.python.org/3.5/reference/grammar.html>`_
+PythonExtra's grammar is based on the `CPython grammar <https://docs.python.org/3.5/reference/grammar.html>`_
 and is defined in `py/grammar.h <https://github.com/micropython/micropython/blob/master/py/grammar.h>`_.
-This grammar is what is used to parse MicroPython source files.
+This grammar is what is used to parse PythonExtra source files.
 
 There are two macros you need to know to define a grammar rule: ``DEF_RULE`` and ``DEF_RULE_NC``.
 ``DEF_RULE`` allows you to define a rule with an associated compile function,
@@ -49,7 +49,7 @@ and the other for its argument, a ``testlist`` rule which is the top-level expre
 
 .. note::
    The ``add1`` rule here is just an example and not part of the standard
-   MicroPython grammar.
+   PythonExtra grammar.
 
 The fourth argument in this example is the token associated with the rule, ``KW_ADD1``. This token should be
 defined in the lexer by editing ``py/lexer.h``.
@@ -140,7 +140,7 @@ not applied to *docstrings*.
 Compiler passes
 ---------------
 
-Like many compilers, MicroPython compiles all code to MicroPython bytecode or native code. The functionality
+Like many compilers, PythonExtra compiles all code to PythonExtra bytecode or native code. The functionality
 that achieves this is implemented in `py/compile.c <https://github.com/micropython/micropython/blob/master/py/compile.c>`_.
 The most relevant method you should know about is this:
 

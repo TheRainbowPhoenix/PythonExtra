@@ -5,10 +5,10 @@ Working with filesystems
 
 .. contents::
 
-This tutorial describes how MicroPython provides an on-device filesystem,
+This tutorial describes how PythonExtra provides an on-device filesystem,
 allowing standard Python file I/O methods to be used with persistent storage.
 
-MicroPython automatically creates a default configuration and auto-detects the
+PythonExtra automatically creates a default configuration and auto-detects the
 primary filesystem, so this tutorial will be mostly useful if you want to modify
 the partitioning, filesystem type, or use custom block devices.
 
@@ -26,7 +26,7 @@ host OS.
 VFS
 ---
 
-MicroPython implements a Unix-like Virtual File System (VFS) layer. All mounted
+PythonExtra implements a Unix-like Virtual File System (VFS) layer. All mounted
 filesystems are combined into a single virtual filesystem, starting at the root
 ``/``. Filesystems are mounted into directories in this structure, and at
 startup the working directory is changed to where the primary filesystem is
@@ -47,9 +47,9 @@ Built-in block devices
 
 Ports provide built-in block devices to access their primary flash.
 
-On power-on, MicroPython will attempt to detect the filesystem on the default
+On power-on, PythonExtra will attempt to detect the filesystem on the default
 flash and configure and mount it automatically. If no filesystem is found,
-MicroPython will attempt to create a FAT filesystem spanning the entire flash.
+PythonExtra will attempt to create a FAT filesystem spanning the entire flash.
 Ports can also provide a mechanism to "factory reset" the primary flash, usually
 by some combination of button presses at power on.
 
@@ -166,7 +166,7 @@ normally would be used from Python code, for example::
 Filesystems
 -----------
 
-MicroPython ports can provide implementations of :class:`FAT <vfs.VfsFat>`,
+PythonExtra ports can provide implementations of :class:`FAT <vfs.VfsFat>`,
 :class:`littlefs v1 <vfs.VfsLfs1>` and :class:`littlefs v2 <vfs.VfsLfs2>`.
 
 The following table shows which filesystems are included in the firmware by

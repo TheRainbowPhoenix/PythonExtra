@@ -1,13 +1,13 @@
 .. _constrained:
 
-MicroPython on microcontrollers
+PythonExtra on microcontrollers
 ===============================
 
-MicroPython is designed to be capable of running on microcontrollers. These
+PythonExtra is designed to be capable of running on microcontrollers. These
 have hardware limitations which may be unfamiliar to programmers more familiar
 with conventional computers. In particular the amount of RAM and nonvolatile
 "disk" (flash memory) storage is limited. This tutorial offers ways to make
-the most of the limited resources. Because MicroPython runs on controllers
+the most of the limited resources. Because PythonExtra runs on controllers
 based on a variety of architectures, the methods presented are generic: in some
 cases it will be necessary to obtain detailed information from platform specific
 documentation.
@@ -18,7 +18,7 @@ Flash memory
 On the Pyboard the simple way to address the limited capacity is to fit a micro
 SD card. In some cases this is impractical, either because the device does not
 have an SD card slot or for reasons of cost or power consumption; hence the
-on-chip flash must be used. The firmware including the MicroPython subsystem is
+on-chip flash must be used. The firmware including the PythonExtra subsystem is
 stored in the onboard flash. The remaining capacity is available for use. For
 reasons connected with the physical architecture of the flash memory part of
 this capacity may be inaccessible as a filesystem. In such cases this space may
@@ -40,7 +40,7 @@ relevant part of the source tree.
 
 In general terms the steps are as follows:
 
-* Clone the MicroPython `repository <https://github.com/micropython/micropython>`_.
+* Clone the PythonExtra `repository <https://github.com/micropython/micropython>`_.
 * Acquire the (platform specific) toolchain to build the firmware.
 * Build the cross compiler.
 * Place the modules to be frozen in a specified directory (dependent on whether
@@ -61,8 +61,8 @@ section covering the `heap`_.
 Compilation phase
 ~~~~~~~~~~~~~~~~~
 
-When a module is imported, MicroPython compiles the code to bytecode which is
-then executed by the MicroPython virtual machine (VM). The bytecode is stored
+When a module is imported, PythonExtra compiles the code to bytecode which is
+then executed by the PythonExtra virtual machine (VM). The bytecode is stored
 in RAM. The compiler itself requires RAM, but this becomes available for use
 when the compilation has completed.
 
@@ -78,7 +78,7 @@ all modules have been imported. This maximises the RAM available to the
 compiler.
 
 If RAM is still insufficient to compile all modules one solution is to
-precompile modules. MicroPython has a cross compiler capable of compiling Python
+precompile modules. PythonExtra has a cross compiler capable of compiling Python
 modules to bytecode (see the README in the mpy-cross directory). The resulting
 bytecode file has a .mpy extension; it may be copied to the filesystem and
 imported in the usual way. Alternatively some or all modules may be implemented
@@ -92,7 +92,7 @@ There are a number of coding techniques for reducing RAM usage.
 
 **Constants**
 
-MicroPython provides a ``const`` keyword which may be used as follows:
+PythonExtra provides a ``const`` keyword which may be used as follows:
 
 .. code::
 
@@ -238,7 +238,7 @@ were frozen as bytecode, both the `tuple` and `bytes` object would reside in fla
 **Strings Versus Bytes**
 
 Python3 introduced Unicode support. This introduced a distinction between a
-string and an array of bytes. MicroPython ensures that Unicode strings take no
+string and an array of bytes. PythonExtra ensures that Unicode strings take no
 additional space so long as all characters in the string are ASCII (i.e. have
 a value < 126). If values in the full 8-bit range are required `bytes` and
 `bytearray` objects can be used to ensure that no additional space will be
@@ -431,10 +431,10 @@ after the import will ameliorate the problem.
 String operations
 -----------------
 
-MicroPython handles strings in an efficient manner and understanding this can
+PythonExtra handles strings in an efficient manner and understanding this can
 help in designing applications to run on microcontrollers. When a module
 is compiled, strings which occur multiple times are stored once only, a process
-known as string interning. In MicroPython an interned string is known as a ``qstr``.
+known as string interning. In PythonExtra an interned string is known as a ``qstr``.
 In a module imported normally that single instance will be located in RAM, but
 as described above, in modules frozen as bytecode it will be located in flash.
 
@@ -446,7 +446,7 @@ come as a surprise to C programmers.
 Postscript
 ----------
 
-MicroPython passes, returns and (by default) copies objects by reference. A
+PythonExtra passes, returns and (by default) copies objects by reference. A
 reference occupies a single machine word so these processes are efficient in
 RAM usage and speed.
 

@@ -28,7 +28,7 @@ described on the relevant page.
 Instruction categories
 ----------------------
 
-The following sections details the subset of the ARM Thumb-2 instruction set supported by MicroPython.
+The following sections details the subset of the ARM Thumb-2 instruction set supported by PythonExtra.
 
 .. toctree::
    :maxdepth: 1

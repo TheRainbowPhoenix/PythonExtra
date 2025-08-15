@@ -1,6 +1,6 @@
 # `casioplot`: CASIO's official I/O module
 
-`casioplot` is a drawing library provided by CASIO as support for the official `turtle` and `matplotlib` modules. It was [announced in February 2020](https://www.planet-casio.com/Fr/forums/topic16154-1-modules-graphiques-python-en-avril-matplotlib-et-turtle.html) and [released in April](https://www.planet-casio.com/Fr/forums/topic16243-1-rendu-graphique-en-python-partie-1-decouverte-de-matplotlib-et-turtle.html). The module is notably available on G-III and fx-CG models with the same API. As of March 2024, `casioplot` is the only custom module in CASIO's official port of MicroPython. PythonExtra also provides the module for source compatibility.
+`casioplot` is a drawing library provided by CASIO as support for the official `turtle` and `matplotlib` modules. It was [announced in February 2020](https://www.planet-casio.com/Fr/forums/topic16154-1-modules-graphiques-python-en-avril-matplotlib-et-turtle.html) and [released in April](https://www.planet-casio.com/Fr/forums/topic16243-1-rendu-graphique-en-python-partie-1-decouverte-de-matplotlib-et-turtle.html). The module is notably available on G-III and fx-CG models with the same API. As of March 2024, `casioplot` is the only custom module in CASIO's official port of PythonExtra. PythonExtra also provides the module for source compatibility.
 
 ```py
 import casioplot

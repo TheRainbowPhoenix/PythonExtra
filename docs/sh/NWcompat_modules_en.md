@@ -2,7 +2,7 @@
 
 PythonExtra offers the possibility of using certain Numworks modules in order to make the scripts of this machine compatible as is on Casio fx-CG50 (no support on the fx9860G due to insufficient memory and lack of color screen ).
 
-This is a Work in Progress (WIP) and the support is subject to extensive testing at this stage. The port concerns the Numworks `kandinsky`, `ion` and `time` modules which are machine specific and are now supported via this implementation. The `math`, `cmath`, `random` modules being identical between the `Numworks` version and the `builtins` modules of MicroPython, they are therefore not part of this implementation but are perfectly usable without modification in the scripts.
+This is a Work in Progress (WIP) and the support is subject to extensive testing at this stage. The port concerns the Numworks `kandinsky`, `ion` and `time` modules which are machine specific and are now supported via this implementation. The `math`, `cmath`, `random` modules being identical between the `Numworks` version and the `builtins` modules of PythonExtra, they are therefore not part of this implementation but are perfectly usable without modification in the scripts.
 
 Note: the `turtle` and `matplotlib.pyplot` modules are not included in this implementation. It is possible to use the `turtle`, `matplotlib` and `casioplot` modules from Casio Education which are perfectly functional and provided as an example in `ports/sh/examples`.
 

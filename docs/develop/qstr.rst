@@ -1,12 +1,12 @@
 .. _qstr:
 
-MicroPython string interning
+PythonExtra string interning
 ============================
 
-MicroPython uses `string interning`_ to save both RAM and ROM.  This avoids
+PythonExtra uses `string interning`_ to save both RAM and ROM.  This avoids
 having to store duplicate copies of the same string.  Primarily, this applies to
 identifiers in your code, as something like a function or variable name is very
-likely to appear in multiple places in the code.  In MicroPython an interned
+likely to appear in multiple places in the code.  In PythonExtra an interned
 string is called a QSTR (uniQue STRing).
 
 A QSTR value (with type ``qstr``) is a index into a linked list of QSTR pools.
@@ -17,7 +17,7 @@ a QSTR argument.
 Compile-time QSTR generation
 ----------------------------
 
-In the MicroPython C code, any strings that should be interned in the final
+In the PythonExtra C code, any strings that should be interned in the final
 firmware are written as ``MP_QSTR_Foo``.  At compile time this will evaluate to
 a ``qstr`` value that points to the index of ``"Foo"`` in the QSTR pool.
 

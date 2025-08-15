@@ -3,7 +3,7 @@
 Maps and Dictionaries
 =====================
 
-MicroPython dictionaries and maps use techniques called open addressing and linear probing.
+PythonExtra dictionaries and maps use techniques called open addressing and linear probing.
 This chapter details both of these methods.
 
 Open addressing
@@ -17,13 +17,13 @@ slot or location. For example, given a hash setup as this:
 
 If there is a request to fill slot ``0`` with ``70``, since the slot ``0`` is not empty, open addressing
 finds the next available slot in the dictionary to service this request. This sequential search for an alternate
-location is called *probing*. There are several sequence probing algorithms but MicroPython uses
+location is called *probing*. There are several sequence probing algorithms but PythonExtra uses
 linear probing that is described in the next section.
 
 Linear probing
 --------------
 
-Linear probing is one of the methods for finding an available address or slot in a dictionary. In MicroPython,
+Linear probing is one of the methods for finding an available address or slot in a dictionary. In PythonExtra,
 it is used with open addressing. To service the request described above, unlike other probing algorithms,
 linear probing assumes a fixed interval of ``1`` between probes. The request will therefore be serviced by
 placing the item in the next free slot which is slot ``4`` in our example:

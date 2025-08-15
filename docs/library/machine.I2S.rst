@@ -136,7 +136,7 @@ Methods
 
   Set a callback. ``handler`` is called when ``buf`` is emptied (``write`` method) or becomes full (``readinto`` method).
   Setting a callback changes the ``write`` and ``readinto`` methods to non-blocking operation.
-  ``handler`` is called in the context of the MicroPython scheduler.
+  ``handler`` is called in the context of the PythonExtra scheduler.
 
 .. staticmethod::  I2S.shift(*, buf, bits, shift)
 

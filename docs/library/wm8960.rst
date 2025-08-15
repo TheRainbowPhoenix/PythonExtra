@@ -6,7 +6,7 @@
 This driver is used to control a WM8960 codec chip.  It is a Python
 translation of the C-Code provided by NXP/Freescale for their i.MX RT series of
 MCUs.  Very little has been added, and just a few API related names were changed
-or added to cope with the naming style of MicroPython.
+or added to cope with the naming style of PythonExtra.
 
 The primary purpose of the driver is initialization and setting operation modes
 of the codec.  It does not do the audio data processing for the codec.  That is

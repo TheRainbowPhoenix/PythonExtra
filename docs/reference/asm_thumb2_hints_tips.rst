@@ -80,7 +80,7 @@ the code executes the registers will be initialised to those values.
 The data types which can be passed in this way are integers and memory
 addresses. With current firmware all possible 32 bit values may be passed and
 returned. If the return value may have the most significant bit set a Python
-type hint should be employed to enable MicroPython to determine whether the
+type hint should be employed to enable PythonExtra to determine whether the
 value should be interpreted as a signed or unsigned integer: types are
 ``int`` or ``uint``.
 
@@ -170,7 +170,7 @@ thus:
     def foo():
         mov(r0, MYDATA)
 
-The const() construct causes MicroPython to replace the variable name
+The const() construct causes PythonExtra to replace the variable name
 with its value at compile time. If constants are declared in an outer
 Python scope they can be shared between multiple assembler functions and
 with Python code.
@@ -178,7 +178,7 @@ with Python code.
 Assembler code as class methods
 -------------------------------
 
-MicroPython passes the address of the object instance as the first argument
+PythonExtra passes the address of the object instance as the first argument
 to class methods. This is normally of little use to an assembler function.
 It can be avoided by declaring the function as a static method thus:
 
@@ -205,12 +205,12 @@ calls such as
 
 indicates that each subsequent argument is a two byte quantity.
 
-Overcoming MicroPython's integer restriction
+Overcoming PythonExtra's integer restriction
 --------------------------------------------
 
 The Pyboard chip includes a CRC generator. Its use presents a problem in
-MicroPython because the returned values cover the full gamut of 32 bit
-quantities whereas small integers in MicroPython cannot have differing values
+PythonExtra because the returned values cover the full gamut of 32 bit
+quantities whereas small integers in PythonExtra cannot have differing values
 in bits 30 and 31. This limitation is overcome with the following code, which
 uses assembler to put the result into an array and Python code to
 coerce the result into an arbitrary precision unsigned integer.

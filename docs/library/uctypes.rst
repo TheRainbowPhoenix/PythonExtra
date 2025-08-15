@@ -4,7 +4,7 @@
 .. module:: uctypes
    :synopsis: access binary data in a structured way
 
-This module implements "foreign data interface" for MicroPython. The idea
+This module implements "foreign data interface" for PythonExtra. The idea
 behind it is similar to CPython's ``ctypes`` modules, but the actual API is
 different, streamlined and optimized for small size. The basic idea of the
 module is to define data structure layout with about the same power as the
@@ -198,7 +198,7 @@ Module contents
 .. data:: NATIVE
 
    Layout type for a native structure - with data endianness and alignment
-   conforming to the ABI of the system on which MicroPython runs.
+   conforming to the ABI of the system on which PythonExtra runs.
 
 .. function:: sizeof(struct, layout_type=NATIVE, /)
 

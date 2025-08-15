@@ -12,7 +12,7 @@ library written in another language.
 
 One of the main advantages of using native .mpy files is that native machine code
 can be imported by a script dynamically, without the need to rebuild the main
-MicroPython firmware.  This is in contrast to :ref:`cmodules` which also allows
+PythonExtra firmware.  This is in contrast to :ref:`cmodules` which also allows
 defining custom modules in C but they must be compiled into the main firmware image.
 
 The focus here is on using C to build native modules, but in principle any
@@ -27,7 +27,7 @@ CPython 3 and the library pyelftools v0.25 or greater.
 Supported features and limitations
 ----------------------------------
 
-A .mpy file can contain MicroPython bytecode and/or native machine code.  If it
+A .mpy file can contain PythonExtra bytecode and/or native machine code.  If it
 contains native machine code then the .mpy file has a specific architecture
 associated with it.  Current supported architectures are (these are the valid
 options for the ``ARCH`` variable, see below):
@@ -78,7 +78,7 @@ in your Makefile. Custom static libraries can also be linked by adding
 the native module and will not be shared with other modules or the system.
 
 Linker limitation: the native module is not linked against the symbol table of the
-full MicroPython firmware.  Rather, it is linked against an explicit table of exported
+full PythonExtra firmware.  Rather, it is linked against an explicit table of exported
 symbols found in ``mp_fun_table`` (in ``py/nativeglue.h``), that is fixed at firmware
 build time.  It is thus not possible to simply call some arbitrary HAL/OS/RTOS/system
 function, for example.
@@ -98,7 +98,7 @@ The filesystem layout consists of two main parts, the source files and the Makef
 
 * In the simplest case only a single C source file is required, which contains all
   the code that will be compiled into the .mpy module.  This C source code must
-  include the ``py/dynruntime.h`` file to access the MicroPython dynamic API, and
+  include the ``py/dynruntime.h`` file to access the PythonExtra dynamic API, and
   must at least define a function called ``mpy_init``.  This function will be the
   entry point of the module, called when the module is imported.
 
@@ -110,7 +110,7 @@ The filesystem layout consists of two main parts, the source files and the Makef
 
 * The ``Makefile`` contains the build configuration for the module and list the
   source files used to build the .mpy module.  It should define ``MPY_DIR`` as the
-  location of the MicroPython repository (to find header files, the relevant Makefile
+  location of the PythonExtra repository (to find header files, the relevant Makefile
   fragment, and the ``mpy_ld.py`` tool), ``MOD`` as the name of the module, ``SRC``
   as the list of source files, optionally specify the machine architecture via ``ARCH``,
   and then include ``py/dynruntime.mk``.
@@ -132,7 +132,7 @@ The file ``factorial.c`` contains:
 
 .. code-block:: c
 
-    // Include the header file to get access to the MicroPython API
+    // Include the header file to get access to the PythonExtra API
     #include "py/dynruntime.h"
 
     // Helper function to compute factorial
@@ -145,11 +145,11 @@ The file ``factorial.c`` contains:
 
     // This is the function which will be called from Python, as factorial(x)
     static mp_obj_t factorial(mp_obj_t x_obj) {
-        // Extract the integer from the MicroPython input object
+        // Extract the integer from the PythonExtra input object
         mp_int_t x = mp_obj_get_int(x_obj);
         // Calculate the factorial
         mp_int_t result = factorial_helper(x);
-        // Convert the result to a MicroPython integer object and return it
+        // Convert the result to a PythonExtra integer object and return it
         return mp_obj_new_int(result);
     }
     // Define a Python reference to the function above
@@ -171,7 +171,7 @@ The file ``Makefile`` contains:
 
 .. code-block:: make
 
-    # Location of top-level MicroPython directory
+    # Location of top-level PythonExtra directory
     MPY_DIR = ../../..
 
     # Name of module
@@ -191,11 +191,11 @@ Compiling the module
 
 The prerequisite tools needed to build a native .mpy file are:
 
-* The MicroPython repository (at least the ``py/`` and ``tools/`` directories).
+* The PythonExtra repository (at least the ``py/`` and ``tools/`` directories).
 * CPython 3, and the library pyelftools (eg ``pip install 'pyelftools>=0.25'``).
 * GNU make.
 * A C compiler for the target architecture (if C source is used).
-* Optionally ``mpy-cross``, built from the MicroPython repository (if .py source is used).
+* Optionally ``mpy-cross``, built from the PythonExtra repository (if .py source is used).
 
 Be sure to select the correct ``ARCH`` for the target you are going to run on.
 Then build with::
@@ -206,11 +206,11 @@ Without modifying the Makefile you can specify the target architecture via::
 
     $ make ARCH=armv7m
 
-Module usage in MicroPython
+Module usage in PythonExtra
 ---------------------------
 
 Once the module is built there should be a file called ``factorial.mpy``.  Copy
-this so it is accessible on the filesystem of your MicroPython system and can be
+this so it is accessible on the filesystem of your PythonExtra system and can be
 found in the import path.  The module can now be accessed in Python just like any
 other module, for example::
 

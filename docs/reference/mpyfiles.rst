@@ -1,9 +1,9 @@
 .. _mpy_files:
 
-MicroPython .mpy files
+PythonExtra .mpy files
 ======================
 
-MicroPython defines the concept of an .mpy file which is a binary container
+PythonExtra defines the concept of an .mpy file which is a binary container
 file format that holds precompiled code, and which can be imported like a
 normal .py module.  The file ``foo.mpy`` can be imported via ``import foo``,
 as long as ``foo.mpy`` can be found in the usual way by the import machinery.
@@ -21,7 +21,7 @@ a variety of ways, most notably from C source code.
 Versioning and compatibility of .mpy files
 ------------------------------------------
 
-A given .mpy file may or may not be compatible with a given MicroPython system.
+A given .mpy file may or may not be compatible with a given PythonExtra system.
 Compatibility is based on the following:
 
 * Version of the .mpy file: the version of the file must match the version
@@ -40,7 +40,7 @@ Compatibility is based on the following:
   it will specify the architecture of that machine code and the system
   loading it must support execution of that architecture's code.
 
-If a MicroPython system supports importing .mpy files then the
+If a PythonExtra system supports importing .mpy files then the
 ``sys.implementation._mpy`` field will exist and return an integer which
 encodes the version (lower 8 bits), features and native architecture.
 
@@ -51,7 +51,7 @@ code) will raise ``ValueError('incompatible .mpy arch')``.
 
 If importing an .mpy file fails then try the following:
 
-* Determine the .mpy version and flags supported by your MicroPython system
+* Determine the .mpy version and flags supported by your PythonExtra system
   by executing::
 
     import sys
@@ -80,11 +80,11 @@ If importing an .mpy file fails then try the following:
   above, or by inspecting the ``MPY_CROSS_FLAGS`` Makefile variable for the
   port that you are using.
 
-The following table shows the correspondence between MicroPython release
+The following table shows the correspondence between PythonExtra release
 and .mpy version.
 
 =================== ============
-MicroPython release .mpy version
+PythonExtra release .mpy version
 =================== ============
 v1.23.0 and up      6.3
 v1.22.x             6.2
@@ -98,7 +98,7 @@ v1.5.1 - v1.8.7     0
 =================== ============
 
 For completeness, the next table shows the Git commit of the main
-MicroPython repository at which the .mpy version was changed.
+PythonExtra repository at which the .mpy version was changed.
 
 =================== ========================================
 .mpy version change Git commit
@@ -118,7 +118,7 @@ initial version 0   d8c834c95d506db979ec871417de90b7951edc30
 Binary encoding of .mpy files
 -----------------------------
 
-MicroPython .mpy files are a binary container format with code objects (bytecode
+PythonExtra .mpy files are a binary container format with code objects (bytecode
 and native machine code) stored internally in a nested hierarchy.  The code for
 the outer module is stored first, and then its children follow.  Each child may
 have further children, for example in the case of a class having methods, or a
@@ -139,7 +139,7 @@ The top-level of an .mpy file consists of three parts:
   This outer scope is executed when the .mpy file is imported.
 
 You can inspect the contents of a .mpy file by using ``mpy-tool.py``, for
-example (run from the root of the main MicroPython repository)::
+example (run from the root of the main PythonExtra repository)::
 
     $ ./tools/mpy-tool.py -xd myfile.mpy
 
