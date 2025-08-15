@@ -1,0 +1,40 @@
+# .github/workflows/build.yml
+name: Build (gint-docker)
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    # Run all steps inside your GHCR image
+    container:
+      image: ghcr.io/therainbowphoenix/gint-docker:main
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Helpful when submodules are involved
+          fetch-depth: 0  # fetch full history (optional)  # see docs
+          # You asked to run `git submodule update` explicitly, so we keep submodules default here
+          # (Alternatively: submodules: recursive) 
+
+      - name: Init submodules
+        run: git submodule update --init --recursive
+
+      - name: Build (make)
+        working-directory: ports/fxcp
+        run: |
+          make
+
+      - name: Upload artifact (ports/fxcp/build)
+        uses: actions/upload-artifact@v4
+        with:
+          name: fxcp-build
+          path: ports/fxcp/build/
+          if-no-files-found: error
+          retention-days: 14
