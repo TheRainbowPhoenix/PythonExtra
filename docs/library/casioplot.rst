@@ -4,7 +4,7 @@
 .. module:: casioplot
    :synopsis: a simple interface for drawing graphics and text.
 
-The `casioplot` module provides a set of basic, easy-to-use functions for drawing on the calculator's screen. It is designed for beginners and simple graphical applications.
+The casioplot module provides a set of basic, easy-to-use functions for drawing on the calculator's screen. It is designed for beginners and simple graphical applications.
 
 Functions
 ---------
@@ -48,7 +48,7 @@ Functions
 
    :param x: The horizontal position of the pixel.
    :param y: The vertical position of the pixel.
-   :return: An RGB tuple `(r, g, b)` representing the color of the pixel.
+   :return: An RGB tuple (r, g, b) representing the color of the pixel.
 
    .. admonition:: Performance Warning
       :class: attention
@@ -69,8 +69,8 @@ Functions
 
    :param x: The horizontal position for the top-left corner of the text.
    :param y: The vertical position for the top-left corner of the text.
-   :param text: The string of text to be drawn. Newline characters (`\n`) in the string will be rendered as spaces.
-   :param color: An RGB tuple `(r, g, b)` for the text color. Defaults to black.
+   :param text: The string of text to be drawn. Newline characters (\\n) in the string will be rendered as spaces.
+   :param color: An RGB tuple (r, g, b) for the text color. Defaults to black.
    :param size: The font size. Can be one of ``"small"``, ``"medium"``, or ``"large"``. Defaults to "medium".
 
    Example:

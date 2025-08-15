@@ -1,3 +1,4 @@
+# .github/workflows/build-docs.yml
 name: Build docs
 
 on:
@@ -10,14 +11,48 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
-
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-python@v5
-    - name: Install Python packages
-      run: pip install -r docs/requirements.txt
-    - name: Build docs
-      run: make -C docs/ html
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install Python packages
+        run: pip install -r docs/requirements.txt
+
+      - name: Build docs (Sphinx)
+        run: make -C docs html
+        # continue-on-error: true
+
+      # Prepare Pages artifact from docs/build/html
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+            path: docs/build/html
+            # index.html will be used as the homepage
+
+  deploy:
+    # Only this job deploys to Pages
+    needs: build
+    if: github.event_name != 'pull_request'   # skip PRs; deploy on push/manual
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write      # required for Pages deployment
+      id-token: write   # required for OIDC
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

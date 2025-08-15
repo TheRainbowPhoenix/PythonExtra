@@ -57,34 +57,21 @@ library.
    :maxdepth: 1
 
    array.rst
-   asyncio.rst
-   binascii.rst
    builtins.rst
    cmath.rst
    collections.rst
-   errno.rst
    gc.rst
    gint.rst
-   gzip.rst
-   hashlib.rst
-   heapq.rst
    io.rst
-   json.rst
    marshal.rst
    math.rst
    os.rst
    platform.rst
    random.rst
-   re.rst
-   select.rst
-   socket.rst
-   ssl.rst
    struct.rst
    sys.rst
    time.rst
-   zlib.rst
-   _thread.rst
-
+   
 .. _micropython_lib_micropython:
 
 PythonExtra-specific libraries
@@ -96,25 +83,10 @@ the following libraries.
 .. toctree::
    :maxdepth: 1
 
-   bluetooth.rst
-   btree.rst
-   cryptolib.rst
-   deflate.rst
-   framebuf.rst
    machine.rst
    micropython.rst
-   neopixel.rst
-   network.rst
-   openamp.rst
    uctypes.rst
    vfs.rst
-
-The following libraries provide drivers for hardware components.
-
-.. toctree::
-  :maxdepth: 1
-
-  wm8960.rst
 
 
 Port-specific libraries

@@ -4,7 +4,7 @@
 .. module:: gint
     :synopsis: functions for graphics, keyboard, and timers.
 
-The `gint` module provides a high-level interface to the gint library, allowing direct access to the calculator's hardware features like the display and keyboard.
+The gint module provides a high-level interface to the gint library, allowing direct access to the calculator's hardware features like the display and keyboard.
 
 Classes
 -------
@@ -106,7 +106,12 @@ Keyboard Functions
 
 .. function:: clearevents()
 
-    Clears all pending keyboard events from the event queue. This is useful when you need to check the immediate keyboard state with :func:`keydown` without being influenced by historical events. It is equivalent to running `while pollevent().type != KEYEV_NONE: pass`.
+    Clears all pending keyboard events from the event queue. This is useful when you need to check the immediate keyboard state with :func:`keydown` without being influenced by historical events. It is equivalent to running 
+    
+    .. code-block:: python
+    
+        while pollevent().type != KEYEV_NONE: pass
+    
 
 .. function:: pollevent() -> KeyEvent
 
@@ -178,7 +183,7 @@ Keyboard Functions
 
     :param options: A combination of ``GETKEY_*`` flags (e.g., ``GETKEY_MOD_SHIFT | GETKEY_REP_ARROWS``).
     :param timeout_ms: The maximum time to wait in milliseconds. If ``None``, it waits indefinitely.
-    :return: A :class:`KeyEvent` object, or a dummy event with `type=KEYEV_NONE` if the timeout is reached.
+    :return: A :class:`KeyEvent` object, or a dummy event with ``type=KEYEV_NONE`` if the timeout is reached.
 
 .. function:: keycode_function(keycode) -> int
 
@@ -258,7 +263,7 @@ Display Functions
 
     Draws a polygon. The polygon is automatically closed if the first and last vertices are not the same.
 
-    :param vertices: A flat list of coordinates, e.g., `[x0, y0, x1, y1, ...]`.
+    :param vertices: A flat list of coordinates, e.g., ``[x0, y0, x1, y1, ...]``.
     :param fill: The fill color (use ``C_NONE`` for transparent).
     :param border: The border color (use ``C_NONE`` for no border).
 
@@ -309,7 +314,7 @@ Font Constructor
 
 .. function:: font(...) -> GintFont
 
-    Constructs a custom :class:`GintFont` object. Takes numerous parameters describing the font's properties and glyph data, such as `line_height`, `char_spacing`, `blocks`, and `data`.
+    Constructs a custom ``GintFont`` object. Takes numerous parameters describing the font's properties and glyph data, such as ``line_height``, ``char_spacing``, ``blocks``, and ``data``.
 
 Constants
 ---------

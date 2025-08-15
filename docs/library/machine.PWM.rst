@@ -86,8 +86,6 @@ Specific PWM class implementations
 
 The following concrete class(es) implement enhancements to the PWM class.
 
-   | :ref:`pyb.Timer for PyBoard <pyb.Timer>`
-
 Limitations of PWM
 ------------------
 

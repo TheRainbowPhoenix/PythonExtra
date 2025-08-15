@@ -54,25 +54,6 @@ State which is cleared by a soft reset includes:
 - Network sockets. Open TCP sockets are closed cleanly with respect to the other party.
 - Open files. The filesystem is left in a valid state.
 
-Some system state remains the same after a soft reset, including:
-
-- Any existing network connections (Ethernet, Wi-Fi, etc) remain active at the
-  IP Network layer. Querying the :doc:`network interface from code
-  </library/network>` may indicate the network interface is still active with a
-  configured IP address, etc.
-- An active :doc:`REPL <repl>` appears continuous before and after soft reset,
-  except in some unusual cases:
-
-  * If the :ref:`machine.USBDevice <machine.USBDevice>` class has been used to
-    create a custom USB interface then any built-in USB serial device will
-    appear to disconnect and reconnect as the custom USB interface must be
-    cleared during reset.
-  * A serial UART REPL will restore its default hardware configuration (baud
-    rate, etc).
-
-- CPU clock speed is usually not changed by a soft reset.
-- :doc:`RTC </library/machine.RTC>` configuration (i.e. setting of the current
-  time) is not changed by soft reset.
 
 .. _boot_sequence:
 
@@ -240,14 +221,6 @@ two processes:
 2. Factory Reset to erase the entire contents of the flash filesystem. This may
    also be necessary if the internal flash filesystem has become corrupted
    somehow.
-
-The specific process(es) are different on each port:
-
-- :doc:`pyboard and stm32 port instructions </pyboard/tutorial/reset>`
-- :doc:`esp32 port instructions </esp32/tutorial/reset>`
-- :doc:`renesas-ra port instructions </renesas-ra/tutorial/reset>`
-- :doc:`rp2 port instructions </rp2/tutorial/reset>`
-- :doc:`wipy port instructions </wipy/tutorial/reset>`
 
 For ports without specific instructions linked above, the factory reset process
 involves erasing the board's entire flash and then flashing PythonExtra again

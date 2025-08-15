@@ -53,19 +53,6 @@ PythonExtra will attempt to create a FAT filesystem spanning the entire flash.
 Ports can also provide a mechanism to "factory reset" the primary flash, usually
 by some combination of button presses at power on.
 
-STM32 / Pyboard
-...............
-
-The :ref:`pyb.Flash <pyb.Flash>` class provides access to the internal flash. On some
-boards which have larger external flash (e.g. Pyboard D), it will use that
-instead. The ``start`` kwarg should always be specified, i.e.
-``pyb.Flash(start=0)``.
-
-Note: For backwards compatibility, when constructed with no arguments (i.e.
-``pyb.Flash()``), it only implements the simple block interface and reflects the
-virtual device presented to USB MSC (i.e. it includes a virtual partition table
-at the start).
-
 ESP8266
 .......
 

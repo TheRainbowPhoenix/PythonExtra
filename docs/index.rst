@@ -5,7 +5,8 @@ PythonExtra documentation and references
 
     library/index.rst
     reference/index.rst
-    genrst/idex.rst
-    develop/idex.rst
-    license.rs
+    genrst/index.rst
+    develop/index.rst
+    license.rst
     gint/fxcp/quickref.rst
+    unix/quickref.rst
