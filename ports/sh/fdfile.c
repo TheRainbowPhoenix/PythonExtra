@@ -181,7 +181,7 @@ static mp_obj_t fdfile_open(const mp_obj_type_t *type, mp_arg_val_t *args) {
             case '+':
                 mode_rw = O_RDWR;
                 break;
-            #if MICROPY_PY_IO_FILEIO
+            #if MICROPY_PY_IO_BYTESIO
             // If we don't have io.FileIO, then files are in text mode implicitly
             case 'b':
                 type = &mp_type_fileio;
@@ -234,7 +234,7 @@ static const mp_rom_map_elem_t rawfile_locals_dict_table[] = {
 
 static MP_DEFINE_CONST_DICT(rawfile_locals_dict, rawfile_locals_dict_table);
 
-#if MICROPY_PY_IO_FILEIO
+#if MICROPY_PY_IO_BYTESIO
 static const mp_stream_p_t fileio_stream_p = {
     .read = fdfile_read,
     .write = fdfile_write,
