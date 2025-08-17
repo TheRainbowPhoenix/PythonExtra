@@ -295,6 +295,28 @@ static mp_obj_t modgint_dupdate(void)
     return mp_const_none;
 }
 
+static mp_obj_t modgint_dwindow_get(void)
+{
+    mp_obj_t tup[4];
+    tup[0] = MP_OBJ_NEW_SMALL_INT(dwindow.left);
+    tup[1] = MP_OBJ_NEW_SMALL_INT(dwindow.top);
+    tup[2] = MP_OBJ_NEW_SMALL_INT(dwindow.right);
+    tup[3] = MP_OBJ_NEW_SMALL_INT(dwindow.bottom);
+
+    return mp_obj_new_tuple(4, tup);
+}
+
+static mp_obj_t modgint_dwindow_set(size_t n, mp_obj_t const *args)
+{
+    mp_int_t x1 = mp_obj_get_int(args[0]);
+    mp_int_t y1 = mp_obj_get_int(args[1]);
+    mp_int_t x2 = mp_obj_get_int(args[2]);
+    mp_int_t y2 = mp_obj_get_int(args[3]);
+    struct dwindow mode = { x1, y1, x2, y2 };
+    dwindow_set(mode);
+    return mp_const_none;
+}
+
 static mp_obj_t modgint_drect(size_t n, mp_obj_t const *args)
 {
     mp_int_t x1 = mp_obj_get_int(args[0]);
@@ -458,6 +480,72 @@ static mp_obj_t modgint_dfont(mp_obj_t new_font)
     return mp_const_none;
 }
 
+static mp_obj_t modgint_dsize(mp_obj_t arg1, mp_obj_t arg2)
+{
+    char const *str = mp_obj_str_get_str(arg1);
+    font_t font_data, *font;
+
+    // TODO[gint]: For ro access to images/fonts, shallow copy is unneeded
+    if (arg2 == mp_const_none)
+        font = NULL;
+    else {
+        objgintfont_get(arg2, &font_data);
+        font = &font_data;
+    }
+
+    mp_obj_t wh[2];
+    int w, h;
+
+    dsize(str, font, &w, &h);
+    wh[0] = MP_OBJ_NEW_SMALL_INT(w);
+    wh[1] = MP_OBJ_NEW_SMALL_INT(h);
+    return mp_obj_new_tuple(2, wh);
+}
+
+static mp_obj_t modgint_dnsize(mp_obj_t arg1, mp_obj_t arg2, mp_obj_t arg3)
+{
+    char const *str = mp_obj_str_get_str(arg1);
+    mp_int_t size = mp_obj_get_int(arg2);
+    font_t font_data, *font;
+
+    if (arg3 == mp_const_none)
+        font = NULL;
+    else {
+        objgintfont_get(arg3, &font_data);
+        font = &font_data;
+    }
+
+    mp_obj_t wh[2];
+    int w, h;
+
+    dnsize(str, size, font, &w, &h);
+    wh[0] = MP_OBJ_NEW_SMALL_INT(w);
+    wh[1] = MP_OBJ_NEW_SMALL_INT(h);
+    return mp_obj_new_tuple(2, wh);
+}
+
+static mp_obj_t modgint_drsize(mp_obj_t arg1, mp_obj_t arg2, mp_obj_t arg3)
+{
+    char const *str = mp_obj_str_get_str(arg1);
+    mp_int_t width = mp_obj_get_int(arg3);
+    font_t font_data, *font;
+
+    if (arg2 == mp_const_none)
+        font = NULL;
+    else {
+        objgintfont_get(arg2, &font_data);
+        font = &font_data;
+    }
+
+    int w;
+    char const *str2 = drsize(str, font, width, &w);
+
+    mp_obj_t result[2];
+    result[0] = MP_OBJ_NEW_SMALL_INT(str2 - str);
+    result[1] = MP_OBJ_NEW_SMALL_INT(w);
+    return mp_obj_new_tuple(2, result);
+}
+
 /* fx-CG-specific image constructors */
 #if GINT_RENDER_RGB
 
@@ -573,6 +661,8 @@ FUN_0(dgray_getdelays);
 #endif
 FUN_1(dclear);
 FUN_0(dupdate);
+FUN_0(dwindow_get);
+FUN_BETWEEN(dwindow_set, 4, 4);
 FUN_BETWEEN(drect, 5, 5);
 FUN_BETWEEN(drect_border, 7, 7);
 FUN_3(dpixel);
@@ -586,6 +676,9 @@ FUN_3(dpoly);
 FUN_BETWEEN(dtext_opt, 8, 8);
 FUN_BETWEEN(dtext, 4, 4);
 FUN_1(dfont);
+FUN_2(dsize);
+FUN_3(dnsize);
+FUN_3(drsize);
 #if GINT_RENDER_RGB
 FUN_3(image_rgb565);
 FUN_3(image_rgb565a);
@@ -783,6 +876,8 @@ static const mp_rom_map_elem_t modgint_module_globals_table[] = {
 #endif
     OBJ(dclear),
     OBJ(dupdate),
+    OBJ(dwindow_get),
+    OBJ(dwindow_set),
     OBJ(drect),
     OBJ(drect_border),
     OBJ(dpixel),
@@ -796,6 +891,9 @@ static const mp_rom_map_elem_t modgint_module_globals_table[] = {
 
     { MP_ROM_QSTR(MP_QSTR_font), MP_ROM_PTR(&mp_type_gintfont) },   
     OBJ(dfont),
+    OBJ(dsize),
+    OBJ(dnsize),
+    OBJ(drsize),
     OBJ(dtext_opt),
     OBJ(dtext),
 
