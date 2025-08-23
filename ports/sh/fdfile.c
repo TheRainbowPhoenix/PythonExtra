@@ -99,7 +99,7 @@ static mp_uint_t fdfile_write(mp_obj_t o_in, const void *buf, mp_uint_t size, in
 }
 
 static mp_uint_t fdfile_ioctl(mp_obj_t o_in, mp_uint_t request, uintptr_t arg, int *errcode) {
-/*    mp_obj_fdfile_t *o = MP_OBJ_TO_PTR(o_in);
+    mp_obj_fdfile_t *o = MP_OBJ_TO_PTR(o_in);
     check_fd_is_open(o);
     switch (request) {
         case MP_STREAM_SEEK: {
@@ -112,18 +112,19 @@ static mp_uint_t fdfile_ioctl(mp_obj_t o_in, mp_uint_t request, uintptr_t arg, i
             s->offset = off;
             return 0;
         }
-        case MP_STREAM_FLUSH:
+/*
+	case MP_STREAM_FLUSH:
             if ((int) gint_world_switch( GINT_CALL( fsync, o->fd) ) < 0) {
                 *errcode = errno;
                 return MP_STREAM_ERROR;
             }
             return 0;
+*/
         default:
             *errcode = EINVAL;
             return MP_STREAM_ERROR;
     }
-*/
-    // FIXME: to do the correct function
+
     return 0;
 }
 
