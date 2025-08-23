@@ -484,6 +484,13 @@ int main(int argc, char **argv)
     if(!unique_area)
         abort();
     gc_init(unique_area, unique_area + 300000);
+
+    for(int i = 0; i < 10; i++) {
+        void *area = malloc(65536);
+        if(area)
+            gc_add(area, area + 65536);
+        else break;
+    }
 #else
     /* On Math+, we have a loooot of free space in the _ld1 arena. */
     if(gint[HWCALC] == HWCALC_FXCG100) {
