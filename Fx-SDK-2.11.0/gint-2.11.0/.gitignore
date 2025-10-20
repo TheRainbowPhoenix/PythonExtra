@@ -1,0 +1,13 @@
+# Build directories
+build*/**
+
+# Sublime Text files
+*.sublime-project
+*.sublime-workspace
+
+# Lots of unordered project notes
+notes/**
+
+# GiteaPC config files
+giteapc-config.make
+giteapc-config-*.make
