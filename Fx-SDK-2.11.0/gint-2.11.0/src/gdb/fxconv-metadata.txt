@@ -1,0 +1,9 @@
+icons-i1msb.png:
+  type: bopti-image
+  profile: mono
+  name: gint_gdb_icons_i1msb
+
+icons-rgb565.png:
+  type: bopti-image
+  profile: rgb565
+  name: gint_gdb_icons_rgb565
