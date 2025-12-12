@@ -32,7 +32,7 @@ jobs:
           make
 
       - name: Upload PythonExtra-hh2.bin
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: PythonExtra-hh2.bin
           path: ports/fxcp/PythonExtra-hh2.bin
