@@ -249,7 +249,7 @@ static mp_obj_t Kandinsky_draw_string(size_t n, mp_obj_t const *args) {
   for (int l = 0; l < (int)text_len; l++) {
     if (text[l] == '\n') {
       u = 0;
-      v += 16;
+      v += 18;
     } else {
       /* The following test is for support of unicode characters that are encoded on 1 char or more */
       /* we need to pass multiple chars to dtext to take care of unicode encoding */

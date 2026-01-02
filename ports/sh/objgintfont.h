@@ -15,10 +15,10 @@ extern const mp_obj_type_t mp_type_gintfont;
 
 /* A raw gint font with its pointers extracted into Python objects, allowing
    manipulation through bytes() and bytearray() methods. The base font is
-   [font]. The members [data] and [palette] (which must be bytes, bytearray or
-   None) act as overrides for the corresponding fields of [img], which are
-   considered garbage/scratch and is constantly updated from the Python objects
-   before using the image.
+   [font]. The members [data], [glyph_index] and [glyph_width] (which must be
+   bytes, bytearray or None) act as overrides for the corresponding fields of
+   [font], which are considered garbage/scratch and is constantly updated from
+   the Python objects before using the font.
 
    Particular care should be given to not manipulating bytes and bytearrays in
    ways that cause reallocation, especially when memory is scarce. */
