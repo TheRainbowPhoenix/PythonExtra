@@ -39,11 +39,11 @@
 #include "debug.h"
 #include "resources.h"
 
-HH2_NAME("PythonExtra " PE_BUILD)
-HH2_DESCRIPTION("Python application based on MicroPython "
+HHK_NAME("PythonExtra " PE_BUILD)
+HHK_DESCRIPTION("Python application based on MicroPython "
                 MICROPY_VERSION_STRING_BASE " and gint.")
-HH2_AUTHOR("Lephe, SlyVTT & Planete Casio contributors")
-HH2_VERSION(PE_BUILD)
+HHK_AUTHOR("Lephe, SlyVTT & Planete Casio contributors")
+HHK_VERSION(PE_BUILD)
 
 //=== Application globals ===//
 
@@ -480,15 +480,15 @@ int main(int argc, char **argv)
     gc_add(py_ram_start, py_ram_end); */
 #endif
 #elif FXCP
-    void *unique_area = malloc(300000);
+    void *unique_area = malloc(4*1024*1024); // We have 12MB heap and only using 4MB here is mild
     if(!unique_area)
         abort();
-    gc_init(unique_area, unique_area + 300000);
+    gc_init(unique_area, unique_area + 4*1024*1024);
 
-    for(int i = 0; i < 10; i++) {
-        void *area = malloc(65536);
+    for(int i = 0; i < 64; i++) { // Another 4MB as 64x 64KB
+        void *area = malloc(64*1024);
         if(area)
-            gc_add(area, area + 65536);
+            gc_add(area, area + 64*1024);
         else break;
     }
 #else
