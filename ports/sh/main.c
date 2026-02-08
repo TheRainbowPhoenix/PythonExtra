@@ -480,16 +480,21 @@ int main(int argc, char **argv)
     gc_add(py_ram_start, py_ram_end); */
 #endif
 #elif FXCP
+    void *areas_to_free[65] = { 0 };
+    int areas_to_free_i = 0;
+
     void *unique_area = malloc(4*1024*1024); // We have 12MB heap and only using 4MB here is mild
     if(!unique_area)
         abort();
     gc_init(unique_area, unique_area + 4*1024*1024);
+    areas_to_free[areas_to_free_i++] = unique_area;
 
     for(int i = 0; i < 64; i++) { // Another 4MB as 64x 64KB
         void *area = malloc(64*1024);
         if(area)
             gc_add(area, area + 64*1024);
         else break;
+        areas_to_free[areas_to_free_i++] = area;
     }
 #else
     /* On Math+, we have a loooot of free space in the _ld1 arena. */
@@ -611,6 +616,11 @@ int main(int argc, char **argv)
     gc_sweep_all();
     mp_deinit();
     console_destroy(PE.console);
+
+#ifdef FXCP
+    for(int i = 0; i < areas_to_free_i; i++)
+        free(areas_to_free[i]);
+#endif
     return 0;
 }
 
