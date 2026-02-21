@@ -1,0 +1,28 @@
+name: Sync upstream dev
+
+on:
+  schedule:
+    - cron: '0 6 * * 1' # every Monday 06:00 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run upstream sync script
+        env:
+          UPSTREAM_URL: https://git.planet-casio.com/Lephenixnoir/PythonExtra.git
+          UPSTREAM_BRANCH: dev
+          BASE_BRANCH: main
+        run: |
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config --global user.name "github-actions[bot]"
+          bash ./scripts/update-from-upstream.sh
