@@ -126,6 +126,10 @@ void mp_emit_glue_assign_native(mp_raw_code_t *rc, mp_raw_code_kind_t kind, cons
         "mcr p15, 0, r0, c7, c7, 0\n" // invalidate I-cache and D-cache
         : : : "r0", "cc");
     #endif
+    #elif MICROPY_EMIT_SH
+    // Flush I-cache and D-cache.
+    // This GCC builtin is expected to be available or provided by the system.
+    __builtin___clear_cache((void *)fun_data, (char *)fun_data + fun_len);
     #endif
 
     rc->kind = kind;
