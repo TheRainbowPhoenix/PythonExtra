@@ -130,6 +130,39 @@ void mp_emit_glue_assign_native(mp_raw_code_t *rc, mp_raw_code_kind_t kind, cons
     // Flush I-cache and D-cache.
     // This GCC builtin is expected to be available or provided by the system.
     __builtin___clear_cache((void *)fun_data, (char *)fun_data + fun_len);
+
+    // Dump code for inspection
+    // We use a simple counter to generate unique filenames
+    // This is temporary debug code
+    {
+        static int dump_counter = 0;
+        char filename[32];
+        snprintf(filename, sizeof(filename), "/fls0/code_%d.bin", dump_counter++);
+
+        // We need to use mp_vfs_open but it requires an initialized VFS.
+        // If this runs before VFS init, it might crash.
+        // Assuming VFS is ready when compiling user scripts.
+
+        // Using low-level file operations might be safer if available in the port.
+        // But mp_import_stat is available.
+        // Let's try standard file IO if possible? No, we are in baremetal environment usually.
+        // We rely on mp_vfs_open.
+
+        // Actually, we can just use the provided debug print if MICROPY_DEBUG_VERBOSE is on.
+        // But the user asked for a .bin file.
+
+        // Let's attempt to write using standard C FILE if the port supports it (which ports/sh likely maps to something).
+        // ports/sh has fdfile.c.
+
+        FILE *fp = fopen(filename, "wb");
+        if (fp) {
+            fwrite(fun_data, 1, fun_len, fp);
+            fclose(fp);
+            printf("Dumped native code to %s (%u bytes)\n", filename, (uint)fun_len);
+        } else {
+             printf("Failed to dump native code to %s\n", filename);
+        }
+    }
     #endif
 
     rc->kind = kind;
