@@ -92,9 +92,11 @@ void asm_sh_asr_reg_reg(asm_sh_t *as, uint rd, uint rs); // rd >>= rs (signed)
 // comparisons
 void asm_sh_cmp_reg_reg(asm_sh_t *as, uint rd, uint rm); // T = (rd == rm) or similar
 void asm_sh_cmp_reg_i8(asm_sh_t *as, uint rd, int imm); // T = (rd == imm)
+void asm_sh_compare_op(asm_sh_t *as, uint op_idx, uint rn, uint rm);
 
 // conditional set
 // SH4 uses T-bit. To set a register based on T-bit requires explicit code.
+// cond here interprets op_idx (0-11) for comparison results.
 void asm_sh_setcc_reg(asm_sh_t *as, uint rd, uint cond);
 
 // memory load/store

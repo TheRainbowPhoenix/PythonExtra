@@ -2696,6 +2696,9 @@ static void emit_native_binary_op(emit_t *emit, mp_binary_op_t op) {
                 default:
                     break;
             }
+            #elif N_SH
+            asm_sh_compare_op(emit->as, op_idx, REG_ARG_2, reg_rhs);
+            asm_sh_setcc_reg(emit->as, REG_RET, op_idx);
             #elif N_DEBUG
             asm_debug_setcc_reg_reg_reg(emit->as, op_idx, REG_RET, REG_ARG_2, reg_rhs);
             #else

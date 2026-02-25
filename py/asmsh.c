@@ -402,11 +402,19 @@ void asm_sh_mov_reg_pcrel(asm_sh_t *as, uint reg_dest, uint label) {
 }
 
 void asm_sh_setcc_reg(asm_sh_t *as, uint rd, uint cond) {
-    asm_sh_write_word16(as, 0x0029 | (rd << 8)); // MOVT Rn
+    // cond is op_idx from emitnative.c (0-11)
+    // MOVT Rn
+    asm_sh_write_word16(as, 0x0029 | (rd << 8));
 
-    if (cond == ASM_SH_CC_NE) {
+    // If NE (5 or 11), we need to invert the result.
+    if (cond == 5 || cond == 11) {
+        // T=1 if EQ. So for NE, we want result 0 if EQ (T=1), 1 if NE (T=0).
+        // MOVT sets rd to T.
+        // If EQ (T=1), rd=1. Invert -> 0.
+        // If NE (T=0), rd=0. Invert -> 1.
+        // Invert rd: CMP/EQ #0, rd (sets T=1 if rd==0). MOVT rd.
         asm_sh_cmp_reg_i8(as, rd, 0);
-        asm_sh_write_word16(as, 0x0029 | (rd << 8)); // MOVT Rn
+        asm_sh_write_word16(as, 0x0029 | (rd << 8));
     }
 }
 
@@ -444,6 +452,42 @@ void asm_sh_strb_reg_reg_reg(asm_sh_t *as, uint rd, uint rm, uint rn) {
 void asm_sh_strh_reg_reg_reg(asm_sh_t *as, uint rd, uint rm, uint rn) {
     asm_sh_mov_reg_reg(as, ASM_SH_REG_R0, rn);
     asm_sh_write_word16(as, 0x0005 | (rd << 8) | (rm << 4)); // MOV.W Rd, @(R0, Rm)
+}
+
+void asm_sh_compare_op(asm_sh_t *as, uint op_idx, uint rn, uint rm) {
+    // op_idx from emitnative.c
+    // 0=U_LT, 1=U_GT, 2=U_EQ, 3=U_LE, 4=U_GE, 5=U_NE
+    // 6=S_LT, 7=S_GT, 8=S_EQ, 9=S_LE, 10=S_GE, 11=S_NE
+    switch(op_idx) {
+        case 0: // U_LT: rn < rm -> rm > rn -> CMP/HI rm, rn
+            // CMP/HI Rm, Rn (3n m6) -> T=1 if Rn > Rm.
+            // We want T=1 if rm > rn. So CMP/HI rm, rn.
+            // 3(rn) (rm)6
+            asm_sh_write_word16(as, 0x3006 | (rn << 8) | (rm << 4)); break;
+        case 1: // U_GT: rn > rm -> CMP/HI rn, rm
+            asm_sh_write_word16(as, 0x3006 | (rm << 8) | (rn << 4)); break;
+        case 2: // U_EQ
+            asm_sh_write_word16(as, 0x3000 | (rn << 8) | (rm << 4)); break;
+        case 3: // U_LE: rn <= rm -> rm >= rn -> CMP/HS rm, rn
+            asm_sh_write_word16(as, 0x3002 | (rn << 8) | (rm << 4)); break;
+        case 4: // U_GE: rn >= rm -> CMP/HS rn, rm
+            asm_sh_write_word16(as, 0x3002 | (rm << 8) | (rn << 4)); break;
+        case 5: // U_NE
+            asm_sh_write_word16(as, 0x3000 | (rn << 8) | (rm << 4)); break;
+
+        case 6: // S_LT: rn < rm -> rm > rn -> CMP/GT rm, rn
+            asm_sh_write_word16(as, 0x3007 | (rn << 8) | (rm << 4)); break;
+        case 7: // S_GT: rn > rm -> CMP/GT rn, rm
+            asm_sh_write_word16(as, 0x3007 | (rm << 8) | (rn << 4)); break;
+        case 8: // S_EQ
+            asm_sh_write_word16(as, 0x3000 | (rn << 8) | (rm << 4)); break;
+        case 9: // S_LE: rn <= rm -> rm >= rn -> CMP/GE rm, rn
+            asm_sh_write_word16(as, 0x3003 | (rn << 8) | (rm << 4)); break;
+        case 10: // S_GE: rn >= rm -> CMP/GE rn, rm
+            asm_sh_write_word16(as, 0x3003 | (rm << 8) | (rn << 4)); break;
+        case 11: // S_NE
+            asm_sh_write_word16(as, 0x3000 | (rn << 8) | (rm << 4)); break;
+    }
 }
 
 #endif // MICROPY_EMIT_SH
