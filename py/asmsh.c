@@ -397,6 +397,7 @@ void asm_sh_mov_reg_pcrel(asm_sh_t *as, uint reg_dest, uint label) {
     mp_uint_t dest = as->base.label_offsets[label];
     // We can't easily do it.
     // Fallback: Load constant 0 (placeholder).
+    (void)dest;
     asm_sh_mov_reg_imm8(as, reg_dest, 0);
 }
 
