@@ -128,31 +128,36 @@ void mp_emit_glue_assign_native(mp_raw_code_t *rc, mp_raw_code_kind_t kind, cons
     #endif
     #elif MICROPY_EMIT_SH
     // Flush I-cache and D-cache.
-    // This GCC builtin is expected to be available or provided by the system.
-    __builtin___clear_cache((void *)fun_data, (char *)fun_data + fun_len);
+    // Manual implementation for SH4 to avoid syscalls in __builtin___clear_cache
+    {
+        char *p = (char *)((uintptr_t)fun_data & ~31);
+        char *e = (char *)((uintptr_t)fun_data + fun_len);
+        while (p < e) {
+            asm volatile ("ocbwb @%0" : : "r" (p)); // Write back D-cache
+            asm volatile ("icbi @%0" : : "r" (p));  // Invalidate I-cache
+            p += 32;
+        }
+        asm volatile ("synco"); // Ensure completion
+        // ICBI requires a branch to synchronize
+        asm volatile ("nop; nop; nop; nop;"); // Padding/delay?
+        // Usually a branch is needed, but we are returning anyway.
+    }
 
     // Dump code for inspection
     // We use a simple counter to generate unique filenames
     // This is temporary debug code
     {
         static int dump_counter = 0;
+        printf("Dumped native code SH4_%d (%u bytes):\n", dump_counter++, (uint)fun_len);
+        for (mp_uint_t i = 0; i < fun_len; i++) {
+             if (i > 0 && i % 16 == 0) printf("\n");
+             printf(" %02x", ((const byte *)fun_data)[i]);
+        }
+        printf("\n");
+        // File writing disabled to prevent crashes if stdio is not fully supported
+        /*
         char filename[32];
         snprintf(filename, sizeof(filename), "/fls0/code_%d.bin", dump_counter++);
-
-        // We need to use mp_vfs_open but it requires an initialized VFS.
-        // If this runs before VFS init, it might crash.
-        // Assuming VFS is ready when compiling user scripts.
-
-        // Using low-level file operations might be safer if available in the port.
-        // But mp_import_stat is available.
-        // Let's try standard file IO if possible? No, we are in baremetal environment usually.
-        // We rely on mp_vfs_open.
-
-        // Actually, we can just use the provided debug print if MICROPY_DEBUG_VERBOSE is on.
-        // But the user asked for a .bin file.
-
-        // Let's attempt to write using standard C FILE if the port supports it (which ports/sh likely maps to something).
-        // ports/sh has fdfile.c.
 
         FILE *fp = fopen(filename, "wb");
         if (fp) {
@@ -162,6 +167,7 @@ void mp_emit_glue_assign_native(mp_raw_code_t *rc, mp_raw_code_kind_t kind, cons
         } else {
              printf("Failed to dump native code to %s\n", filename);
         }
+        */
     }
     #endif
 
