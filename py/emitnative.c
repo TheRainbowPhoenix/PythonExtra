@@ -59,7 +59,7 @@
 #endif
 
 // wrapper around everything in this file
-#if N_X64 || N_X86 || N_THUMB || N_ARM || N_XTENSA || N_XTENSAWIN || N_RV32 || N_DEBUG
+#if N_X64 || N_X86 || N_THUMB || N_ARM || N_XTENSA || N_XTENSAWIN || N_RV32 || N_SH || N_DEBUG
 
 // C stack layout for native functions:
 //  0:                          nlr_buf_t [optional]
@@ -2696,6 +2696,9 @@ static void emit_native_binary_op(emit_t *emit, mp_binary_op_t op) {
                 default:
                     break;
             }
+            #elif N_SH
+            asm_sh_compare_op(emit->as, op_idx, REG_ARG_2, reg_rhs);
+            asm_sh_setcc_reg(emit->as, REG_RET, op_idx);
             #elif N_DEBUG
             asm_debug_setcc_reg_reg_reg(emit->as, op_idx, REG_RET, REG_ARG_2, reg_rhs);
             #else
