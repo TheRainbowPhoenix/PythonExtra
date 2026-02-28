@@ -68,3 +68,9 @@
 [submodule "lib/arduino-lib"]
 	path = lib/arduino-lib
 	url = https://github.com/arduino/arduino-lib-mpy.git
+[submodule "gint_repo"]
+	path = gint_repo
+	url = https://git.planet-casio.com/Lephenixnoir/gint.git
+[submodule "gintctl_repo"]
+	path = gintctl_repo
+	url = https://git.planet-casio.com/Lephenixnoir/gintctl.git

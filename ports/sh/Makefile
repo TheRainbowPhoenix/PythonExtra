@@ -21,6 +21,7 @@ SRC_C = \
     ports/sh/mphalport.c \
     ports/sh/objgintimage.c \
     ports/sh/objgintfont.c \
+    ports/sh/objgintusb.c \
     ports/sh/pyexec.c \
     ports/sh/resources.c \
     ports/sh/stredit.c \
@@ -36,6 +37,7 @@ SRC_QSTR += \
     ports/sh/modgint.c \
     ports/sh/objgintimage.c \
     ports/sh/objgintfont.c \
+    ports/sh/objgintusb.c \
     ports/sh/pyexec.c \
 
 ifeq ($(shell [[ x"$$(git describe)" == x"$$(git describe main)" ]] \
