@@ -40,8 +40,15 @@ static MP_DEFINE_CONST_FUN_OBJ_2(gintusb_write_obj, gintusb_write);
 
 static mp_obj_t gintusb_read(size_t n_args, const mp_obj_t *args) {
     mp_int_t size = -1;
+    mp_int_t timeout_val = -1;
+
     if (n_args > 1) {
         size = mp_obj_get_int(args[1]);
+    }
+    if (n_args > 2) {
+        if (args[2] != mp_const_none) {
+            timeout_val = mp_obj_get_int(args[2]);
+        }
     }
 
     int pipe = usb_ff_bulk_input();
@@ -53,16 +60,27 @@ static mp_obj_t gintusb_read(size_t n_args, const mp_obj_t *args) {
     vstr_t vstr;
     vstr_init_len(&vstr, size);
 
-    int rc = usb_read_sync(pipe, vstr.buf, size, false);
+    int rc;
+    if (timeout_val >= 0) {
+        timeout_t tm = timeout_make_ms(timeout_val);
+        rc = usb_read_sync_timeout(pipe, vstr.buf, size, false, &tm);
+    } else {
+        rc = usb_read_sync(pipe, vstr.buf, size, false);
+    }
+
     if (rc < 0) {
         vstr_clear(&vstr);
+        if (rc == USB_TIMEOUT) {
+            // Return empty bytes on timeout
+            return mp_const_empty_bytes;
+        }
         mp_raise_OSError(rc);
     }
 
     vstr.len = rc;
     return mp_obj_new_bytes_from_vstr(&vstr);
 }
-static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(gintusb_read_obj, 1, 2, gintusb_read);
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(gintusb_read_obj, 1, 3, gintusb_read);
 
 // fxlink helper
 static mp_obj_t gintusb_fxlink_header(size_t n_args, const mp_obj_t *args) {
