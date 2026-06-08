@@ -27,7 +27,3 @@ user.props
 
 # vscode
 .vscode/
-
-# gint and gintctl
-gint_repo/
-gintctl_repo/
