@@ -101,18 +101,6 @@ static mp_obj_t gintusb_fxlink_header(size_t n_args, const mp_obj_t *args) {
     if (rc < 0) {
         mp_raise_OSError(rc);
     }
-    // Note: We don't commit here because the payload usually follows immediately.
-    // The user should write payload and then the driver handles commit or user calls commit?
-    // In gint C api: "After the last write in a sequence, use usb_commit_sync()".
-    // gintusb_write() commits. So if we use gintusb_write() for payload, it will commit.
-    // But we need to make sure the header is not auto-committed if we want it in same transaction?
-    // "The message can be built from any number of writes to the pipe. After the last write, commit the pipe."
-    // gintusb_write() commits *every time*. This breaks the "build message" flow.
-
-    // We need separate write_no_commit or just expose commit.
-    // Let's change `write` to NOT commit by default? Or add `commit()` method?
-    // Python's `write` usually buffers. `flush` commits.
-    // So let's implement `flush` (commit) and make `write` just `usb_write_sync`.
 
     return mp_const_none;
 }
@@ -124,7 +112,6 @@ static mp_obj_t gintusb_flush(mp_obj_t self_in) {
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(gintusb_flush_obj, gintusb_flush);
 
-// Update write to NOT commit automatically
 static mp_obj_t gintusb_write_no_auto_commit(mp_obj_t self_in, mp_obj_t data_in) {
     mp_buffer_info_t bufinfo;
     mp_get_buffer_raise(data_in, &bufinfo, MP_BUFFER_READ);
@@ -134,7 +121,6 @@ static mp_obj_t gintusb_write_no_auto_commit(mp_obj_t self_in, mp_obj_t data_in)
     if (rc < 0) {
         mp_raise_OSError(rc);
     }
-    // Removed usb_commit_sync(pipe);
     return mp_const_none;
 }
 static MP_DEFINE_CONST_FUN_OBJ_2(gintusb_write_no_auto_commit_obj, gintusb_write_no_auto_commit);

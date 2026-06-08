@@ -56,5 +56,4 @@ def main():
 
     print("Demo finished.")
 
-if __name__ == "__main__":
-    main()
+main()

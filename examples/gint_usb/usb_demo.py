@@ -17,5 +17,4 @@ def main():
 
     print("Disconnected.")
 
-if __name__ == "__main__":
-    main()
+main()

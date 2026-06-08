@@ -28,6 +28,6 @@ mp_uint_t mp_hal_stdout_tx_strn(const char *str, mp_uint_t len)
 
 void mp_machine_idle(void) {
     // Basic implementation for machine.idle()
-    // On SH-4 we could potentially use the sleep instruction if interrupts wake it up.
+    // It could potentially use the sleep instruction if interrupts wake it up.
     // For now, returning immediately is safe.
 }
