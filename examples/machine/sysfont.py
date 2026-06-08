@@ -1,10 +1,6 @@
 from gint import *
 import machine
 
-# Define some basic 5-bit Casio colors just in case
-C_RED = C_RGB(31, 0, 0)
-C_BLUE = C_RGB(0, 0, 31)
-
 class SysFont:
     def __init__(self, addr):
         """Initializes a PEG Font by reading the struct at the given memory address."""
@@ -91,6 +87,7 @@ def main():
     
     try:
         # Construct font wrappers pointing to internal OS addresses
+        # Fonts are at 8c1a70cc, 8c1a712c, 8c1a71a4 # 8c1a75c4 # 8c1a718c
         f1 = SysFont(0x8c1a70cc)
         f2 = SysFont(0x8c1a718c)
         f3 = SysFont(0x8c1a71a4)

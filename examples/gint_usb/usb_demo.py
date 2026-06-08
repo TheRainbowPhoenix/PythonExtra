@@ -6,6 +6,7 @@ def main():
         print("Connected!")
         # Example: write a simple message
         u.write(b"Hello from calculator!")
+        u.flush() # Explicit flush is required to commit the USB transfer!
 
         # Example: read response
         print("Waiting for response...")

@@ -8,6 +8,7 @@
 #include "console.h"
 #include <gint/display.h>
 #include <gint/keyboard.h>
+#include <gint/cpu.h>
 #include <unistd.h>
 
 int mp_hal_stdin_rx_chr(void)
@@ -27,7 +28,5 @@ mp_uint_t mp_hal_stdout_tx_strn(const char *str, mp_uint_t len)
 }
 
 void mp_machine_idle(void) {
-    // Basic implementation for machine.idle()
-    // It could potentially use the sleep instruction if interrupts wake it up.
-    // For now, returning immediately is safe.
+    sleep()
 }

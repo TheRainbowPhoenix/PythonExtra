@@ -33,7 +33,6 @@ static mp_obj_t gintusb_write(mp_obj_t self_in, mp_obj_t data_in) {
     if (rc < 0) {
         mp_raise_OSError(rc);
     }
-    usb_commit_sync(pipe);
     return mp_const_none;
 }
 static MP_DEFINE_CONST_FUN_OBJ_2(gintusb_write_obj, gintusb_write);
@@ -112,20 +111,6 @@ static mp_obj_t gintusb_flush(mp_obj_t self_in) {
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(gintusb_flush_obj, gintusb_flush);
 
-static mp_obj_t gintusb_write_no_auto_commit(mp_obj_t self_in, mp_obj_t data_in) {
-    mp_buffer_info_t bufinfo;
-    mp_get_buffer_raise(data_in, &bufinfo, MP_BUFFER_READ);
-
-    int pipe = usb_ff_bulk_output();
-    int rc = usb_write_sync(pipe, bufinfo.buf, bufinfo.len, false);
-    if (rc < 0) {
-        mp_raise_OSError(rc);
-    }
-    return mp_const_none;
-}
-static MP_DEFINE_CONST_FUN_OBJ_2(gintusb_write_no_auto_commit_obj, gintusb_write_no_auto_commit);
-
-
 static mp_obj_t gintusb_make_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw, const mp_obj_t *args) {
     mp_arg_check_num(n_args, n_kw, 0, 0, false);
     mp_obj_gintusb_t *self = mp_obj_malloc(mp_obj_gintusb_t, type);
@@ -148,7 +133,7 @@ static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(gintusb___exit___obj, 4, 4, gintusb__
 static const mp_rom_map_elem_t gintusb_locals_dict_table[] = {
     { MP_ROM_QSTR(MP_QSTR_open), MP_ROM_PTR(&gintusb_open_obj) },
     { MP_ROM_QSTR(MP_QSTR_close), MP_ROM_PTR(&gintusb_close_obj) },
-    { MP_ROM_QSTR(MP_QSTR_write), MP_ROM_PTR(&gintusb_write_no_auto_commit_obj) }, // Changed behavior!
+    { MP_ROM_QSTR(MP_QSTR_write), MP_ROM_PTR(&gintusb_write_obj) },
     { MP_ROM_QSTR(MP_QSTR_flush), MP_ROM_PTR(&gintusb_flush_obj) },
     { MP_ROM_QSTR(MP_QSTR_read), MP_ROM_PTR(&gintusb_read_obj) },
     { MP_ROM_QSTR(MP_QSTR_fxlink_header), MP_ROM_PTR(&gintusb_fxlink_header_obj) },
