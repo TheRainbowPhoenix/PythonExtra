@@ -15,6 +15,7 @@ from gint import *
 **Contents**
 - [Keyboard input](#keyboard-input)
 - [Drawing and rendering](#drawing-and-rendering)
+- [USB Communication](#usb-communication)
 - [Differences with gint's C API](#differences-with-gints-c-api)
 
 ## Keyboard input
@@ -563,6 +564,51 @@ dtext(10,50,C_RED,"Hello after changing font")
 
 dupdate()
 getkey()
+```
+
+## USB Communication
+
+The `gint` module provides a way to communicate over USB using the `gint.USB` class. Additionally, the standard MicroPython `machine` module can be used alongside it to read specific hardware memory addresses.
+
+### Basic USB I/O
+
+You can open a USB connection using a context manager (like you would do with a file), which will safely handle opening and closing the connection. Alternatively, you can manage the connection manually with the `open()` and `close()` methods.
+
+```py
+import gint
+
+with gint.USB() as u:
+    # Write a simple message
+    u.write(b"Hello from calculator!")
+    
+    # IMPORTANT: You must explicitly call flush() to commit the transfer!
+    u.flush() 
+
+    # Read up to 64 bytes
+    try:
+        data = u.read(64)
+        print("Received:", data)
+    except OSError as e:
+        print("Error reading:", e)
+```
+
+**Note**: To ensure optimal performance, `gint.USB().write()` does not automatically commit data to the USB pipeline. If you make multiple small writes, they are buffered. You must call `.flush()` once you are done with a transaction to actually send the data.
+
+### Integration with fxlink
+If you are communicating with a PC running the `fxlink` tool, `gint.USB` provides a helper method to format your data packets with the required headers. The `fxlink_header()` method allows you to specify the target application, the data type, and the size of the payload.
+
+```python
+import gint
+
+with gint.USB() as u:
+    text_payload = b"Hello from Python via fxlink!"
+    
+    # Send header: application="python", type="text", size=length of payload
+    u.fxlink_header("python", "text", len(text_payload))
+    
+    # Write payload and commit
+    u.write(text_payload)
+    u.flush()
 ```
 
 
