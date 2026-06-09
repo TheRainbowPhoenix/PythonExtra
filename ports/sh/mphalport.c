@@ -8,6 +8,7 @@
 #include "console.h"
 #include <gint/display.h>
 #include <gint/keyboard.h>
+#include <gint/cpu.h>
 #include <unistd.h>
 
 int mp_hal_stdin_rx_chr(void)
@@ -24,4 +25,8 @@ mp_uint_t mp_hal_stdout_tx_strn(const char *str, mp_uint_t len)
 {
     int r = write(STDOUT_FILENO, str, len);
     return (r < 0 ? 0 : r);
+}
+
+void mp_machine_idle(void) {
+    sleep();
 }

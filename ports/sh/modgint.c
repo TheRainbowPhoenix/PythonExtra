@@ -14,6 +14,7 @@
 #include "py/objtuple.h"
 #include "objgintimage.h"
 #include "objgintfont.h"
+#include "objgintusb.h"
 #include <gint/display.h>
 #include <gint/keyboard.h>
 #include <gint/timer.h>
@@ -908,6 +909,8 @@ static const mp_rom_map_elem_t modgint_module_globals_table[] = {
     #endif
     OBJ(dimage),
     OBJ(dsubimage),
+
+    { MP_ROM_QSTR(MP_QSTR_USB), MP_ROM_PTR(&mp_type_gintusb) },
 
     /* <gint/image.h> */
 

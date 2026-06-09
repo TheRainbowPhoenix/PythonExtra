@@ -15,6 +15,7 @@ from gint import *
 **Sommaire**
 - [Saisie au clavier](#saisie-au-clavier)
 - [Dessin à l'écran](#dessin-à-lécran)
+- [Communication USB](#communication-usb)
 - [Différences avec l'API C de gint](#différences-avec-lapi-c-de-gint)
 
 ## Saisie au clavier
@@ -568,6 +569,54 @@ dtext(10,50,C_RED,"Hello after changing font")
 
 dupdate()
 getkey()
+```
+
+Voici la traduction en français de votre texte :
+
+## Communication USB
+
+Le module `gint` offre un moyen de communiquer via USB en utilisant la classe `gint.USB`. De plus, le module standard MicroPython `machine` peut être utilisé conjointement pour lire des adresses mémoire matérielles spécifiques.
+
+### E/S USB de base
+
+Vous pouvez ouvrir une connexion USB à l'aide d'un gestionnaire de contexte (comme vous le feriez avec un fichier), ce qui gérera de manière sécurisée l'ouverture et la fermeture de la connexion. Alternativement, vous pouvez gérer la connexion manuellement avec les méthodes `open()` et `close()`.
+
+```py
+import gint
+
+with gint.USB() as u:
+    # Écrire un message simple
+    u.write(b"Hello from calculator!")
+    
+    # IMPORTANT : Vous devez appeler explicitement flush() pour valider le transfert !
+    u.flush() 
+
+    # Lire jusqu'à 64 octets
+    try:
+        data = u.read(64)
+        print("Reçu :", data)
+    except OSError as e:
+        print("Erreur de lecture :", e)
+```
+
+**Remarque** : Pour garantir des performances optimales, `gint.USB().write()` ne valide pas automatiquement les données dans le flux USB. Si vous effectuez plusieurs petites écritures, elles sont mises en mémoire tampon. Vous devez appeler `.flush()` une fois que vous avez terminé une transaction pour envoyer réellement les données.
+
+### Intégration avec fxlink
+
+Si vous communiquez avec un PC exécutant l'outil `fxlink`, `gint.USB` fournit une méthode utilitaire pour formater vos paquets de données avec les en-têtes requis. La méthode `fxlink_header()` vous permet de spécifier l'application cible, le type de données et la taille de la charge utile (payload).
+
+```python
+import gint
+
+with gint.USB() as u:
+    text_payload = b"Hello from Python via fxlink!"
+    
+    # Envoyer l'en-tête : application="python", type="text", size=longueur de la charge utile
+    u.fxlink_header("python", "text", len(text_payload))
+    
+    # Écrire la charge utile et valider
+    u.write(text_payload)
+    u.flush()
 ```
 
 ## Différences avec l'API C de gint
