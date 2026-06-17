@@ -1,0 +1,82 @@
+Bugs to fix:
+* render:    figure out why fx-CG dclear() now takes 4.1 ms instead of 2.6 ms
+
+Extensions on existing code:
+* clock:     mono support
+* usb:       and interrupt pipes
+* fs:        support RAM files
+* fs:        support USB streams as generic file descriptors
+* fugue:     support glob() to abstract away BFile entirely
+* fugue/fs:  offer a primitive to remove recursively, which is native in Fugue
+* bfile:     implement the optimization-restart as realized by Kbd2
+* kernel:    better restore to userspace before panic (ensure BL=0 IMASK=0)
+* project:   add license file
+* kernel:    group linker script symbols in a single header file
+* r61524:    brightness control and clean the file
+* core:      review forgotten globals and MPU addresses not in <gint/mpu/*.h>
+* core:      run destructors when a task-switch results in leaving the app
+* fs:        support read-only files backed with GetBlockAddress() on fx-CG
+* kernel:    SH4- or G-III-specific linker scripts?
+* render:    Properly document bopti fx. Also make it faster maybe?
+
+Future directions:
+* Audio playback using TSWilliamson's libsnd method
+* Serial communication
+* Make fx9860g projects work out of the box on fxcg50
+* Base for Yatis' threads library
+
+Bits that need to abstract out into APIs:
+- display: Toggle backlight (or set level)
+  -> Have a backlight property with min/max values
+  @ getkey
+  @ justui jscene
+- os: OS interface to access OS info, like in fxos
+  @ usb/setup.c set_strings
+  @ usb/classes/ff-bulk.c identify command
+- render: current video mode
+  @ usb/classes/ff-bulk.c capture_vram
+- gray: make gray engine a subset of t6k11 which then supports two modes
+
+Video formats:
+- i1msb
+- 2i1msb
+- rgb565
+
+T6K11:
+  mode 0 :   i1msb   128x64   @64 Hz
+  mode 1 :   2i1msb  128x64   @64 Hz
+R61524:
+  mode 0 :   rgb565  396x224  @? Hz
+  mode 1 :   i3???   396x224  @? Hz
+  mode 2 :   i1msb   128x64   @? Hz # <- for g1a emulation :)
+  mode 3 :   2i1msb  128x64   @? Hz # <- for g1a emulation :)
+
+enum {
+    /* Indexed 1-bit, 0 is white, 1 is black. Row-major, left-to-right, each
+       row a set of 4-byte values with leftmost pixel on the MSB. */
+    IMAGE_FORMAT_I1MSB,
+    /* Indexed 2-bit: white, light gray, dark gray, black. Represented as a
+       pair of I1MSB buffers, the first being bit #0, the second bit #1. */
+    IMAGE_FORMAT_2I1MSB,
+};
+
+fx-CP port progress.
+DONE:
+- kernel can start add-ins, take over interrupts (but no interrupt sources yet)
+- panic handler works (no interactive choices, only RESET)
+- no OS menu (likely never) and poweroff (maybe later)
+- memory: 64 kB total + OS heap (no gint arena, no MMU)
+- r61523: prototype display driver
+- can use the rendering pipeline with no DMA acceleration
+IN-PROGRESS:
+- unification of the image/video interface
+TODO:
+- hardware info: rom and fs type
+- quit handler
+- DMA acceleration for dclear and dupdate
+- keyboard and touch screen input
+- drivers: cpg, dma, intc, rtc, tmu
+- find more memory, 64 kB is not enough
+- benchmark memory and display performance
+- improve API and performance of display driver
+- way off: filesystem, remote debugging, usb
