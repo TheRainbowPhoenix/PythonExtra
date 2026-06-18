@@ -126,6 +126,49 @@ void mp_emit_glue_assign_native(mp_raw_code_t *rc, mp_raw_code_kind_t kind, cons
         "mcr p15, 0, r0, c7, c7, 0\n" // invalidate I-cache and D-cache
         : : : "r0", "cc");
     #endif
+    #elif MICROPY_EMIT_SH
+    // Flush I-cache and D-cache.
+    // Manual implementation for SH4 to avoid syscalls in __builtin___clear_cache
+    {
+        char *p = (char *)((uintptr_t)fun_data & ~31);
+        char *e = (char *)((uintptr_t)fun_data + fun_len);
+        while (p < e) {
+            asm volatile ("ocbwb @%0" : : "r" (p)); // Write back D-cache
+            asm volatile ("icbi @%0" : : "r" (p));  // Invalidate I-cache
+            p += 32;
+        }
+        asm volatile ("synco"); // Ensure completion
+        // ICBI requires a branch to synchronize
+        asm volatile ("nop; nop; nop; nop;"); // Padding/delay?
+        // Usually a branch is needed, but we are returning anyway.
+    }
+
+    // Dump code for inspection
+    // We use a simple counter to generate unique filenames
+    // This is temporary debug code
+    {
+        static int dump_counter = 0;
+        printf("Dumped native code SH4_%d (%u bytes):\n", dump_counter++, (uint)fun_len);
+        for (mp_uint_t i = 0; i < fun_len; i++) {
+             if (i > 0 && i % 16 == 0) printf("\n");
+             printf(" %02x", ((const byte *)fun_data)[i]);
+        }
+        printf("\n");
+        // File writing disabled to prevent crashes if stdio is not fully supported
+        /*
+        char filename[32];
+        snprintf(filename, sizeof(filename), "/fls0/code_%d.bin", dump_counter++);
+
+        FILE *fp = fopen(filename, "wb");
+        if (fp) {
+            fwrite(fun_data, 1, fun_len, fp);
+            fclose(fp);
+            printf("Dumped native code to %s (%u bytes)\n", filename, (uint)fun_len);
+        } else {
+             printf("Failed to dump native code to %s\n", filename);
+        }
+        */
+    }
     #endif
 
     rc->kind = kind;
