@@ -1,0 +1,17 @@
+font5x7.png:
+  name: gint_font5x7
+  type: font
+  charset: ascii
+  grid.size: 5x7
+  grid.padding: 1
+  grid.border: 0
+
+font8x9.png:
+  name: gint_font8x9
+  type: font
+  charset: print
+  grid.size: 8x11
+  grid.padding: 1
+  grid.border: 0
+  proportional: true
+  height: 9
