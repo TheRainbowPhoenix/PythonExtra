@@ -18,6 +18,7 @@ SRC_C = \
     ports/sh/keymap.c \
     ports/sh/modcasioplot.c \
     ports/sh/modgint.c \
+    ports/sh/modmemx.c \
     ports/sh/mphalport.c \
     ports/sh/objgintimage.c \
     ports/sh/objgintfont.c \
@@ -35,6 +36,7 @@ SRC_QSTR += \
     ports/sh/main.c \
     ports/sh/modcasioplot.c \
     ports/sh/modgint.c \
+    ports/sh/modmemx.c \
     ports/sh/objgintimage.c \
     ports/sh/objgintfont.c \
     ports/sh/objgintusb.c \
