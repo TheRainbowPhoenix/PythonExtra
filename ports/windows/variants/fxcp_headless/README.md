@@ -45,3 +45,9 @@ Reset counters for bounded runs; they are signed machine integers. The native
 draw functions update C counters without allocating Python objects. Reading the
 stats tuple and JSON serialization are tracing overhead and belong outside
 allocation benchmarks. The host does not estimate SuperH cycles or LCD time.
+
+The shared small headless variant additionally supports clipped \`dpixel\`,
+\`dtext\` (6x10 cell estimate), \`dline\`, RGB565 \`C_RGB\`, and deterministic
+\`getkey\` for noninteractive tests. These operations only update tracing
+counters: they do not draw a framebuffer or substitute for the separate
+\`fxcp_instrument\` host's full renderer.
