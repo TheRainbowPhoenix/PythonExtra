@@ -250,8 +250,8 @@ static mp_obj_t headless_drect_border(size_t n, const mp_obj_t *args) {
     mp_int_t x1=mp_obj_get_int(args[0]), y1=mp_obj_get_int(args[1]);
     mp_int_t x2=mp_obj_get_int(args[2]), y2=mp_obj_get_int(args[3]);
     (void)mp_obj_get_int(args[4]);
-    (void)mp_obj_get_int(args[5]);
-    mp_int_t border=mp_obj_get_int(args[6]);
+    mp_int_t border=mp_obj_get_int(args[5]);
+    (void)mp_obj_get_int(args[6]);
     if (border < 0 || border > 1000) { mp_raise_ValueError(MP_ERROR_TEXT("invalid border width")); }
     headless_box(x1,y1,x2,y2);
     return mp_const_none;
@@ -349,6 +349,19 @@ static mp_obj_t headless_dwindow_set(size_t n,const mp_obj_t *args) {
 }
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(headless_dwindow_set_obj,4,4,headless_dwindow_set);
 
+
+static mp_obj_t headless_drsize(mp_obj_t text, mp_obj_t font, mp_obj_t limit) {
+    (void)font;
+    mp_int_t budget=mp_obj_get_int(limit);
+    size_t length;
+    (void)mp_obj_str_get_data(text,&length);
+    size_t count=budget<=0?0:(size_t)budget/6;
+    if(count>length){count=length;}
+    mp_obj_t values[2]={mp_obj_new_int(count),mp_obj_new_int(count*6)};
+    return mp_obj_new_tuple(2,values);
+}
+static MP_DEFINE_CONST_FUN_OBJ_3(headless_drsize_obj,headless_drsize);
+
 #define FUN(name, obj) {MP_ROM_QSTR(MP_QSTR_##name), MP_ROM_PTR(&obj)}
 #define INT(name, val) {MP_ROM_QSTR(MP_QSTR_##name), MP_ROM_INT(val)}
 static const mp_rom_map_elem_t globals_table[] = {
@@ -356,6 +369,7 @@ static const mp_rom_map_elem_t globals_table[] = {
     INT(DWIDTH, 320), INT(DHEIGHT, 528),
     INT(C_WHITE, 65535), INT(C_BLACK, 0), INT(C_NONE, -1), INT(C_INVERT, -2),
     INT(C_RED, 63488), INT(C_GREEN, 2016), INT(C_BLUE, 31),
+    INT(C_LIGHT, 44373), INT(C_DARK, 21130),
     INT(DTEXT_LEFT, 0), INT(DTEXT_CENTER, 1), INT(DTEXT_RIGHT, 2),
     INT(DTEXT_TOP, 0), INT(DTEXT_MIDDLE, 1), INT(DTEXT_BOTTOM, 2),
     INT(font_9, 9), INT(font8x9, 89),
@@ -366,7 +380,10 @@ static const mp_rom_map_elem_t globals_table[] = {
     INT(KEY_0, 65536), INT(KEY_1, 131072), INT(KEY_2, 262144),
     INT(KEY_3, 524288), INT(KEY_5, 1048576),
     INT(KEY_MENU, 8192), INT(KEY_F1, 16384), INT(KEY_KBD, 32768),
-    INT(KEYEV_NONE, 0), INT(KEYEV_DOWN, 1), INT(KEYEV_UP, 2), INT(KEYEV_TOUCH_DOWN, 1), INT(KEYEV_TOUCH_DRAG, 2), INT(KEYEV_TOUCH_UP, 3),
+    INT(KEY_EQUALS, 2097152), INT(KEY_PLUS, 4194304), INT(KEY_MINUS, 8388608),
+    INT(KEYEV_NONE, 0), INT(KEYEV_DOWN, 1), INT(KEYEV_UP, 2),
+    INT(KEYEV_HOLD, 3), INT(KEYEV_OSMENU, 4),
+    INT(KEYEV_TOUCH_DOWN, 5), INT(KEYEV_TOUCH_DRAG, 6), INT(KEYEV_TOUCH_UP, 7),
     INT(IMAGE_P4_RGB565, 5), INT(IMAGE_P4_RGB565A, 6),
     FUN(image, headless_image_type), FUN(dsubimage, headless_dsubimage_obj),
     FUN(trace_touch, trace_touch_obj), FUN(pollevent, headless_pollevent_obj),
@@ -376,6 +393,7 @@ static const mp_rom_map_elem_t globals_table[] = {
     FUN(dtext, headless_dtext_obj), FUN(dline, headless_dline_obj),
     FUN(C_RGB, headless_rgb_obj), FUN(getkey, headless_getkey_obj),
     FUN(dtext_opt, headless_dtext_opt_obj), FUN(dsize, headless_dsize_obj),
+    FUN(drsize, headless_drsize_obj),
     FUN(drect_border, headless_drect_border_obj), FUN(dcircle, headless_dcircle_obj),
     FUN(dellipse, headless_dellipse_obj), FUN(dpoly, headless_dpoly_obj),
     FUN(dhline, headless_dhline_obj), FUN(dvline, headless_dvline_obj),
