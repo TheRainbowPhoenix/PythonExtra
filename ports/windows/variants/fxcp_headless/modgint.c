@@ -73,18 +73,52 @@ static mp_obj_t image_new(const mp_obj_type_t *type, size_t n_args, size_t n_kw,
     mp_int_t fmt = mp_obj_get_int(args[0]), cc = mp_obj_get_int(args[1]);
     mp_int_t w = mp_obj_get_int(args[2]), h = mp_obj_get_int(args[3]), stride = mp_obj_get_int(args[4]);
     mp_buffer_info_t data, pal;
+    if ((fmt!=0 && fmt!=1 && fmt!=3 && fmt!=4 && fmt!=5 && fmt!=6)
+        || w<=0 || h<=0 || stride<=0 || w>65535 || h>65535) {
+        mp_raise_ValueError(MP_ERROR_TEXT("invalid image format/dimensions"));
+    }
+    size_t minimum=(fmt<=1)?(size_t)w*2:((fmt==3||fmt==6)?(size_t)(w+1)/2:(size_t)w);
+    if ((size_t)stride<minimum || (size_t)stride > SIZE_MAX/(size_t)h) {
+        mp_raise_ValueError(MP_ERROR_TEXT("invalid image stride"));
+    }
     mp_get_buffer_raise(args[5], &data, MP_BUFFER_READ);
-    mp_get_buffer_raise(args[6], &pal, MP_BUFFER_READ);
-    if ((fmt != 5 && fmt != 6) || cc != 16 || w <= 0 || h <= 0 || stride < (w + 1) / 2
-            || data.len < (size_t)stride * h || pal.len < 32) {
-        mp_raise_ValueError(MP_ERROR_TEXT("invalid P4 image"));
+    if (data.len < (size_t)stride*(h-1)+minimum) {
+        mp_raise_ValueError(MP_ERROR_TEXT("image data too short"));
+    }
+    if (fmt<=1) {
+        if (cc!=0 || args[6]!=mp_const_none) {
+            mp_raise_ValueError(MP_ERROR_TEXT("RGB image cannot have palette"));
+        }
+    } else {
+        if (cc<1 || cc>256 || ((fmt==3||fmt==6)&&cc!=16)) {
+            mp_raise_ValueError(MP_ERROR_TEXT("invalid palette count"));
+        }
+        mp_get_buffer_raise(args[6], &pal, MP_BUFFER_READ);
+        if (pal.len<(size_t)cc*2) {
+            mp_raise_ValueError(MP_ERROR_TEXT("palette too short"));
+        }
     }
     headless_image *self = mp_obj_malloc(headless_image, type);
     self->format = fmt; self->width = w; self->height = h; self->stride = stride;
     self->data = args[5]; self->palette = args[6];
     return MP_OBJ_FROM_PTR(self);
 }
-static MP_DEFINE_CONST_OBJ_TYPE(headless_image_type, MP_QSTR_image, MP_TYPE_FLAG_NONE, make_new, image_new);
+static void headless_image_attr(mp_obj_t object,qstr attribute,mp_obj_t *dest) {
+    if(dest[0]!=MP_OBJ_NULL)return;
+    headless_image *img=MP_OBJ_TO_PTR(object);
+    switch(attribute) {
+        case MP_QSTR_format: dest[0]=mp_obj_new_int(img->format); break;
+        case MP_QSTR_flags: dest[0]=MP_OBJ_NEW_SMALL_INT(3); break;
+        case MP_QSTR_color_count: dest[0]=mp_obj_new_int(img->format<=1?0:(img->format==3||img->format==6?16:256)); break;
+        case MP_QSTR_width: dest[0]=mp_obj_new_int(img->width); break;
+        case MP_QSTR_height: dest[0]=mp_obj_new_int(img->height); break;
+        case MP_QSTR_stride: dest[0]=mp_obj_new_int(img->stride); break;
+        case MP_QSTR_data: dest[0]=img->data;break;
+        case MP_QSTR_palette: dest[0]=img->palette;break;
+        default:break;
+    }
+}
+static MP_DEFINE_CONST_OBJ_TYPE(headless_image_type, MP_QSTR_image, MP_TYPE_FLAG_NONE, make_new, image_new, attr, headless_image_attr);
 static mp_obj_t headless_dsubimage(size_t n, const mp_obj_t *args) {
     (void)n;
     if (!mp_obj_is_type(args[2], &headless_image_type)) { mp_raise_TypeError(MP_ERROR_TEXT("expected image")); }
@@ -102,6 +136,45 @@ static mp_obj_t headless_dsubimage(size_t n, const mp_obj_t *args) {
     return mp_const_none;
 }
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(headless_dsubimage_obj, 7, 7, headless_dsubimage);
+
+
+static mp_obj_t headless_dimage(mp_obj_t x,mp_obj_t y,mp_obj_t image) {
+    if(!mp_obj_is_type(image,&headless_image_type)){
+        mp_raise_TypeError(MP_ERROR_TEXT("expected image"));
+    }
+    headless_image *img=MP_OBJ_TO_PTR(image);
+    mp_obj_t args[]={x,y,image,MP_OBJ_NEW_SMALL_INT(0),MP_OBJ_NEW_SMALL_INT(0),
+                     mp_obj_new_int(img->width),mp_obj_new_int(img->height)};
+    return headless_dsubimage(7,args);
+}
+static MP_DEFINE_CONST_FUN_OBJ_3(headless_dimage_obj,headless_dimage);
+
+static mp_obj_t headless_image_helper(int fmt,size_t n,const mp_obj_t *args) {
+    mp_int_t w=mp_obj_get_int(args[0]),h=mp_obj_get_int(args[1]);
+    if(w<=0 || w>65535 || h<=0 || h>65535){
+        mp_raise_ValueError(MP_ERROR_TEXT("invalid image dimensions"));
+    }
+    mp_int_t stride=(fmt<=1)?2*w:((fmt==3||fmt==6)?(w+1)/2:w);
+    mp_int_t cc=0;
+    mp_obj_t palette=mp_const_none;
+    if(n==4){
+        palette=args[3];
+        mp_buffer_info_t info;mp_get_buffer_raise(palette,&info,MP_BUFFER_READ);
+        cc=info.len/2;
+    }
+    mp_obj_t params[]={mp_obj_new_int(fmt),mp_obj_new_int(cc),args[0],
+        args[1],mp_obj_new_int(stride),args[2],palette};
+    return image_new(&headless_image_type,7,0,params);
+}
+#define IMAGE_HELPER(name,fmt,argc) \
+static mp_obj_t name(size_t n,const mp_obj_t *args){return headless_image_helper(fmt,n,args);} \
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(name##_obj,argc,argc,name)
+IMAGE_HELPER(headless_image_rgb565,0,3);
+IMAGE_HELPER(headless_image_rgb565a,1,3);
+IMAGE_HELPER(headless_image_p8_rgb565,4,4);
+IMAGE_HELPER(headless_image_p8_rgb565a,5,4);
+IMAGE_HELPER(headless_image_p4_rgb565,6,4);
+IMAGE_HELPER(headless_image_p4_rgb565a,3,4);
 
 static mp_obj_t trace_stats(void) {
     mp_obj_t values[] = {mp_obj_new_int(frames), mp_obj_new_int(rects),
@@ -464,8 +537,16 @@ static const mp_rom_map_elem_t globals_table[] = {
     INT(KEYEV_NONE, 0), INT(KEYEV_DOWN, 1), INT(KEYEV_UP, 2),
     INT(KEYEV_HOLD, 3), INT(KEYEV_OSMENU, 4),
     INT(KEYEV_TOUCH_DOWN, 5), INT(KEYEV_TOUCH_DRAG, 6), INT(KEYEV_TOUCH_UP, 7),
-    INT(IMAGE_P4_RGB565, 5), INT(IMAGE_P4_RGB565A, 6),
+    INT(IMAGE_RGB565, 0), INT(IMAGE_RGB565A, 1),
+    INT(IMAGE_P8_RGB565, 4), INT(IMAGE_P8_RGB565A, 5),
+    INT(IMAGE_P4_RGB565, 6), INT(IMAGE_P4_RGB565A, 3),
+    INT(IMAGE_FLAGS_DATA_RO, 1), INT(IMAGE_FLAGS_PALETTE_RO, 2),
+    INT(IMAGE_FLAGS_DATA_ALLOC, 4), INT(IMAGE_FLAGS_PALETTE_ALLOC, 8),
     FUN(image, headless_image_type), FUN(dsubimage, headless_dsubimage_obj),
+    FUN(dimage, headless_dimage_obj),
+    FUN(image_rgb565, headless_image_rgb565_obj), FUN(image_rgb565a, headless_image_rgb565a_obj),
+    FUN(image_p8_rgb565, headless_image_p8_rgb565_obj), FUN(image_p8_rgb565a, headless_image_p8_rgb565a_obj),
+    FUN(image_p4_rgb565, headless_image_p4_rgb565_obj), FUN(image_p4_rgb565a, headless_image_p4_rgb565a_obj),
     FUN(trace_touch, trace_touch_obj), FUN(pollevent, headless_pollevent_obj),
     FUN(keydown, headless_keydown_obj), FUN(clearevents, headless_clearevents_obj),
     FUN(keydown_all, headless_key_all_obj), FUN(keydown_any, headless_key_any_obj),
