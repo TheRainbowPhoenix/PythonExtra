@@ -22,7 +22,8 @@ It requires the **Windows `fxcp_instrument`** executable, not this Linux
 enable UI rendering. Porting the full instrumentation host requires a Linux
 IPC/framebuffer/clock backend and a larger `gint` implementation.
 
-Current Linux stub intentionally lacks `dpixel`, `dtext`, `getkey`, and
-many normal calculator APIs. The probe tests real MiscPythonExtra compression
-libraries and explicitly records graphical games as incompatible rather than
-mistaking an expected `AttributeError` for a successful game run.
+The shared Linux/Windows stub now implements counter-only `dpixel`, `dtext`,
+`dline`, `C_RGB` and `getkey`. The probe runs the unmodified LZW and compression
+modules and bounded frame/scanline slices of real MiscPythonExtra games. No
+visual result is verified because there is no framebuffer. `memoryview.tobytes()`
+is also supported to match the buffer API expected by `lzw.py`.
