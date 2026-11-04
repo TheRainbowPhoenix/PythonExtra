@@ -39,6 +39,11 @@ jobs:
           ports/windows/build-fxcp_headless/micropython.exe -c
           "import gint; assert bytes(memoryview(b'abcdef')[1:4]) == b'bcd'; gint.trace_reset(); gint.dpixel(5, 6, 0); gint.dpixel(-1, 6, 0); gint.dtext(0, 0, 0, 'ABC'); gint.dline(0, 0, 2, 0, 0); assert gint.C_RGB(31, 63, 31) == 65535; assert gint.trace_stats() == (0, 4, 0, 184)"
 
+      - name: Smoke test key transitions and clipped graphics window
+        run: >-
+          ports/windows/build-fxcp_headless/micropython.exe -c
+          "import gint; gint.trace_reset(); assert gint.dwindow_get() == (0,0,320,528); gint.trace_keys(gint.KEY_LEFT); assert gint.keypressed(gint.KEY_LEFT); gint.cleareventflips(); assert not gint.keypressed(gint.KEY_LEFT); gint.trace_keys(0); assert gint.keyreleased(gint.KEY_LEFT); old=gint.dwindow_set(0,0,4,4); gint.dpixel(8,8,0); gint.dpixel(2,2,0); assert gint.trace_stats()[-1] == 1; assert gint.dwindow_set(*old) == (0,0,4,4)"
+
       - name: Checkout MiscPythonExtra portable LZW
         uses: actions/checkout@v4
         with:
