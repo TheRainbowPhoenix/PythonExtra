@@ -159,7 +159,7 @@ static mp_obj_t headless_rgb(mp_obj_t red, mp_obj_t green, mp_obj_t blue) {
     if (r < 0 || r > 31 || g < 0 || g > 63 || b < 0 || b > 31) {
         mp_raise_ValueError(MP_ERROR_TEXT("RGB channel out of range"));
     }
-    return mp_obj_new_int((r << 11) | (g << 5) | b);
+    return mp_obj_new_int((r << 11) | (g << 6) | b);
 }
 static MP_DEFINE_CONST_FUN_OBJ_3(headless_rgb_obj, headless_rgb);
 
