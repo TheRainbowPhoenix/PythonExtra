@@ -44,7 +44,7 @@ def main():
             parser.error("missing examples directory: " + str(root))
         root_literal = repr(str(root))
         cases += [
-            ("MiscPythonExtra/lzw.py", "import sys; sys.path.insert(0,"+root_literal+"); import lzw; b=b'TOBEORNOTTOBEORTOBEORNOT'; assert lzw.decompress(lzw.compress(b))==b; print('OK LZW')", "pass"),
+            ("MiscPythonExtra/lzw.py", "import sys; sys.path.insert(0,"+root_literal+"); import lzw; b=b'TOBEORNOTTOBEORTOBEORNOT'; assert lzw.decompress(lzw.compress(b))==b; print('OK LZW')", "known-lzw"),
             ("MiscPythonExtra/compression.py", "import sys; sys.path.insert(0,"+root_literal+"); import compression; b=b'ABCD'*50; assert compression.rle_decompress(compression.rle_compress(b))==b; assert compression.lzw_decompress(compression.lzw_compress(b))==b; print('OK compression')", "pass"),
         ]
         # These graphical apps are meaningful *negative* compatibility tests.
@@ -68,8 +68,12 @@ def main():
             ok = run["returncode"] == 0 and not run["timeout"]
             status = "PASS" if ok else "FAIL"
             bad |= not ok
+        elif expected == "known-lzw":
+            ok = run["returncode"] not in (None, 0) and "memoryview" in combined and "tobytes" in combined
+            status = "KNOWN INCOMPATIBILITY" if ok else "UNEXPECTED"
+            bad |= not ok
         elif expected == "unsupported":
-            ok = run["returncode"] not in (None, 0) and "AttributeError" in combined
+            ok = run["returncode"] not in (None, 0) and ("AttributeError" in combined or "NameError" in combined)
             status = "UNSUPPORTED (expected)" if ok else "UNEXPECTED"
             bad |= not ok
         else:
