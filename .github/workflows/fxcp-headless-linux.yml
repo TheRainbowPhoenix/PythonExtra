@@ -55,6 +55,9 @@ jobs:
             --typing typing-reference/.typings/gint.pyi \
             --json build/fxcp-typing.json
 
+      - name: Check behavioral typing contract
+        run: python3 tools/pe-headless/test_gint_contract.py --exe ports/unix/build-fxcp_headless/micropython
+
       - name: Smoke test native tracing module
         shell: bash
         run: |
