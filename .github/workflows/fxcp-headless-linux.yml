@@ -45,6 +45,11 @@ jobs:
           file "$exe" | grep -q 'ELF 32-bit'
           "$exe" -c "import gint, struct; assert struct.calcsize('P') == 4; gint.trace_reset(); gint.drect(0, 0, 9, 13, 0); img = gint.image(5, 16, 10, 14, 5, bytearray(70), bytearray(32)); gint.dsubimage(0, 0, img, 0, 0, 10, 14); gint.dupdate(); assert gint.trace_stats() == (1, 2, 0, 280); gint.trace_touch(1, 160, 400); ev = gint.pollevent(); assert (ev.type, ev.x, ev.y) == (1, 160, 400)"
 
+      - name: Smoke test key transitions and clipped graphics window
+        run: >-
+          ports/unix/build-fxcp_headless/micropython -c
+          "import gint; gint.trace_reset(); assert gint.dwindow_get() == (0,0,320,528); gint.trace_keys(gint.KEY_LEFT); assert gint.keypressed(gint.KEY_LEFT); gint.cleareventflips(); assert not gint.keypressed(gint.KEY_LEFT); gint.trace_keys(0); assert gint.keyreleased(gint.KEY_LEFT); old=gint.dwindow_set(0,0,4,4); gint.dpixel(8,8,0); gint.dpixel(2,2,0); assert gint.trace_stats()[-1] == 1; assert gint.dwindow_set(*old) == (0,0,4,4)"
+
       - name: Checkout MiscPythonExtra samples
         uses: actions/checkout@v4
         with:
