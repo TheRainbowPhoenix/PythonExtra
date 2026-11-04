@@ -152,6 +152,54 @@ static mp_obj_t headless_dtext(size_t n, const mp_obj_t *args) {
 }
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(headless_dtext_obj, 4, 4, headless_dtext);
 
+
+// RGB565 color helper, shared by both host ports.
+static mp_obj_t headless_rgb(mp_obj_t red, mp_obj_t green, mp_obj_t blue) {
+    mp_int_t r = mp_obj_get_int(red), g = mp_obj_get_int(green), b = mp_obj_get_int(blue);
+    if (r < 0 || r > 31 || g < 0 || g > 63 || b < 0 || b > 31) {
+        mp_raise_ValueError(MP_ERROR_TEXT("RGB channel out of range"));
+    }
+    return mp_obj_new_int((r << 11) | (g << 5) | b);
+}
+static MP_DEFINE_CONST_FUN_OBJ_3(headless_rgb_obj, headless_rgb);
+
+// Bresenham line counter, clipped per pixel; no framebuffer or allocations.
+static mp_obj_t headless_dline(size_t n, const mp_obj_t *args) {
+    (void)n;
+    mp_int_t x0 = mp_obj_get_int(args[0]), y0 = mp_obj_get_int(args[1]);
+    mp_int_t x1 = mp_obj_get_int(args[2]), y1 = mp_obj_get_int(args[3]);
+    (void)mp_obj_get_int(args[4]);
+    mp_int_t dx = x1 > x0 ? x1 - x0 : x0 - x1;
+    mp_int_t dy = y1 > y0 ? y1 - y0 : y0 - y1;
+    // Protect the instrumentation host against enormous line coordinates.
+    if (dx > 1000000 || dy > 1000000) {
+        mp_raise_ValueError(MP_ERROR_TEXT("line span too large"));
+    }
+    mp_int_t sx = x0 < x1 ? 1 : -1, sy = y0 < y1 ? 1 : -1;
+    mp_int_t err = dx - dy;
+    rects++;
+    for (;;) {
+        if (x0 >= 0 && x0 < 320 && y0 >= 0 && y0 < 528) { pixels++; }
+        if (x0 == x1 && y0 == y1) { break; }
+        mp_int_t twice = 2 * err;
+        if (twice > -dy) { err -= dy; x0 += sx; }
+        if (twice < dx) { err += dx; y0 += sy; }
+    }
+    return mp_const_none;
+}
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(headless_dline_obj, 5, 5, headless_dline);
+
+// Deterministic key for noninteractive scripts finishing with getkey().
+static mp_obj_t headless_getkey(void) {
+    static const qstr fields[] = {MP_QSTR_time, MP_QSTR_mod, MP_QSTR_shift,
+        MP_QSTR_alpha, MP_QSTR_type, MP_QSTR_key, MP_QSTR_x, MP_QSTR_y};
+    mp_obj_t values[] = {MP_OBJ_NEW_SMALL_INT(0), mp_const_false, mp_const_false,
+        mp_const_false, MP_OBJ_NEW_SMALL_INT(1), MP_OBJ_NEW_SMALL_INT(8),
+        MP_OBJ_NEW_SMALL_INT(0), MP_OBJ_NEW_SMALL_INT(0)};
+    return mp_obj_new_attrtuple(fields, 8, values);
+}
+static MP_DEFINE_CONST_FUN_OBJ_0(headless_getkey_obj, headless_getkey);
+
 #define FUN(name, obj) {MP_ROM_QSTR(MP_QSTR_##name), MP_ROM_PTR(&obj)}
 #define INT(name, val) {MP_ROM_QSTR(MP_QSTR_##name), MP_ROM_INT(val)}
 static const mp_rom_map_elem_t globals_table[] = {
@@ -160,15 +208,18 @@ static const mp_rom_map_elem_t globals_table[] = {
     INT(C_WHITE, 65535), INT(C_BLACK, 0),
     INT(KEY_LEFT, 1), INT(KEY_RIGHT, 2), INT(KEY_SHIFT, 4), INT(KEY_EXIT, 8),
     INT(KEY_7, 16), INT(KEY_9, 32),
-    INT(KEY_EXE, 64),
-    INT(KEYEV_NONE, 0), INT(KEYEV_TOUCH_DOWN, 1), INT(KEYEV_TOUCH_DRAG, 2), INT(KEYEV_TOUCH_UP, 3),
+    INT(KEY_EXE, 64), INT(KEY_UP, 128), INT(KEY_4, 256), INT(KEY_6, 512),
+    INT(KEY_8, 1024), INT(KEY_DEL, 2048),
+    INT(KEYEV_NONE, 0), INT(KEYEV_DOWN, 1), INT(KEYEV_UP, 2), INT(KEYEV_TOUCH_DOWN, 1), INT(KEYEV_TOUCH_DRAG, 2), INT(KEYEV_TOUCH_UP, 3),
     INT(IMAGE_P4_RGB565, 5), INT(IMAGE_P4_RGB565A, 6),
     FUN(image, headless_image_type), FUN(dsubimage, headless_dsubimage_obj),
     FUN(trace_touch, trace_touch_obj), FUN(pollevent, headless_pollevent_obj),
     FUN(keydown, headless_keydown_obj), FUN(clearevents, headless_clearevents_obj),
     FUN(dupdate, headless_dupdate_obj), FUN(dclear, headless_dclear_obj),
     FUN(drect, headless_drect_obj), FUN(dpixel, headless_dpixel_obj),
-    FUN(dtext, headless_dtext_obj), FUN(trace_reset, trace_reset_obj),
+    FUN(dtext, headless_dtext_obj), FUN(dline, headless_dline_obj),
+    FUN(C_RGB, headless_rgb_obj), FUN(getkey, headless_getkey_obj),
+    FUN(trace_reset, trace_reset_obj),
     FUN(trace_keys, trace_keys_obj), FUN(trace_stats, trace_stats_obj),
 };
 static MP_DEFINE_CONST_DICT(globals, globals_table);
