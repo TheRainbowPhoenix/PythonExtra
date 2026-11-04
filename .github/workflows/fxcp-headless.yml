@@ -44,6 +44,11 @@ jobs:
           --exe ports/windows/build-fxcp_headless/micropython.exe
           --typing typing-reference/.typings/gint.pyi
 
+      - name: Check small headless typing semantics
+        run: >-
+          python tools/pe-headless/test_gint_contract.py
+          --exe ports/windows/build-fxcp_headless/micropython.exe
+
       - name: Smoke test native tracing module
         run: >-
           ports/windows/build-fxcp_headless/micropython.exe -c
@@ -79,6 +84,11 @@ jobs:
           python tools/pe-headless/type_coverage.py
           --exe ports/windows/build-fxcp_instrument/micropython.exe
           --typing typing-reference/.typings/gint.pyi
+
+      - name: Check full instrumentation typing semantics
+        run: >-
+          python tools/pe-headless/test_gint_contract.py
+          --exe ports/windows/build-fxcp_instrument/micropython.exe
 
       - name: Test virtual USB bridge SHM protocol
         run: python tools/pe-headless/test_usb_bridge.py
