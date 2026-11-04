@@ -60,6 +60,21 @@ jobs:
             --examples misc-examples \
             --json build/fxcp-headless-probe.json
 
+      - name: Audit all MiscPythonExtra examples and smoke-run 20 programs
+        run: |
+          python3 tools/pe-headless/audit_examples.py \
+            --exe ports/unix/build-fxcp_headless/micropython \
+            --examples misc-examples \
+            --out build/fxcp-headless-audit.json
+
+      - name: Upload expanded example audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: PythonExtra-fxcp-headless-example-audit
+          path: build/fxcp-headless-audit.json
+          if-no-files-found: ignore
+
       - name: Upload compatibility report
         if: always()
         uses: actions/upload-artifact@v4
