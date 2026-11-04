@@ -130,7 +130,7 @@ static void image_attr(mp_obj_t obj,qstr attr,mp_obj_t *dest) {
     host_image *im=MP_OBJ_TO_PTR(obj);
     if(attr==MP_QSTR_width){dest[0]=mp_obj_new_int(im->w);}else if(attr==MP_QSTR_height){dest[0]=mp_obj_new_int(im->h);}
     else if(attr==MP_QSTR_format){dest[0]=mp_obj_new_int(im->fmt);}else if(attr==MP_QSTR_stride){dest[0]=mp_obj_new_int(im->stride);}
-    else if(attr==MP_QSTR_color_count){dest[0]=mp_obj_new_int(im->cc);}else if(attr==MP_QSTR_data){dest[0]=im->data;}else if(attr==MP_QSTR_palette){dest[0]=im->palette;}
+    else if(attr==MP_QSTR_color_count){dest[0]=mp_obj_new_int(im->cc);}else if(attr==MP_QSTR_flags){dest[0]=MP_OBJ_NEW_SMALL_INT(3);}else if(attr==MP_QSTR_data){dest[0]=im->data;}else if(attr==MP_QSTR_palette){dest[0]=im->palette;}
 }
 static MP_DEFINE_CONST_OBJ_TYPE(image_type,MP_QSTR_image,MP_TYPE_FLAG_NONE,make_new,image_make,attr,image_attr);
 static uint16_t word(const mp_buffer_info_t *buf,unsigned offset) {
