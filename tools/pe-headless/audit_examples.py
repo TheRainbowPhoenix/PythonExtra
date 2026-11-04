@@ -37,7 +37,7 @@ def run(exe, code, *, timeout=3, cwd=None):
     try:
         p = subprocess.run([str(exe), "-c", code], cwd=cwd,
                            capture_output=True, text=True, timeout=timeout)
-        return {"exit_code": p.returncode, "stdout": p.stdout[-1500:],
+        return {"exit_code": p.returncode, "stdout": p.stdout[-20000:],
                 "stderr": p.stderr[-1500:], "timeout": False}
     except subprocess.TimeoutExpired:
         return {"exit_code": None, "stdout": "", "stderr": "",
