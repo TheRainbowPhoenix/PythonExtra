@@ -43,7 +43,8 @@ def main():
                 if not ready.wait(4):
                     raise RuntimeError("USB TCP server did not start")
                 script = ("import gint; u=gint.USB();u.open();"
-                          "u.write(b'CPChat-to-peer');u.flush();"
+                          "u.fxlink_header('CPChat','chat',12);"
+                          "u.write(b'chat-message');u.flush();"
                           "print(u.read(17,3000));u.close()")
                 env = dict(os.environ, PE_MAP=str(path))
                 process = subprocess.Popen([str(exe), "-c", script], cwd=directory,
@@ -52,13 +53,19 @@ def main():
                     with socket.create_connection(("127.0.0.1", ports[0]), timeout=4) as client:
                         client.settimeout(5)
                         outgoing = bytearray()
-                        while len(outgoing) < len(b"CPChat-to-peer"):
+                        header_size = struct.calcsize("<III16s16s")
+                        while len(outgoing) < header_size + len(b"chat-message"):
                             chunk = client.recv(1024)
                             if not chunk:
                                 raise RuntimeError("guest closed virtual USB unexpectedly")
                             outgoing.extend(chunk)
-                        if bytes(outgoing) != b"CPChat-to-peer":
-                            raise AssertionError(f"unexpected guest output {outgoing!r}")
+                        header = struct.unpack_from("<III16s16s", outgoing)
+                        if header[:3] != (0x100, 12, 2048):
+                            raise AssertionError(f"invalid fxlink header {header!r}")
+                        if header[3].split(b"\\0", 1)[0] != b"CPChat" or header[4].split(b"\\0", 1)[0] != b"chat":
+                            raise AssertionError(f"incorrect fxlink application/type {header!r}")
+                        if bytes(outgoing[header_size:]) != b"chat-message":
+                            raise AssertionError(f"unexpected guest payload {outgoing!r}")
                         client.sendall(b"virtual-usb-reply")
                     out, err = process.communicate(timeout=8)
                     if process.returncode != 0:
