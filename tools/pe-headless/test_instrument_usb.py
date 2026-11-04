@@ -66,7 +66,7 @@ def main():
                         header = struct.unpack_from("<III16s16s", outgoing)
                         if header[:3] != (0x100, 12, 2048):
                             raise AssertionError(f"invalid fxlink header {header!r}")
-                        if header[3].split(b"\\0", 1)[0] != b"CPChat" or header[4].split(b"\\0", 1)[0] != b"chat":
+                        if header[3].split(bytes((0,)), 1)[0] != b"CPChat" or header[4].split(bytes((0,)), 1)[0] != b"chat":
                             raise AssertionError(f"incorrect fxlink application/type {header!r}")
                         offset = header_size + len(b"chat-message")
                         if bytes(outgoing[header_size:offset]) != b"chat-message":
@@ -74,7 +74,7 @@ def main():
                         bulk = struct.unpack_from("<III16s16s", outgoing, offset)
                         if bulk[:3] != (0x100, 24576, 2048):
                             raise AssertionError(f"invalid second fxlink header {bulk!r}")
-                        if bulk[4].split(b"\\0", 1)[0] != b"bulk":
+                        if bulk[4].split(bytes((0,)), 1)[0] != b"bulk":
                             raise AssertionError(f"unexpected fxlink bulk type {bulk!r}")
                         if bytes(outgoing[offset+header_size:]) != b"Z"*24576:
                             raise AssertionError("corrupted streamed USB bulk payload")
