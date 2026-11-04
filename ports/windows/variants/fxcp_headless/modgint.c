@@ -385,6 +385,70 @@ static mp_obj_t headless_drsize(mp_obj_t text, mp_obj_t font, mp_obj_t limit) {
 }
 static MP_DEFINE_CONST_FUN_OBJ_3(headless_drsize_obj,headless_drsize);
 
+
+/* Public gint keyboard/text compatibility, available in both host variants. */
+static mp_obj_t headless_key_all(size_t n,const mp_obj_t *args) {
+    if(n==1 && mp_obj_is_type(args[0],&mp_type_list)) {
+        size_t len;mp_obj_t *items;mp_obj_get_array(args[0],&len,&items);
+        for(size_t i=0;i<len;i++){if(!mp_obj_is_true(headless_keydown(items[i])))return mp_const_false;}
+    } else {
+        for(size_t i=0;i<n;i++){if(!mp_obj_is_true(headless_keydown(args[i])))return mp_const_false;}
+    }
+    return mp_const_true;
+}
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(headless_key_all_obj,0,255,headless_key_all);
+static mp_obj_t headless_key_any(size_t n,const mp_obj_t *args) {
+    if(n==1 && mp_obj_is_type(args[0],&mp_type_list)) {
+        size_t len;mp_obj_t *items;mp_obj_get_array(args[0],&len,&items);
+        for(size_t i=0;i<len;i++){if(mp_obj_is_true(headless_keydown(items[i])))return mp_const_true;}
+    } else {
+        for(size_t i=0;i<n;i++){if(mp_obj_is_true(headless_keydown(args[i])))return mp_const_true;}
+    }
+    return mp_const_false;
+}
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(headless_key_any_obj,0,255,headless_key_any);
+static mp_obj_t headless_key_digit(mp_obj_t key) {
+    int k=mp_obj_get_int(key);
+    static const int keys[]={17,33,34,35,49,50,51,65,66,67};
+    for(int i=0;i<10;i++)if(k==keys[i])return mp_obj_new_int(i);
+    return mp_obj_new_int(-1);
+}
+static MP_DEFINE_CONST_FUN_OBJ_1(headless_key_digit_obj,headless_key_digit);
+static mp_obj_t headless_key_function(mp_obj_t key) {
+    int k=mp_obj_get_int(key);
+    return mp_obj_new_int(k>=145&&k<=150?k-144:-1);
+}
+static MP_DEFINE_CONST_FUN_OBJ_1(headless_key_function_obj,headless_key_function);
+static mp_obj_t headless_getkey_opt(mp_obj_t opts,mp_obj_t timeout) {
+    (void)mp_obj_get_int(opts);
+    if(timeout!=mp_const_none){(void)mp_obj_get_int(timeout);}
+    // No live human keyboard in the small headless port: timeout gives no event.
+    touch_event ev={0,0,0};
+    if(event_read!=event_write){ev=events[event_read++%64];}
+    static const qstr fields[]={MP_QSTR_time,MP_QSTR_mod,MP_QSTR_shift,
+        MP_QSTR_alpha,MP_QSTR_type,MP_QSTR_key,MP_QSTR_x,MP_QSTR_y};
+    mp_obj_t values[]={MP_OBJ_NEW_SMALL_INT(0),mp_const_false,mp_const_false,
+        mp_const_false,mp_obj_new_int(ev.type),MP_OBJ_NEW_SMALL_INT(0),
+        mp_obj_new_int(ev.x),mp_obj_new_int(ev.y)};
+    return mp_obj_new_attrtuple(fields,8,values);
+}
+static MP_DEFINE_CONST_FUN_OBJ_2(headless_getkey_opt_obj,headless_getkey_opt);
+static mp_obj_t headless_dnsize(mp_obj_t text,mp_obj_t count,mp_obj_t font) {
+    (void)font;
+    size_t len; (void)mp_obj_str_get_data(text,&len);
+    mp_int_t max=mp_obj_get_int(count);
+    if(max>=0 && len>(size_t)max)len=(size_t)max;
+    mp_obj_t pair[]={mp_obj_new_int(len*6),MP_OBJ_NEW_SMALL_INT(10)};
+    return mp_obj_new_tuple(2,pair);
+}
+static MP_DEFINE_CONST_FUN_OBJ_3(headless_dnsize_obj,headless_dnsize);
+static mp_obj_t headless_dgetpixel(mp_obj_t x,mp_obj_t y) {
+    (void)mp_obj_get_int(x);(void)mp_obj_get_int(y);
+    // The lightweight host deliberately does not store any pixel color.
+    mp_raise_NotImplementedError(MP_ERROR_TEXT("dgetpixel requires fxcp_instrument framebuffer"));
+}
+static MP_DEFINE_CONST_FUN_OBJ_2(headless_dgetpixel_obj,headless_dgetpixel);
+
 #define FUN(name, obj) {MP_ROM_QSTR(MP_QSTR_##name), MP_ROM_PTR(&obj)}
 #define INT(name, val) {MP_ROM_QSTR(MP_QSTR_##name), MP_ROM_INT(val)}
 static const mp_rom_map_elem_t globals_table[] = {
@@ -404,12 +468,16 @@ static const mp_rom_map_elem_t globals_table[] = {
     FUN(image, headless_image_type), FUN(dsubimage, headless_dsubimage_obj),
     FUN(trace_touch, trace_touch_obj), FUN(pollevent, headless_pollevent_obj),
     FUN(keydown, headless_keydown_obj), FUN(clearevents, headless_clearevents_obj),
+    FUN(keydown_all, headless_key_all_obj), FUN(keydown_any, headless_key_any_obj),
+    FUN(keycode_digit, headless_key_digit_obj), FUN(keycode_function, headless_key_function_obj),
+    FUN(getkey_opt, headless_getkey_opt_obj),
     FUN(dupdate, headless_dupdate_obj), FUN(dclear, headless_dclear_obj),
     FUN(drect, headless_drect_obj), FUN(dpixel, headless_dpixel_obj),
     FUN(dtext, headless_dtext_obj), FUN(dline, headless_dline_obj),
     FUN(C_RGB, headless_rgb_obj), FUN(getkey, headless_getkey_obj),
     FUN(dtext_opt, headless_dtext_opt_obj), FUN(dsize, headless_dsize_obj),
-    FUN(drsize, headless_drsize_obj),
+    FUN(drsize, headless_drsize_obj), FUN(dnsize, headless_dnsize_obj),
+    FUN(dgetpixel, headless_dgetpixel_obj),
     FUN(drect_border, headless_drect_border_obj), FUN(dcircle, headless_dcircle_obj),
     FUN(dellipse, headless_dellipse_obj), FUN(dpoly, headless_dpoly_obj),
     FUN(dhline, headless_dhline_obj), FUN(dvline, headless_dvline_obj),
