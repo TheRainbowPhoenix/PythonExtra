@@ -34,7 +34,7 @@ class USBBridgeTests(unittest.TestCase):
         self.assertEqual(self.rings.to_calculator(data), len(data))
         self.assertEqual(self.mm[usb_bridge.RX+usb_bridge.CAP-2:usb_bridge.RX+usb_bridge.CAP], data[:2])
         self.assertEqual(self.mm[usb_bridge.RX:usb_bridge.RX+3], data[2:])
-        self.rings.set(3, usb_bridge.CAP+3)
+        self.rings.set(3, usb_bridge.CAP+5)
         self.rings.set(4, usb_bridge.CAP-2)
         self.mm[usb_bridge.TX+usb_bridge.CAP-2:usb_bridge.TX+usb_bridge.CAP]=b"AB"
         self.mm[usb_bridge.TX:usb_bridge.TX+5]=b"CDEFG"
