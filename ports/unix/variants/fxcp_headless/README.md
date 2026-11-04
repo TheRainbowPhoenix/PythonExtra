@@ -17,7 +17,10 @@ On 64-bit Linux hosts, executing the ELF requires 32-bit glibc runtime support
 
 The `gint` API, bounds checks, event queue, and draw counters are reused
 directly from the Windows variant to prevent platform drift. This is not a
-SuperH or full calculator emulator. Unsupported `gint` APIs raise
+SuperH or full calculator emulator. The shared stub supports `dpixel`,
+`dtext`, `dline`, `C_RGB` and `getkey` for bounded instrumentation tests;
+these APIs increment counters but do not render a framebuffer. Unsupported
+`gint` APIs raise
 `AttributeError`. For instrumentation methods, consult the Windows variant's
 README.
 
