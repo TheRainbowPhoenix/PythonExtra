@@ -202,8 +202,11 @@ static mp_obj_t headless_drect(size_t n, const mp_obj_t *args) {
     (void)n;
     mp_int_t x1 = mp_obj_get_int(args[0]), y1 = mp_obj_get_int(args[1]);
     mp_int_t x2 = mp_obj_get_int(args[2]), y2 = mp_obj_get_int(args[3]);
-    (void)mp_obj_get_int(args[4]);
+    mp_int_t color=mp_obj_get_int(args[4]);
     rects++;
+    if (x1>x2) { mp_int_t swap=x1; x1=x2; x2=swap; }
+    if (y1>y2) { mp_int_t swap=y1; y1=y2; y2=swap; }
+    if (color==-1) { return mp_const_none; }
     if (x1 < win_left) { x1 = win_left; }
     if (y1 < win_top) { y1 = win_top; }
     if (x2 >= win_right) { x2 = win_right - 1; }
@@ -218,9 +221,9 @@ static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(headless_drect_obj, 5, 5, headless_dr
 // use this same source. Drawing is clipped; no framebuffer is allocated.
 static mp_obj_t headless_dpixel(mp_obj_t px, mp_obj_t py, mp_obj_t color) {
     mp_int_t x = mp_obj_get_int(px), y = mp_obj_get_int(py);
-    (void)mp_obj_get_int(color);
+    mp_int_t c=mp_obj_get_int(color);
     rects++;
-    if (x >= win_left && x < win_right && y >= win_top && y < win_bottom) {
+    if (c!=-1 && x >= win_left && x < win_right && y >= win_top && y < win_bottom) {
         pixels++;
     }
     return mp_const_none;
@@ -254,7 +257,7 @@ static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(headless_dtext_obj, 4, 4, headless_dt
 // RGB565 color helper, shared by both host ports.
 static mp_obj_t headless_rgb(mp_obj_t red, mp_obj_t green, mp_obj_t blue) {
     mp_int_t r = mp_obj_get_int(red), g = mp_obj_get_int(green), b = mp_obj_get_int(blue);
-    if (r < 0 || r > 31 || g < 0 || g > 63 || b < 0 || b > 31) {
+    if (r < 0 || r > 31 || g < 0 || g > 31 || b < 0 || b > 31) {
         mp_raise_ValueError(MP_ERROR_TEXT("RGB channel out of range"));
     }
     return mp_obj_new_int((r << 11) | (g << 6) | b);
@@ -303,10 +306,12 @@ static MP_DEFINE_CONST_FUN_OBJ_0(headless_getkey_obj, headless_getkey);
  * Pixel counts are bounding-box estimates, not framebuffer render results. */
 static void headless_box(mp_int_t x1, mp_int_t y1, mp_int_t x2, mp_int_t y2) {
     rects++;
-    if (x1 < 0) { x1 = 0; }
-    if (y1 < 0) { y1 = 0; }
-    if (x2 > 319) { x2 = 319; }
-    if (y2 > 527) { y2 = 527; }
+    if (x1>x2) { mp_int_t swap=x1; x1=x2; x2=swap; }
+    if (y1>y2) { mp_int_t swap=y1; y1=y2; y2=swap; }
+    if (x1 < win_left) { x1 = win_left; }
+    if (y1 < win_top) { y1 = win_top; }
+    if (x2 >= win_right) { x2 = win_right-1; }
+    if (y2 >= win_bottom) { y2 = win_bottom-1; }
     if (x2 >= x1 && y2 >= y1) {
         pixels += (x2 - x1 + 1) * (y2 - y1 + 1);
     }
@@ -367,13 +372,12 @@ static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(headless_dcircle_obj, 5, 5, headless_
 
 static mp_obj_t headless_dellipse(size_t n, const mp_obj_t *args) {
     (void)n;
-    mp_int_t x=mp_obj_get_int(args[0]), y=mp_obj_get_int(args[1]);
-    mp_int_t rx=mp_obj_get_int(args[2]), ry=mp_obj_get_int(args[3]);
+    mp_int_t x1=mp_obj_get_int(args[0]), y1=mp_obj_get_int(args[1]);
+    mp_int_t x2=mp_obj_get_int(args[2]), y2=mp_obj_get_int(args[3]);
     (void)mp_obj_get_int(args[4]); (void)mp_obj_get_int(args[5]);
-    if (rx<0 || rx>100000 || ry<0 || ry>100000) {
-        mp_raise_ValueError(MP_ERROR_TEXT("invalid radii"));
-    }
-    headless_box(x-rx,y-ry,x+rx,y+ry);
+    // gint.dellipse takes opposite corners of a bounding rectangle,
+    // not center and radii (see the published gint.pyi contract).
+    headless_box(x1,y1,x2,y2);
     return mp_const_none;
 }
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(headless_dellipse_obj, 6, 6, headless_dellipse);
