@@ -63,7 +63,10 @@ static mp_obj_t get_key(void) {
     }
 } FN0(get_key);
 static mp_obj_t get_key_opt(mp_obj_t opts,mp_obj_t timeout) {
-    if(integer(opts)!=0){mp_raise_NotImplementedError(MP_ERROR_TEXT("getkey_opt hardware/modifier options are not emulated"));}int ms=integer(timeout);
+    // Host has no calculator backlight/repeat policy; accept the documented
+    // option bitmask instead of rejecting regular GETKEY_DEFAULT callers.
+    (void)integer(opts);
+    int ms=timeout==mp_const_none?-1:integer(timeout);
     uint64_t end=pe_clock_us()+(ms<0?0x7fffffffffffffffULL:(uint64_t)ms*1000);
     for(;;){mp_obj_t ev=poll_event();int type=integer(mp_load_attr(ev,MP_QSTR_type));
         if(type==1||type==3||type>=5||pe_clock_us()>=end){return ev;}pe_delay_us(1000);}
