@@ -1,3 +1,7 @@
+#ifdef PE_HOST_INSTRUMENT
+#include "pe_trace.h"
+#endif
+/* PE_TRACE_HOOKS */
 /*
  * This file is part of the MicroPython project, http://micropython.org/
  *
@@ -119,6 +123,10 @@ static void mp_reader_posix_close(void *data) {
     if (reader->close_fd) {
         MP_THREAD_GIL_EXIT();
         close(reader->fd);
+#ifdef PE_HOST_INSTRUMENT
+    pe_trace(9,reader->fd,0,NULL);
+#endif
+
         MP_THREAD_GIL_ENTER();
     }
     m_del_obj(mp_reader_posix_t, reader);
@@ -150,6 +158,10 @@ void mp_reader_new_file_from_fd(mp_reader_t *reader, int fd, bool close_fd) {
 void mp_reader_new_file(mp_reader_t *reader, qstr filename) {
     MP_THREAD_GIL_EXIT();
     int fd = open(qstr_str(filename), O_RDONLY, 0644);
+#ifdef PE_HOST_INSTRUMENT
+    pe_trace(6,fd,0,qstr_str(filename));
+#endif
+
     MP_THREAD_GIL_ENTER();
     if (fd < 0) {
         mp_raise_OSError_with_filename(errno, qstr_str(filename));

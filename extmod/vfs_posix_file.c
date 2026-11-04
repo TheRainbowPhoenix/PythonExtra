@@ -1,3 +1,7 @@
+#ifdef PE_HOST_INSTRUMENT
+#include "pe_trace.h"
+#endif
+/* PE_TRACE_HOOKS */
 /*
  * This file is part of the MicroPython project, http://micropython.org/
  *
@@ -105,6 +109,10 @@ mp_obj_t mp_vfs_posix_file_open(const mp_obj_type_t *type, mp_obj_t file_in, mp_
     int fd;
     MP_HAL_RETRY_SYSCALL(fd, open(fname, mode_x | mode_rw, 0644), mp_raise_OSError(err));
     o->fd = fd;
+#ifdef PE_HOST_INSTRUMENT
+    pe_trace(6,fd,0,fname);
+#endif
+
     return MP_OBJ_FROM_PTR(o);
 }
 
@@ -123,7 +131,11 @@ static mp_uint_t vfs_posix_file_read(mp_obj_t o_in, void *buf, mp_uint_t size, i
         *errcode = err;
         return MP_STREAM_ERROR;
     });
-    return (mp_uint_t)r;
+    
+#ifdef PE_HOST_INSTRUMENT
+    pe_trace(7,o->fd,r,NULL);
+#endif
+return (mp_uint_t)r;
 }
 
 static mp_uint_t vfs_posix_file_write(mp_obj_t o_in, const void *buf, mp_uint_t size, int *errcode) {
@@ -136,7 +148,11 @@ static mp_uint_t vfs_posix_file_write(mp_obj_t o_in, const void *buf, mp_uint_t 
     }
     #endif
     ssize_t r;
-    MP_HAL_RETRY_SYSCALL(r, write(o->fd, buf, size), {
+    
+#ifdef PE_HOST_INSTRUMENT
+    pe_trace(8,o->fd,size,NULL);
+#endif
+MP_HAL_RETRY_SYSCALL(r, write(o->fd, buf, size), {
         *errcode = err;
         return MP_STREAM_ERROR;
     });
@@ -205,6 +221,10 @@ static mp_uint_t vfs_posix_file_ioctl(mp_obj_t o_in, mp_uint_t request, uintptr_
             if (o->fd >= 0) {
                 MP_THREAD_GIL_EXIT();
                 close(o->fd);
+#ifdef PE_HOST_INSTRUMENT
+    pe_trace(9,o->fd,0,NULL);
+#endif
+
                 MP_THREAD_GIL_ENTER();
             }
             o->fd = -1;

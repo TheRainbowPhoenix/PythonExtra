@@ -1,0 +1,6 @@
+#define MICROPY_PY_BUILTINS_HELP (1)
+#define MICROPY_PY_BUILTINS_HELP_MODULES (1)
+#define MICROPY_PY_SYS_SETTRACE (1)
+#define MICROPY_PY_RANDOM_EXTRA_FUNCS (1)
+void pe_vm_hook(void);
+#define MICROPY_VM_HOOK_LOOP pe_vm_hook();

@@ -1,3 +1,7 @@
+#ifdef PE_HOST_INSTRUMENT
+#include "pe_trace.h"
+#endif
+/* PE_TRACE_HOOKS */
 /*
  * This file is part of the MicroPython project, http://micropython.org/
  *
@@ -200,7 +204,14 @@ static mp_obj_t mod_time_mktime(mp_obj_t tuple) {
 }
 MP_DEFINE_CONST_FUN_OBJ_1(mod_time_mktime_obj, mod_time_mktime);
 
+#ifdef PE_HOST_INSTRUMENT
+MP_DECLARE_CONST_FUN_OBJ_0(pe_time_monotonic_obj);
+#define PE_TIME_EXTRA_GLOBALS { MP_ROM_QSTR(MP_QSTR_monotonic), MP_ROM_PTR(&pe_time_monotonic_obj) },
+#else
+#define PE_TIME_EXTRA_GLOBALS
+#endif
 #define MICROPY_PY_TIME_EXTRA_GLOBALS \
+    PE_TIME_EXTRA_GLOBALS \
     { MP_ROM_QSTR(MP_QSTR_clock), MP_ROM_PTR(&mod_time_clock_obj) }, \
     { MP_ROM_QSTR(MP_QSTR_gmtime), MP_ROM_PTR(&mod_time_gmtime_obj) }, \
     { MP_ROM_QSTR(MP_QSTR_localtime), MP_ROM_PTR(&mod_time_localtime_obj) }, \

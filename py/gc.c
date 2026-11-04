@@ -1,3 +1,8 @@
+/* PE_TRACE_GC_END_AFTER_SWEEP */
+#ifdef PE_HOST_INSTRUMENT
+#include "pe_trace.h"
+#endif
+/* PE_TRACE_HOOKS */
 /*
  * This file is part of the MicroPython project, http://micropython.org/
  *
@@ -392,6 +397,10 @@ static inline mp_state_mem_area_t *gc_get_ptr_area(const void *ptr) {
 #endif
 
 void gc_collect_start(void) {
+#ifdef PE_HOST_INSTRUMENT
+    pe_trace(2,0,0,NULL);
+#endif
+
     gc_collect_start_common();
     #if MICROPY_GC_ALLOC_THRESHOLD
     MP_STATE_MEM(gc_alloc_amount) = 0;
@@ -544,6 +553,10 @@ void gc_collect_end(void) {
     }
     MP_STATE_THREAD(gc_lock_depth) &= ~GC_COLLECT_FLAG;
     GC_EXIT();
+#ifdef PE_HOST_INSTRUMENT
+    pe_trace(3,0,0,NULL);
+#endif
+
 }
 
 static void gc_deal_with_stack_overflow(void) {
@@ -758,6 +771,10 @@ void gc_info(gc_info_t *info) {
 }
 
 void *gc_alloc(size_t n_bytes, unsigned int alloc_flags) {
+#ifdef PE_HOST_INSTRUMENT
+    pe_trace(1,n_bytes,0,NULL);
+#endif
+
     bool has_finaliser = alloc_flags & GC_ALLOC_FLAG_HAS_FINALISER;
     size_t n_blocks = ((n_bytes + BYTES_PER_BLOCK - 1) & (~(BYTES_PER_BLOCK - 1))) / BYTES_PER_BLOCK;
     DEBUG_printf("gc_alloc(" UINT_FMT " bytes -> " UINT_FMT " blocks)\n", n_bytes, n_blocks);
@@ -1313,3 +1330,7 @@ void gc_dump_alloc_table(const mp_print_t *print) {
 }
 
 #endif // MICROPY_ENABLE_GC
+
+#ifdef PE_HOST_INSTRUMENT
+#include "gc_snapshot.inc"
+#endif

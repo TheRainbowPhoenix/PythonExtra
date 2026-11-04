@@ -1,0 +1,39 @@
+name: Build fxcp headless host
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'ports/windows/**'
+      - '.github/workflows/fxcp-headless.yml'
+  pull_request:
+    paths:
+      - 'ports/windows/**'
+      - '.github/workflows/fxcp-headless.yml'
+jobs:
+  build:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW32
+          update: true
+          install: >-
+            make
+            python
+            mingw-w64-i686-gcc
+      - name: Build 32-bit tracing interpreter
+        working-directory: ports/windows
+        run: make -j2 VARIANT=fxcp_headless
+      - name: Smoke test native tracing module
+        run: >-
+          ports/windows/build-fxcp_headless/micropython.exe -c
+          "import gint, struct; assert struct.calcsize('P') == 4; gint.trace_reset(); gint.drect(0, 0, 9, 13, 0); img = gint.image(5, 16, 10, 14, 5, bytearray(70), bytearray(32)); gint.dsubimage(0, 0, img, 0, 0, 10, 14); gint.dupdate(); assert gint.trace_stats() == (1, 2, 0, 280); gint.trace_touch(1, 160, 400); ev = gint.pollevent(); assert (ev.type, ev.x, ev.y) == (1, 160, 400)"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: PythonExtra-fxcp-headless-win32
+          path: ports/windows/build-fxcp_headless/micropython.exe
+          if-no-files-found: error

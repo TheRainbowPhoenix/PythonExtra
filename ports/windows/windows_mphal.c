@@ -29,6 +29,11 @@
 #include "py/mphal.h"
 #include "py/mpthread.h"
 
+/* PE_HOST_INSTRUMENT hooks */
+#ifdef PE_HOST_INSTRUMENT
+#include "pe_host.h"
+#endif
+
 #include <sys/time.h>
 #include <windows.h>
 #include <unistd.h>
@@ -187,6 +192,13 @@ static int esc_seq_chr() {
 }
 
 int mp_hal_stdin_rx_chr(void) {
+#ifdef PE_HOST_INSTRUMENT
+/* PE_PIPE_STDIN */
+    HANDLE input=GetStdHandle(STD_INPUT_HANDLE);
+    if(GetFileType(input)==FILE_TYPE_PIPE) {char c;DWORD n;
+        return ReadFile(input,&c,1,&n,NULL)&&n ? (unsigned char)c : 4;}
+#endif
+
     // currently processing escape seq?
     const int ret = esc_seq_chr();
     if (ret) {
@@ -237,12 +249,18 @@ void mp_hal_stdout_tx_str(const char *str) {
 }
 
 mp_uint_t mp_hal_ticks_ms(void) {
+#ifdef PE_HOST_INSTRUMENT
+    if(pe_virtual()) {return pe_clock_us()/1000;}
+#endif
     struct timeval tv;
     gettimeofday(&tv, NULL);
     return tv.tv_sec * 1000 + tv.tv_usec / 1000;
 }
 
 mp_uint_t mp_hal_ticks_us(void) {
+#ifdef PE_HOST_INSTRUMENT
+    if(pe_virtual()) {return pe_clock_us();}
+#endif
     struct timeval tv;
     gettimeofday(&tv, NULL);
     return tv.tv_sec * 1000000 + tv.tv_usec;
@@ -259,6 +277,9 @@ mp_uint_t mp_hal_ticks_cpu(void) {
 }
 
 uint64_t mp_hal_time_ns(void) {
+#ifdef PE_HOST_INSTRUMENT
+    if(pe_virtual()) {return pe_clock_us()*1000;}
+#endif
     struct timeval tv;
     gettimeofday(&tv, NULL);
     return (uint64_t)tv.tv_sec * 1000000000ULL + (uint64_t)tv.tv_usec * 1000ULL;
@@ -279,6 +300,9 @@ int usleep(__int64 usec) {
 #endif
 
 void mp_hal_delay_ms(mp_uint_t ms) {
+#ifdef PE_HOST_INSTRUMENT
+    if(pe_virtual()) {pe_delay_us((uint64_t)ms*1000);return;}
+#endif
     #if MICROPY_ENABLE_SCHEDULER
     mp_uint_t start = mp_hal_ticks_ms();
     while (mp_hal_ticks_ms() - start < ms) {

@@ -1,3 +1,8 @@
+/* PE_TRACE_GUARDED_FRAME_FASTPATH */
+#ifdef PE_HOST_INSTRUMENT
+#include "pe_trace.h"
+#endif
+/* PE_TRACE_HOOKS */
 /*
  * This file is part of the MicroPython project, http://micropython.org/
  *
@@ -188,6 +193,9 @@ mp_obj_t mp_prof_settrace(mp_obj_t callback) {
 }
 
 mp_obj_t mp_prof_frame_enter(mp_code_state_t *code_state) {
+#ifdef PE_HOST_INSTRUMENT
+    if (!prof_trace_cb) {code_state->frame=NULL;return MP_OBJ_NULL;}
+#endif
     assert(!mp_prof_is_executing);
 
     mp_obj_frame_t *frame = MP_OBJ_TO_PTR(mp_obj_new_frame(code_state));

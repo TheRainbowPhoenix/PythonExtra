@@ -1,3 +1,8 @@
+/* PE_TRACE_BALANCED_EXITS */
+#ifdef PE_HOST_INSTRUMENT
+#include "pe_trace.h"
+#endif
+/* PE_TRACE_HOOKS */
 /*
  * This file is part of the MicroPython project, http://micropython.org/
  *
@@ -254,6 +259,10 @@ mp_vm_return_kind_t MICROPY_WRAP_MP_EXECUTE_BYTECODE(mp_execute_bytecode)(mp_cod
 run_code_state: ;
 #endif
 FRAME_ENTER();
+#ifdef PE_HOST_INSTRUMENT
+    pe_trace_frame(10,code_state);
+#endif
+
 
 #if MICROPY_STACKLESS
 run_code_state_from_return: ;
@@ -1144,7 +1153,11 @@ unwind_return:
                         goto run_code_state_from_return;
                     }
                     #endif
-                    FRAME_LEAVE();
+                    
+#ifdef PE_HOST_INSTRUMENT
+    pe_trace_frame(11,code_state);
+#endif
+FRAME_LEAVE();
                     return MP_VM_RETURN_NORMAL;
 
                 ENTRY(MP_BC_RAISE_LAST): {
@@ -1185,7 +1198,11 @@ yield:
                     code_state->ip = ip;
                     code_state->sp = sp;
                     code_state->exc_sp_idx = MP_CODE_STATE_EXC_SP_IDX_FROM_PTR(exc_stack, exc_sp);
-                    FRAME_LEAVE();
+                    
+#ifdef PE_HOST_INSTRUMENT
+    pe_trace_frame(11,code_state);
+#endif
+FRAME_LEAVE();
                     return MP_VM_RETURN_YIELD;
 
                 ENTRY(MP_BC_YIELD_FROM): {
@@ -1303,7 +1320,11 @@ yield:
                     mp_obj_t obj = mp_obj_new_exception_msg(&mp_type_NotImplementedError, MP_ERROR_TEXT("opcode"));
                     nlr_pop();
                     code_state->state[0] = obj;
-                    FRAME_LEAVE();
+                    
+#ifdef PE_HOST_INSTRUMENT
+    pe_trace_frame(11,code_state);
+#endif
+FRAME_LEAVE();
                     return MP_VM_RETURN_EXCEPTION;
                 }
 
@@ -1481,7 +1502,11 @@ unwind_loop:
                 // propagate exception to higher level
                 // Note: ip and sp don't have usable values at this point
                 code_state->state[0] = MP_OBJ_FROM_PTR(nlr.ret_val); // put exception here because sp is invalid
-                FRAME_LEAVE();
+                
+#ifdef PE_HOST_INSTRUMENT
+    pe_trace_frame(11,code_state);
+#endif
+FRAME_LEAVE();
                 return MP_VM_RETURN_EXCEPTION;
             }
         }
