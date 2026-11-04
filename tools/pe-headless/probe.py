@@ -54,7 +54,7 @@ def main():
             file = root / app
             if not file.is_file():
                 parser.error("missing example: " + str(file))
-            code = ("import gint; src=open("+repr(str(file))+",'r').read(); "
+            code = ("import gint; src=open("+repr(str(file))+",'r').read().replace(chr(13)+chr(10),chr(10)); "
                     "assert "+repr(loop_pattern)+" in src; "
                     "src=src.replace("+repr(loop_pattern)+", "+
                     repr(loop_pattern.replace("while True:", "for __headless_frame in range(3):"))+", 1); "
