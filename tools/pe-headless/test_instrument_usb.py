@@ -42,7 +42,8 @@ def main():
                 worker.start()
                 if not ready.wait(4):
                     raise RuntimeError("USB TCP server did not start")
-                script = ("import gint; u=gint.USB();u.open();"
+                script = ("import gint; gint.drect(0,0,3,3,0x1234); gint.dupdate(); "
+                          "u=gint.USB();u.open();"
                           "u.fxlink_header('CPChat','chat',12);"
                           "u.write(b'chat-message');u.flush();"
                           "print(u.read(17,3000));u.close()")
@@ -72,7 +73,15 @@ def main():
                         raise RuntimeError(f"interpreter error {process.returncode}: {err}")
                     if "virtual-usb-reply" not in out:
                         raise AssertionError(f"guest did not receive virtual USB: {out!r} {err!r}")
-                    print("PASS: real gint.USB write/read via SHM and TCP:", out.strip())
+                    # A second independent screen reader must still see VRAM
+                    # while the USB bridge owns only the dedicated USB rings.
+                    with path.open("rb") as screen_fd:
+                        with mmap.mmap(screen_fd.fileno(), MAP_SIZE, access=mmap.ACCESS_READ) as screen:
+                            if struct.unpack_from("<H", screen, 4096)[0] != 0x1234:
+                                raise AssertionError("screen reader lost the published frame")
+                            if struct.unpack_from("<H", memory, 4096)[0] != 0x1234:
+                                raise AssertionError("USB bridge damaged the shared framebuffer")
+                    print("PASS: fxlink USB over TCP and independent SHM screen reader:", out.strip())
                 finally:
                     if process.poll() is None:
                         process.kill()
