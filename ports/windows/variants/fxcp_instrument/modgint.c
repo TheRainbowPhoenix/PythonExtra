@@ -194,14 +194,32 @@ static mp_obj_t debug_service(void){pe_debug_service();return mp_const_none;}FN0
 static mp_obj_t wait_start(void){pe_wait_start();return mp_const_none;}FN0(wait_start);
 static mp_obj_t debug_emit(mp_obj_t kind,mp_obj_t line,mp_obj_t name){pe_trace(integer(kind),integer(line),0,mp_obj_str_get_str(name));return mp_const_none;}FN3(debug_emit);
 
+
+static mp_obj_t font_construct(size_t n,const mp_obj_t *args) {
+    (void)n;(void)args;
+    mp_raise_NotImplementedError(MP_ERROR_TEXT("custom font rasterization is not implemented on the host"));
+}
+FNV(font_construct,13,13);
+
 #define FUN(name,obj) {MP_ROM_QSTR(MP_QSTR_##name),MP_ROM_PTR(&obj##_obj)}
 #define INT(name,value) {MP_ROM_QSTR(MP_QSTR_##name),MP_ROM_INT(value)}
 extern const mp_obj_type_t pe_usb_type;
 static const mp_rom_map_elem_t globals_table[]={
  {MP_ROM_QSTR(MP_QSTR___name__),MP_ROM_QSTR(MP_QSTR_gint)},
  {MP_ROM_QSTR(MP_QSTR_USB),MP_ROM_PTR(&pe_usb_type)},
+    INT(I, 0),
+    INT(GETKEY_MOD_SHIFT, 0x0001), INT(GETKEY_MOD_ALPHA, 0x0002),
+    INT(GETKEY_BACKLIGHT, 0x0004), INT(GETKEY_MENU, 0x0008),
+    INT(GETKEY_REP_ARROWS, 0x0010), INT(GETKEY_REP_ALL, 0x0020),
+    INT(GETKEY_REP_PROFILE, 0x0040), INT(GETKEY_FEATURES, 0x0080),
+    INT(GETKEY_NONE, 0), INT(GETKEY_DEFAULT, 0x05df),
+    INT(C_LIGHTEN, -3), INT(C_DARKEN, -4),
+    INT(IMAGE_MONO, -10), INT(IMAGE_MONO_ALPHA, -11),
+    INT(IMAGE_GRAY, -12), INT(IMAGE_GRAY_ALPHA, -13),
  INT(DWIDTH,PE_W),INT(DHEIGHT,PE_H),INT(C_WHITE,65535),INT(C_BLACK,0),INT(C_NONE,-1),INT(C_INVERT,-2),
  INT(C_RED,0xf800),INT(C_GREEN,0x07e0),INT(C_BLUE,0x001f),INT(C_LIGHT,0xad55),INT(C_DARK,0x528a),
+ INT(IMAGE_FLAGS_DATA_RO,1), INT(IMAGE_FLAGS_PALETTE_RO,2),
+ INT(IMAGE_FLAGS_DATA_ALLOC,4), INT(IMAGE_FLAGS_PALETTE_ALLOC,8),
  INT(IMAGE_RGB565,0),INT(IMAGE_RGB565A,1),INT(IMAGE_P4_RGB565A,3),INT(IMAGE_P8_RGB565,4),INT(IMAGE_P8_RGB565A,5),INT(IMAGE_P4_RGB565,6),
  INT(KEYEV_NONE,0),INT(KEYEV_DOWN,1),INT(KEYEV_UP,2),INT(KEYEV_HOLD,3),INT(KEYEV_OSMENU,4),INT(KEYEV_TOUCH_DOWN,5),INT(KEYEV_TOUCH_DRAG,6),INT(KEYEV_TOUCH_UP,7),
  INT(DTEXT_LEFT,0),INT(DTEXT_CENTER,1),INT(DTEXT_RIGHT,2),INT(DTEXT_TOP,0),INT(DTEXT_MIDDLE,1),INT(DTEXT_BOTTOM,2),
@@ -212,7 +230,7 @@ static const mp_rom_map_elem_t globals_table[]={
  FUN(C_RGB,rgb),FUN(dclear,clear_screen),FUN(dupdate,update_screen),FUN(dpixel,set_pixel),FUN(dgetpixel,get_pixel),FUN(drect,rect),FUN(drect_border,rect_border),FUN(dline,line),FUN(dhline,hline),FUN(dvline,vline),FUN(dcircle,circle),FUN(dellipse,ellipse),FUN(dpoly,polygon),FUN(dwindow_get,window_get),FUN(dwindow_set,window_set),
  {MP_ROM_QSTR(MP_QSTR_image),MP_ROM_PTR(&image_type)},
  FUN(dimage,draw_image),FUN(dsubimage,subimage),FUN(image_rgb565,img_rgb),FUN(image_rgb565a,img_rgba),FUN(image_p4_rgb565,img_p4),FUN(image_p4_rgb565a,img_p4a),FUN(image_p8_rgb565,img_p8),FUN(image_p8_rgb565a,img_p8a),
- FUN(dtext,text),FUN(dtext_opt,text_opt),FUN(dfont,font_set),FUN(dsize,size_text),FUN(dnsize,nsize_text),
+ FUN(font,font_construct),FUN(dtext,text),FUN(dtext_opt,text_opt),FUN(dfont,font_set),FUN(dsize,size_text),FUN(dnsize,nsize_text),
  FUN(drsize,rsize_text),
  FUN(host_checkpoint,checkpoint),FUN(host_advance,clock_advance),FUN(host_framebuffer,framebuffer),FUN(host_publish,publish),
  FUN(host_debug_memory,debug_memory),
