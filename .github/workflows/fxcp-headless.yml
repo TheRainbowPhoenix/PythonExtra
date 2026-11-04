@@ -83,6 +83,11 @@ jobs:
       - name: Test virtual USB bridge SHM protocol
         run: python tools/pe-headless/test_usb_bridge.py
 
+      - name: Test actual gint.USB over SHM / TCP loopback
+        run: >-
+          python tools/pe-headless/test_instrument_usb.py
+          --exe ports/windows/build-fxcp_instrument/micropython.exe
+
       - uses: actions/upload-artifact@v4
         with:
           name: PythonExtra-fxcp-instrument-win32
