@@ -44,7 +44,7 @@ def main():
                     raise RuntimeError("USB TCP server did not start")
                 script = ("import gint; u=gint.USB();u.open();"
                           "u.write(b'CPChat-to-peer');u.flush();"
-                          "print(u.read(16,3000));u.close()")
+                          "print(u.read(17,3000));u.close()")
                 env = dict(os.environ, PE_MAP=str(path))
                 process = subprocess.Popen([str(exe), "-c", script], cwd=directory,
                     stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=env)
