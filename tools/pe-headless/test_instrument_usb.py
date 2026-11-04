@@ -45,7 +45,9 @@ def main():
                 script = ("import gint; gint.drect(0,0,3,3,0x1234); gint.dupdate(); "
                           "u=gint.USB();u.open();"
                           "u.fxlink_header('CPChat','chat',12);"
-                          "u.write(b'chat-message');u.flush();"
+                          "u.write(b'chat-message');"
+                          "u.fxlink_header('CPChat','bulk',24576);"
+                          "u.write(b'Z'*24576);u.flush();"
                           "print(u.read(17,3000));u.close()")
                 env = dict(os.environ, PE_MAP=str(path))
                 process = subprocess.Popen([str(exe), "-c", script], cwd=directory,
@@ -55,7 +57,8 @@ def main():
                         client.settimeout(5)
                         outgoing = bytearray()
                         header_size = struct.calcsize("<III16s16s")
-                        while len(outgoing) < header_size + len(b"chat-message"):
+                        total = header_size * 2 + len(b"chat-message") + 24576
+                        while len(outgoing) < total:
                             chunk = client.recv(1024)
                             if not chunk:
                                 raise RuntimeError("guest closed virtual USB unexpectedly")
@@ -65,8 +68,16 @@ def main():
                             raise AssertionError(f"invalid fxlink header {header!r}")
                         if header[3].split(b"\\0", 1)[0] != b"CPChat" or header[4].split(b"\\0", 1)[0] != b"chat":
                             raise AssertionError(f"incorrect fxlink application/type {header!r}")
-                        if bytes(outgoing[header_size:]) != b"chat-message":
-                            raise AssertionError(f"unexpected guest payload {outgoing!r}")
+                        offset = header_size + len(b"chat-message")
+                        if bytes(outgoing[header_size:offset]) != b"chat-message":
+                            raise AssertionError("unexpected first fxlink payload")
+                        bulk = struct.unpack_from("<III16s16s", outgoing, offset)
+                        if bulk[:3] != (0x100, 24576, 2048):
+                            raise AssertionError(f"invalid second fxlink header {bulk!r}")
+                        if bulk[4].split(b"\\0", 1)[0] != b"bulk":
+                            raise AssertionError(f"unexpected fxlink bulk type {bulk!r}")
+                        if bytes(outgoing[offset+header_size:]) != b"Z"*24576:
+                            raise AssertionError("corrupted streamed USB bulk payload")
                         client.sendall(b"virtual-usb-reply")
                     out, err = process.communicate(timeout=8)
                     if process.returncode != 0:
