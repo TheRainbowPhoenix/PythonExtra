@@ -44,6 +44,8 @@ def main():
             parser.error("missing examples directory: " + str(root))
         root_literal = repr(str(root))
         cases += [
+            ("MiscPythonExtra/qr_lib.py import", "import sys; sys.path.insert(0,"+root_literal+"); import qr_lib; assert hasattr(qr_lib,'QRCode'); print('OK QR library')", "pass"),
+            ("MiscPythonExtra/svf.py import", "import sys; sys.path.insert(0,"+root_literal+"); import svf; assert hasattr(svf,'VectorCompiler'); print('OK SVF')", "pass"),
             ("MiscPythonExtra/lzw.py", "import sys; sys.path.insert(0,"+root_literal+"); import lzw; b=b'TOBEORNOTTOBEORTOBEORNOT'; assert lzw.decompress(lzw.compress(b))==b; print('OK LZW')", "pass"),
             ("MiscPythonExtra/compression.py", "import sys; sys.path.insert(0,"+root_literal+"); import compression; b=b'ABCD'*50; assert compression.rle_decompress(compression.rle_compress(b))==b; assert compression.lzw_decompress(compression.lzw_compress(b))==b; print('OK compression')", "pass"),
         ]
@@ -61,6 +63,14 @@ def main():
                     "exec(compile(src,"+repr(str(file))+",'exec'),{'__name__':'__main__'}); "
                     "assert gint.trace_stats()[0] >= 3; print('OK 3 frames')")
             cases.append(("MiscPythonExtra/"+app+" (3 frames)", code, "pass"))
+
+        file = root / "render_raytracer.py"
+        if not file.is_file():
+            parser.error("missing example: " + str(file))
+        code = ("import gint; exec(compile(open("+repr(str(file))+",'rb').read(),"+
+                repr(str(file))+",'exec'),{'__name__':'__main__'}); "
+                "assert gint.trace_stats()[0] >= 16; print('OK raytracer')")
+        cases.append(("MiscPythonExtra/render_raytracer.py", code, "pass"))
 
         file = root / "render_mandelbrot.py"
         if not file.is_file():
