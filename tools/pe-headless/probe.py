@@ -44,17 +44,33 @@ def main():
             parser.error("missing examples directory: " + str(root))
         root_literal = repr(str(root))
         cases += [
-            ("MiscPythonExtra/lzw.py", "import sys; sys.path.insert(0,"+root_literal+"); import lzw; b=b'TOBEORNOTTOBEORTOBEORNOT'; assert lzw.decompress(lzw.compress(b))==b; print('OK LZW')", "known-lzw"),
+            ("MiscPythonExtra/lzw.py", "import sys; sys.path.insert(0,"+root_literal+"); import lzw; b=b'TOBEORNOTTOBEORTOBEORNOT'; assert lzw.decompress(lzw.compress(b))==b; print('OK LZW')", "pass"),
             ("MiscPythonExtra/compression.py", "import sys; sys.path.insert(0,"+root_literal+"); import compression; b=b'ABCD'*50; assert compression.rle_decompress(compression.rle_compress(b))==b; assert compression.lzw_decompress(compression.lzw_compress(b))==b; print('OK compression')", "pass"),
         ]
-        # These graphical apps are meaningful *negative* compatibility tests.
-        # The tiny gint stub lacks dpixel/dtext and a real framebuffer.
-        for app in ("bounce.py", "asteroids.py", "render_mandelbrot.py"):
+        # Exercise actual game source with a bounded top-level loop.
+        # No changes are made to the upstream samples in MiscPythonExtra.
+        for app, loop_pattern in (("bounce.py", "while True:"),
+                                  ("asteroids.py", "    while True:")):
             file = root / app
             if not file.is_file():
                 parser.error("missing example: " + str(file))
-            code = "exec(compile(open("+repr(str(file))+",'rb').read(),"+repr(str(file))+",'exec'),{'__name__':'__main__'})"
-            cases.append(("MiscPythonExtra/"+app, code, "unsupported"))
+            code = ("import gint; src=open("+repr(str(file))+",'r').read(); "
+                    "assert "+repr(loop_pattern)+" in src; "
+                    "src=src.replace("+repr(loop_pattern)+", "+
+                    repr(loop_pattern.replace("while True:", "for __headless_frame in range(3):"))+", 1); "
+                    "exec(compile(src,"+repr(str(file))+",'exec'),{'__name__':'__main__'}); "
+                    "assert gint.trace_stats()[0] >= 3; print('OK 3 frames')")
+            cases.append(("MiscPythonExtra/"+app+" (3 frames)", code, "pass"))
+
+        file = root / "render_mandelbrot.py"
+        if not file.is_file():
+            parser.error("missing example: " + str(file))
+        # Limit the scanlines to keep a CI probe short; execute real pixel math.
+        code = ("import gint; src=open("+repr(str(file))+",'r').read(); "
+                "assert 'range(264)' in src; src=src.replace('range(264)','range(8)',1); "
+                "exec(compile(src,"+repr(str(file))+",'exec'),{'__name__':'__main__'}); "
+                "assert gint.trace_stats()[0] >= 2; print('OK Mandelbrot scanlines')")
+        cases.append(("MiscPythonExtra/render_mandelbrot.py (8 scanlines)", code, "pass"))
     if args.program:
         p = args.program.resolve()
         cases.append((str(p), "exec(compile(open("+repr(str(p))+",'rb').read(),"+repr(str(p))+",'exec'),{'__name__':'__main__'})", "manual"))
@@ -67,14 +83,6 @@ def main():
         if expected == "pass":
             ok = run["returncode"] == 0 and not run["timeout"]
             status = "PASS" if ok else "FAIL"
-            bad |= not ok
-        elif expected == "known-lzw":
-            ok = run["returncode"] not in (None, 0) and "memoryview" in combined and "tobytes" in combined
-            status = "KNOWN INCOMPATIBILITY" if ok else "UNEXPECTED"
-            bad |= not ok
-        elif expected == "unsupported":
-            ok = run["returncode"] not in (None, 0) and ("AttributeError" in combined or "NameError" in combined)
-            status = "UNSUPPORTED (expected)" if ok else "UNEXPECTED"
             bad |= not ok
         else:
             status = "PASS" if run["returncode"] == 0 else "TIMEOUT" if run["timeout"] else "ERROR"
