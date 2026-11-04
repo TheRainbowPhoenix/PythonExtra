@@ -245,15 +245,29 @@ static mp_obj_t memoryview_make_new(const mp_obj_type_t *type_in, size_t n_args,
     return MP_OBJ_FROM_PTR(self);
 }
 
-#if MICROPY_PY_BUILTINS_MEMORYVIEW_ITEMSIZE
+// CPython-compatible buffer copy used by host-side programs (e.g. LZW).
+// The buffer protocol reports the sliced view's byte length and offset.
+static mp_obj_t memoryview_tobytes(mp_obj_t self_in) {
+    mp_buffer_info_t bufinfo;
+    mp_get_buffer_raise(self_in, &bufinfo, MP_BUFFER_READ);
+    return mp_obj_new_bytes(bufinfo.buf, bufinfo.len);
+}
+static MP_DEFINE_CONST_FUN_OBJ_1(memoryview_tobytes_obj, memoryview_tobytes);
+
 static void memoryview_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
     if (dest[0] != MP_OBJ_NULL) {
         return;
     }
-    if (attr == MP_QSTR_itemsize) {
+    if (attr == MP_QSTR_tobytes) {
+        dest[0] = MP_OBJ_FROM_PTR(&memoryview_tobytes_obj);
+        dest[1] = self_in;
+    }
+    #if MICROPY_PY_BUILTINS_MEMORYVIEW_ITEMSIZE
+    else if (attr == MP_QSTR_itemsize) {
         mp_obj_array_t *self = MP_OBJ_TO_PTR(self_in);
         dest[0] = MP_OBJ_NEW_SMALL_INT(mp_binary_get_size('@', self->typecode & TYPECODE_MASK, NULL));
     }
+    #endif
     #if MICROPY_PY_BUILTINS_BYTES_HEX
     else {
         // Need to forward to locals dict.
@@ -261,7 +275,6 @@ static void memoryview_attr(mp_obj_t self_in, qstr attr, mp_obj_t *dest) {
     }
     #endif
 }
-#endif
 
 #endif
 
@@ -634,11 +647,7 @@ MP_DEFINE_CONST_OBJ_TYPE(
 #endif
 
 #if MICROPY_PY_BUILTINS_MEMORYVIEW
-#if MICROPY_PY_BUILTINS_MEMORYVIEW_ITEMSIZE
 #define MEMORYVIEW_TYPE_ATTR attr, memoryview_attr,
-#else
-#define MEMORYVIEW_TYPE_ATTR
-#endif
 
 #if MICROPY_PY_BUILTINS_BYTES_HEX
 #define MEMORYVIEW_TYPE_LOCALS_DICT locals_dict, &mp_obj_memoryview_locals_dict,
