@@ -522,10 +522,34 @@ static mp_obj_t headless_dgetpixel(mp_obj_t x,mp_obj_t y) {
 }
 static MP_DEFINE_CONST_FUN_OBJ_2(headless_dgetpixel_obj,headless_dgetpixel);
 
+
+static mp_obj_t headless_font(size_t count,const mp_obj_t *args) {
+    (void)args; (void)count;
+    mp_raise_NotImplementedError(MP_ERROR_TEXT("custom font rasterization requires fxcp_instrument"));
+}
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(headless_font_obj,13,13,headless_font);
+static mp_obj_t headless_dfont(mp_obj_t value) {
+    if (value!=mp_const_none) {
+        int n=mp_obj_get_int(value);
+        if (n!=9 && n!=89) { mp_raise_NotImplementedError(MP_ERROR_TEXT("custom font unsupported")); }
+    }
+    return MP_OBJ_NEW_SMALL_INT(89);
+}
+static MP_DEFINE_CONST_FUN_OBJ_1(headless_dfont_obj,headless_dfont);
+
 #define FUN(name, obj) {MP_ROM_QSTR(MP_QSTR_##name), MP_ROM_PTR(&obj)}
 #define INT(name, val) {MP_ROM_QSTR(MP_QSTR_##name), MP_ROM_INT(val)}
 static const mp_rom_map_elem_t globals_table[] = {
     {MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_gint)},
+    INT(I, 0),
+    INT(GETKEY_MOD_SHIFT, 0x0001), INT(GETKEY_MOD_ALPHA, 0x0002),
+    INT(GETKEY_BACKLIGHT, 0x0004), INT(GETKEY_MENU, 0x0008),
+    INT(GETKEY_REP_ARROWS, 0x0010), INT(GETKEY_REP_ALL, 0x0020),
+    INT(GETKEY_REP_PROFILE, 0x0040), INT(GETKEY_FEATURES, 0x0080),
+    INT(GETKEY_NONE, 0), INT(GETKEY_DEFAULT, 0x05df),
+    INT(C_LIGHTEN, -3), INT(C_DARKEN, -4),
+    INT(IMAGE_MONO, -10), INT(IMAGE_MONO_ALPHA, -11),
+    INT(IMAGE_GRAY, -12), INT(IMAGE_GRAY_ALPHA, -13),
     INT(DWIDTH, 320), INT(DHEIGHT, 528),
     INT(C_WHITE, 65535), INT(C_BLACK, 0), INT(C_NONE, -1), INT(C_INVERT, -2),
     INT(C_RED, 63488), INT(C_GREEN, 2016), INT(C_BLUE, 31),
@@ -558,7 +582,8 @@ static const mp_rom_map_elem_t globals_table[] = {
     FUN(C_RGB, headless_rgb_obj), FUN(getkey, headless_getkey_obj),
     FUN(dtext_opt, headless_dtext_opt_obj), FUN(dsize, headless_dsize_obj),
     FUN(drsize, headless_drsize_obj), FUN(dnsize, headless_dnsize_obj),
-    FUN(dgetpixel, headless_dgetpixel_obj),
+    FUN(dgetpixel, headless_dgetpixel_obj), FUN(font, headless_font_obj),
+    FUN(dfont, headless_dfont_obj),
     FUN(drect_border, headless_drect_border_obj), FUN(dcircle, headless_dcircle_obj),
     FUN(dellipse, headless_dellipse_obj), FUN(dpoly, headless_dpoly_obj),
     FUN(dhline, headless_dhline_obj), FUN(dvline, headless_dvline_obj),
