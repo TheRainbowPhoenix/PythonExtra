@@ -37,7 +37,19 @@ jobs:
       - name: Smoke test new headless drawing and memoryview API
         run: >-
           ports/windows/build-fxcp_headless/micropython.exe -c
-          "import gint; assert memoryview(b'abcdef')[1:4].tobytes() == b'bcd'; gint.trace_reset(); gint.dpixel(5, 6, 0); gint.dpixel(-1, 6, 0); gint.dtext(0, 0, 0, 'ABC'); gint.dline(0, 0, 2, 0, 0); assert gint.C_RGB(31, 63, 31) == 65535; assert gint.trace_stats() == (0, 4, 0, 184)"
+          "import gint; assert bytes(memoryview(b'abcdef')[1:4]) == b'bcd'; gint.trace_reset(); gint.dpixel(5, 6, 0); gint.dpixel(-1, 6, 0); gint.dtext(0, 0, 0, 'ABC'); gint.dline(0, 0, 2, 0, 0); assert gint.C_RGB(31, 63, 31) == 65535; assert gint.trace_stats() == (0, 4, 0, 184)"
+
+      - name: Checkout MiscPythonExtra portable LZW
+        uses: actions/checkout@v4
+        with:
+          repository: TheRainbowPhoenix/MiscPythonExtra
+          ref: compat/micropython-lzw-bytes
+          path: misc-examples
+          persist-credentials: false
+      - name: Test unmodified LZW round trip on Windows
+        run: >-
+          ports/windows/build-fxcp_headless/micropython.exe -c
+          "import sys; sys.path.insert(0,'misc-examples'); import lzw; b=b'TOBEORNOTTOBEORTOBEORNOT'; assert lzw.decompress(lzw.compress(b)) == b"
 
       - uses: actions/upload-artifact@v4
         with:
