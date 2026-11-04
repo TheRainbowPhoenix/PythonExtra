@@ -50,7 +50,7 @@ def main():
         # Exercise actual game source with a bounded top-level loop.
         # No changes are made to the upstream samples in MiscPythonExtra.
         for app, loop_pattern in (("bounce.py", "while True:"),
-                                  ("asteroids.py", "    while True:")):
+                                  ("asteroids.py", "\\n    while True:")):
             file = root / app
             if not file.is_file():
                 parser.error("missing example: " + str(file))
