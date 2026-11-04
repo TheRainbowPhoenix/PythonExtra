@@ -8,6 +8,7 @@ on:
       - 'ports/windows/variants/fxcp_headless/**'
       - 'py/**'
       - 'extmod/**'
+      - 'tools/pe-headless/**'
       - '.github/workflows/fxcp-headless-linux.yml'
   pull_request:
     paths:
@@ -15,6 +16,7 @@ on:
       - 'ports/windows/variants/fxcp_headless/**'
       - 'py/**'
       - 'extmod/**'
+      - 'tools/pe-headless/**'
       - '.github/workflows/fxcp-headless-linux.yml'
 
 permissions:
@@ -42,6 +44,29 @@ jobs:
           file "$exe"
           file "$exe" | grep -q 'ELF 32-bit'
           "$exe" -c "import gint, struct; assert struct.calcsize('P') == 4; gint.trace_reset(); gint.drect(0, 0, 9, 13, 0); img = gint.image(5, 16, 10, 14, 5, bytearray(70), bytearray(32)); gint.dsubimage(0, 0, img, 0, 0, 10, 14); gint.dupdate(); assert gint.trace_stats() == (1, 2, 0, 280); gint.trace_touch(1, 160, 400); ev = gint.pollevent(); assert (ev.type, ev.x, ev.y) == (1, 160, 400)"
+
+      - name: Checkout MiscPythonExtra samples
+        uses: actions/checkout@v4
+        with:
+          repository: TheRainbowPhoenix/MiscPythonExtra
+          ref: master
+          path: misc-examples
+          persist-credentials: false
+
+      - name: Test real programs with bounded Linux harness
+        run: |
+          python3 tools/pe-headless/probe.py \
+            --exe ports/unix/build-fxcp_headless/micropython \
+            --examples misc-examples \
+            --json build/fxcp-headless-probe.json
+
+      - name: Upload compatibility report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: PythonExtra-fxcp-headless-compatibility
+          path: build/fxcp-headless-probe.json
+          if-no-files-found: ignore
 
       - name: Upload Linux executable
         uses: actions/upload-artifact@v4
