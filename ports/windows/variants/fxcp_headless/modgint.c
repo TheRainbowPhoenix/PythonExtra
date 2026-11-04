@@ -1,15 +1,19 @@
 // Deliberately small tracing contract for tinyking, not a full gint emulator.
 #include "py/runtime.h"
 #include "py/objtuple.h"
+#include <string.h>
+#include <stdint.h>
 
-static mp_int_t input_mask, old_input_mask, frames, rects, clears, pixels;
+static mp_int_t input_mask, frames, rects, clears, pixels;
+static uint8_t host_keys[256], prior_keys[256];
 static mp_int_t win_left=0, win_top=0, win_right=320, win_bottom=528;
 typedef struct { mp_int_t type, x, y; } touch_event;
 static touch_event events[64];
 static unsigned event_read, event_write;
 
 static mp_obj_t trace_reset(void) {
-    input_mask = old_input_mask = frames = rects = clears = pixels = 0;
+    input_mask = frames = rects = clears = pixels = 0;
+    memset(host_keys,0,sizeof(host_keys)); memset(prior_keys,0,sizeof(prior_keys));
     win_left=win_top=0; win_right=320; win_bottom=528;
     event_read = event_write = 0;
     return mp_const_none;
@@ -18,8 +22,26 @@ static MP_DEFINE_CONST_FUN_OBJ_0(trace_reset_obj, trace_reset);
 
 static mp_obj_t trace_keys(mp_obj_t mask) {
     input_mask = mp_obj_get_int(mask);
+    memset(host_keys, 0, sizeof(host_keys));
+    // Legacy compact mask input, with canonical calculator key codes.
+    static const unsigned char codes[] = {
+        133,118,129,116,65,67,21,134,49,51,66,68,117,132,145,161,
+        17,33,34,35,50,165,36,37
+    };
+    for (unsigned bit=0; bit<sizeof(codes); ++bit) {
+        if (((uint32_t)input_mask & ((uint32_t)1<<bit)) != 0) {
+            host_keys[codes[bit]]=1;
+        }
+    }
     return mp_const_none;
 }
+static mp_obj_t trace_key(mp_obj_t key, mp_obj_t down) {
+    mp_int_t code=mp_obj_get_int(key);
+    if (code < 0 || code >= 256) { mp_raise_ValueError(MP_ERROR_TEXT("invalid key code")); }
+    host_keys[code]=mp_obj_is_true(down);
+    return mp_const_none;
+}
+static MP_DEFINE_CONST_FUN_OBJ_2(trace_key_obj, trace_key);
 static MP_DEFINE_CONST_FUN_OBJ_1(trace_keys_obj, trace_keys);
 
 static mp_obj_t trace_touch(mp_obj_t type, mp_obj_t x, mp_obj_t y) {
@@ -89,7 +111,8 @@ static mp_obj_t trace_stats(void) {
 static MP_DEFINE_CONST_FUN_OBJ_0(trace_stats_obj, trace_stats);
 
 static mp_obj_t headless_keydown(mp_obj_t key) {
-    return mp_obj_new_bool((input_mask & mp_obj_get_int(key)) != 0);
+    mp_int_t code=mp_obj_get_int(key);
+    return mp_obj_new_bool(code>=0 && code<256 && host_keys[code]);
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(headless_keydown_obj, headless_keydown);
 static mp_obj_t headless_clearevents(void) { return mp_const_none; }
@@ -196,7 +219,7 @@ static mp_obj_t headless_getkey(void) {
     static const qstr fields[] = {MP_QSTR_time, MP_QSTR_mod, MP_QSTR_shift,
         MP_QSTR_alpha, MP_QSTR_type, MP_QSTR_key, MP_QSTR_x, MP_QSTR_y};
     mp_obj_t values[] = {MP_OBJ_NEW_SMALL_INT(0), mp_const_false, mp_const_false,
-        mp_const_false, MP_OBJ_NEW_SMALL_INT(1), MP_OBJ_NEW_SMALL_INT(8),
+        mp_const_false, MP_OBJ_NEW_SMALL_INT(1), MP_OBJ_NEW_SMALL_INT(116),
         MP_OBJ_NEW_SMALL_INT(0), MP_OBJ_NEW_SMALL_INT(0)};
     return mp_obj_new_attrtuple(fields, 8, values);
 }
@@ -315,16 +338,16 @@ static mp_obj_t headless_dvline(mp_obj_t x, mp_obj_t color) {
 }
 static MP_DEFINE_CONST_FUN_OBJ_2(headless_dvline_obj, headless_dvline);
 
-static mp_obj_t headless_cleareventflips(void) { old_input_mask=input_mask; return mp_const_none; }
+static mp_obj_t headless_cleareventflips(void) { memcpy(prior_keys,host_keys,sizeof(host_keys)); return mp_const_none; }
 static MP_DEFINE_CONST_FUN_OBJ_0(headless_cleareventflips_obj, headless_cleareventflips);
 static mp_obj_t headless_keypressed(mp_obj_t key) {
-    mp_int_t mask=mp_obj_get_int(key);
-    return mp_obj_new_bool((input_mask & mask) && !(old_input_mask & mask));
+    mp_int_t code=mp_obj_get_int(key);
+    return mp_obj_new_bool(code>=0 && code<256 && host_keys[code] && !prior_keys[code]);
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(headless_keypressed_obj, headless_keypressed);
 static mp_obj_t headless_keyreleased(mp_obj_t key) {
-    mp_int_t mask=mp_obj_get_int(key);
-    return mp_obj_new_bool(!(input_mask & mask) && (old_input_mask & mask));
+    mp_int_t code=mp_obj_get_int(key);
+    return mp_obj_new_bool(code>=0 && code<256 && !host_keys[code] && prior_keys[code]);
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(headless_keyreleased_obj, headless_keyreleased);
 
@@ -373,14 +396,7 @@ static const mp_rom_map_elem_t globals_table[] = {
     INT(DTEXT_LEFT, 0), INT(DTEXT_CENTER, 1), INT(DTEXT_RIGHT, 2),
     INT(DTEXT_TOP, 0), INT(DTEXT_MIDDLE, 1), INT(DTEXT_BOTTOM, 2),
     INT(font_9, 9), INT(font8x9, 89),
-    INT(KEY_LEFT, 1), INT(KEY_RIGHT, 2), INT(KEY_SHIFT, 4), INT(KEY_EXIT, 8),
-    INT(KEY_7, 16), INT(KEY_9, 32),
-    INT(KEY_EXE, 64), INT(KEY_UP, 128), INT(KEY_4, 256), INT(KEY_6, 512),
-    INT(KEY_8, 1024), INT(KEY_DEL, 2048), INT(KEY_DOWN, 4096),
-    INT(KEY_0, 65536), INT(KEY_1, 131072), INT(KEY_2, 262144),
-    INT(KEY_3, 524288), INT(KEY_5, 1048576),
-    INT(KEY_MENU, 8192), INT(KEY_F1, 16384), INT(KEY_KBD, 32768),
-    INT(KEY_EQUALS, 2097152), INT(KEY_PLUS, 4194304), INT(KEY_MINUS, 8388608),
+    #include "../fxcp_instrument/key_constants.inc"
     INT(KEYEV_NONE, 0), INT(KEYEV_DOWN, 1), INT(KEYEV_UP, 2),
     INT(KEYEV_HOLD, 3), INT(KEYEV_OSMENU, 4),
     INT(KEYEV_TOUCH_DOWN, 5), INT(KEYEV_TOUCH_DRAG, 6), INT(KEYEV_TOUCH_UP, 7),
@@ -401,7 +417,7 @@ static const mp_rom_map_elem_t globals_table[] = {
     FUN(cleareventflips, headless_cleareventflips_obj),
     FUN(keypressed, headless_keypressed_obj), FUN(keyreleased, headless_keyreleased_obj),
     FUN(trace_reset, trace_reset_obj),
-    FUN(trace_keys, trace_keys_obj), FUN(trace_stats, trace_stats_obj),
+    FUN(trace_keys, trace_keys_obj), FUN(trace_key, trace_key_obj), FUN(trace_stats, trace_stats_obj),
 };
 static MP_DEFINE_CONST_DICT(globals, globals_table);
 const mp_obj_module_t headless_gint = { .base = {&mp_type_module}, .globals = (mp_obj_dict_t *)&globals };
