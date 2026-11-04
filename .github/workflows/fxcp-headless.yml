@@ -33,7 +33,7 @@ jobs:
       - name: Smoke test native tracing module
         run: >-
           ports/windows/build-fxcp_headless/micropython.exe -c
-          "import gint, struct; assert struct.calcsize('P') == 4; gint.trace_reset(); gint.drect(0, 0, 9, 13, 0); img = gint.image(5, 16, 10, 14, 5, bytearray(70), bytearray(32)); gint.dsubimage(0, 0, img, 0, 0, 10, 14); gint.dupdate(); assert gint.trace_stats() == (1, 2, 0, 280); gint.trace_touch(1, 160, 400); ev = gint.pollevent(); assert (ev.type, ev.x, ev.y) == (1, 160, 400)"
+          "import gint, struct; assert struct.calcsize('P') == 4; gint.trace_reset(); gint.drect(0, 0, 9, 13, 0); img = gint.image(gint.IMAGE_P4_RGB565, 16, 10, 14, 5, bytearray(70), bytearray(32)); gint.dsubimage(0, 0, img, 0, 0, 10, 14); gint.dupdate(); assert gint.trace_stats() == (1, 2, 0, 280); gint.trace_touch(1, 160, 400); ev = gint.pollevent(); assert (ev.type, ev.x, ev.y) == (1, 160, 400)"
       - name: Smoke test new headless drawing and memoryview API
         run: >-
           ports/windows/build-fxcp_headless/micropython.exe -c
