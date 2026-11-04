@@ -115,6 +115,43 @@ static mp_obj_t headless_drect(size_t n, const mp_obj_t *args) {
 }
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(headless_drect_obj, 5, 5, headless_drect);
 
+
+// A deliberately counter-only pixel/text implementation. Both Linux and Windows
+// use this same source. Drawing is clipped; no framebuffer is allocated.
+static mp_obj_t headless_dpixel(mp_obj_t px, mp_obj_t py, mp_obj_t color) {
+    mp_int_t x = mp_obj_get_int(px), y = mp_obj_get_int(py);
+    (void)mp_obj_get_int(color);
+    rects++;
+    if (x >= 0 && x < 320 && y >= 0 && y < 528) {
+        pixels++;
+    }
+    return mp_const_none;
+}
+static MP_DEFINE_CONST_FUN_OBJ_3(headless_dpixel_obj, headless_dpixel);
+
+// dtext(x,y,color,text): estimate the drawn glyph footprint without rendering.
+// 6x10 monospace bounding boxes are used for the headless pixel-write counter.
+static mp_obj_t headless_dtext(size_t n, const mp_obj_t *args) {
+    (void)n;
+    mp_int_t x = mp_obj_get_int(args[0]), y = mp_obj_get_int(args[1]);
+    (void)mp_obj_get_int(args[2]);
+    size_t len;
+    (void)mp_obj_str_get_data(args[3], &len);
+    rects++;
+    if (len && y < 528 && y + 10 > 0 && x < 320) {
+        mp_int_t left = x < 0 ? 0 : x, top = y < 0 ? 0 : y;
+        mp_int_t right = x + (mp_int_t)(len > 1000 ? 1000 : len) * 6;
+        if (right > 320) { right = 320; }
+        mp_int_t bottom = y + 10;
+        if (bottom > 528) { bottom = 528; }
+        if (right > left && bottom > top) {
+            pixels += (right - left) * (bottom - top);
+        }
+    }
+    return mp_const_none;
+}
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(headless_dtext_obj, 4, 4, headless_dtext);
+
 #define FUN(name, obj) {MP_ROM_QSTR(MP_QSTR_##name), MP_ROM_PTR(&obj)}
 #define INT(name, val) {MP_ROM_QSTR(MP_QSTR_##name), MP_ROM_INT(val)}
 static const mp_rom_map_elem_t globals_table[] = {
@@ -130,7 +167,8 @@ static const mp_rom_map_elem_t globals_table[] = {
     FUN(trace_touch, trace_touch_obj), FUN(pollevent, headless_pollevent_obj),
     FUN(keydown, headless_keydown_obj), FUN(clearevents, headless_clearevents_obj),
     FUN(dupdate, headless_dupdate_obj), FUN(dclear, headless_dclear_obj),
-    FUN(drect, headless_drect_obj), FUN(trace_reset, trace_reset_obj),
+    FUN(drect, headless_drect_obj), FUN(dpixel, headless_dpixel_obj),
+    FUN(dtext, headless_dtext_obj), FUN(trace_reset, trace_reset_obj),
     FUN(trace_keys, trace_keys_obj), FUN(trace_stats, trace_stats_obj),
 };
 static MP_DEFINE_CONST_DICT(globals, globals_table);
