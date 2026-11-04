@@ -200,16 +200,143 @@ static mp_obj_t headless_getkey(void) {
 }
 static MP_DEFINE_CONST_FUN_OBJ_0(headless_getkey_obj, headless_getkey);
 
+
+/* Counter-only compatibility APIs: keep the same signatures on Unix and Win32.
+ * Pixel counts are bounding-box estimates, not framebuffer render results. */
+static void headless_box(mp_int_t x1, mp_int_t y1, mp_int_t x2, mp_int_t y2) {
+    rects++;
+    if (x1 < 0) { x1 = 0; }
+    if (y1 < 0) { y1 = 0; }
+    if (x2 > 319) { x2 = 319; }
+    if (y2 > 527) { y2 = 527; }
+    if (x2 >= x1 && y2 >= y1) {
+        pixels += (x2 - x1 + 1) * (y2 - y1 + 1);
+    }
+}
+static mp_obj_t headless_dtext_opt(size_t n, const mp_obj_t *args) {
+    (void)n;
+    mp_int_t x = mp_obj_get_int(args[0]), y = mp_obj_get_int(args[1]);
+    (void)mp_obj_get_int(args[2]);
+    (void)mp_obj_get_int(args[3]);
+    mp_int_t horizontal = mp_obj_get_int(args[4]), vertical = mp_obj_get_int(args[5]);
+    size_t len;
+    (void)mp_obj_str_get_data(args[6], &len);
+    mp_int_t maxchars = mp_obj_get_int(args[7]);
+    if (maxchars >= 0 && len > (size_t)maxchars) { len = (size_t)maxchars; }
+    if (len > 1000) { len = 1000; }
+    mp_int_t width = len * 6;
+    if (horizontal == 1) { x -= width / 2; }
+    if (horizontal == 2) { x -= width; }
+    if (vertical == 1) { y -= 5; }
+    if (vertical == 2) { y -= 10; }
+    if (width) { headless_box(x,y,x+width-1,y+9); } else { rects++; }
+    return mp_const_none;
+}
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(headless_dtext_opt_obj, 8, 8, headless_dtext_opt);
+
+static mp_obj_t headless_dsize(mp_obj_t text, mp_obj_t font) {
+    (void)font;
+    size_t len;
+    (void)mp_obj_str_get_data(text, &len);
+    mp_obj_t values[2] = {mp_obj_new_int(len * 6), MP_OBJ_NEW_SMALL_INT(10)};
+    return mp_obj_new_tuple(2, values);
+}
+static MP_DEFINE_CONST_FUN_OBJ_2(headless_dsize_obj, headless_dsize);
+
+static mp_obj_t headless_drect_border(size_t n, const mp_obj_t *args) {
+    (void)n;
+    mp_int_t x1=mp_obj_get_int(args[0]), y1=mp_obj_get_int(args[1]);
+    mp_int_t x2=mp_obj_get_int(args[2]), y2=mp_obj_get_int(args[3]);
+    (void)mp_obj_get_int(args[4]);
+    (void)mp_obj_get_int(args[5]);
+    mp_int_t border=mp_obj_get_int(args[6]);
+    if (border < 0 || border > 1000) { mp_raise_ValueError(MP_ERROR_TEXT("invalid border width")); }
+    headless_box(x1,y1,x2,y2);
+    return mp_const_none;
+}
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(headless_drect_border_obj, 7, 7, headless_drect_border);
+
+static mp_obj_t headless_dcircle(size_t n, const mp_obj_t *args) {
+    (void)n;
+    mp_int_t x=mp_obj_get_int(args[0]), y=mp_obj_get_int(args[1]);
+    mp_int_t r=mp_obj_get_int(args[2]);
+    (void)mp_obj_get_int(args[3]); (void)mp_obj_get_int(args[4]);
+    if (r<0 || r>100000) { mp_raise_ValueError(MP_ERROR_TEXT("invalid radius")); }
+    headless_box(x-r,y-r,x+r,y+r);
+    return mp_const_none;
+}
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(headless_dcircle_obj, 5, 5, headless_dcircle);
+
+static mp_obj_t headless_dellipse(size_t n, const mp_obj_t *args) {
+    (void)n;
+    mp_int_t x=mp_obj_get_int(args[0]), y=mp_obj_get_int(args[1]);
+    mp_int_t rx=mp_obj_get_int(args[2]), ry=mp_obj_get_int(args[3]);
+    (void)mp_obj_get_int(args[4]); (void)mp_obj_get_int(args[5]);
+    if (rx<0 || rx>100000 || ry<0 || ry>100000) {
+        mp_raise_ValueError(MP_ERROR_TEXT("invalid radii"));
+    }
+    headless_box(x-rx,y-ry,x+rx,y+ry);
+    return mp_const_none;
+}
+static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(headless_dellipse_obj, 6, 6, headless_dellipse);
+
+static mp_obj_t headless_dpoly(mp_obj_t coordinates, mp_obj_t fill, mp_obj_t border) {
+    (void)mp_obj_get_int(fill); (void)mp_obj_get_int(border);
+    size_t length;
+    mp_obj_t *items;
+    mp_obj_get_array(coordinates, &length, &items);
+    if (length < 6 || (length & 1)) {
+        mp_raise_ValueError(MP_ERROR_TEXT("polygon expects at least 3 xy points"));
+    }
+    mp_int_t x1=mp_obj_get_int(items[0]), x2=x1;
+    mp_int_t y1=mp_obj_get_int(items[1]), y2=y1;
+    for (size_t i=2; i<length; i+=2) {
+        mp_int_t x=mp_obj_get_int(items[i]), y=mp_obj_get_int(items[i+1]);
+        if(x<x1){x1=x;} if(x>x2){x2=x;}
+        if(y<y1){y1=y;} if(y>y2){y2=y;}
+    }
+    headless_box(x1,y1,x2,y2);
+    return mp_const_none;
+}
+static MP_DEFINE_CONST_FUN_OBJ_3(headless_dpoly_obj, headless_dpoly);
+
+static mp_obj_t headless_dhline(mp_obj_t y, mp_obj_t color) {
+    (void)mp_obj_get_int(color);
+    headless_box(0,mp_obj_get_int(y),319,mp_obj_get_int(y));
+    return mp_const_none;
+}
+static MP_DEFINE_CONST_FUN_OBJ_2(headless_dhline_obj, headless_dhline);
+static mp_obj_t headless_dvline(mp_obj_t x, mp_obj_t color) {
+    (void)mp_obj_get_int(color);
+    headless_box(mp_obj_get_int(x),0,mp_obj_get_int(x),527);
+    return mp_const_none;
+}
+static MP_DEFINE_CONST_FUN_OBJ_2(headless_dvline_obj, headless_dvline);
+
+static mp_obj_t headless_cleareventflips(void) { return mp_const_none; }
+static MP_DEFINE_CONST_FUN_OBJ_0(headless_cleareventflips_obj, headless_cleareventflips);
+static mp_obj_t headless_keypressed(mp_obj_t key) { return headless_keydown(key); }
+static MP_DEFINE_CONST_FUN_OBJ_1(headless_keypressed_obj, headless_keypressed);
+static mp_obj_t headless_keyreleased(mp_obj_t key) {
+    (void)mp_obj_get_int(key); return mp_const_false;
+}
+static MP_DEFINE_CONST_FUN_OBJ_1(headless_keyreleased_obj, headless_keyreleased);
+
 #define FUN(name, obj) {MP_ROM_QSTR(MP_QSTR_##name), MP_ROM_PTR(&obj)}
 #define INT(name, val) {MP_ROM_QSTR(MP_QSTR_##name), MP_ROM_INT(val)}
 static const mp_rom_map_elem_t globals_table[] = {
     {MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_gint)},
     INT(DWIDTH, 320), INT(DHEIGHT, 528),
-    INT(C_WHITE, 65535), INT(C_BLACK, 0),
+    INT(C_WHITE, 65535), INT(C_BLACK, 0), INT(C_NONE, -1), INT(C_INVERT, -2),
+    INT(C_RED, 63488), INT(C_GREEN, 2016), INT(C_BLUE, 31),
+    INT(DTEXT_LEFT, 0), INT(DTEXT_CENTER, 1), INT(DTEXT_RIGHT, 2),
+    INT(DTEXT_TOP, 0), INT(DTEXT_MIDDLE, 1), INT(DTEXT_BOTTOM, 2),
+    INT(font_9, 9), INT(font8x9, 89),
     INT(KEY_LEFT, 1), INT(KEY_RIGHT, 2), INT(KEY_SHIFT, 4), INT(KEY_EXIT, 8),
     INT(KEY_7, 16), INT(KEY_9, 32),
     INT(KEY_EXE, 64), INT(KEY_UP, 128), INT(KEY_4, 256), INT(KEY_6, 512),
-    INT(KEY_8, 1024), INT(KEY_DEL, 2048),
+    INT(KEY_8, 1024), INT(KEY_DEL, 2048), INT(KEY_DOWN, 4096),
+    INT(KEY_MENU, 8192), INT(KEY_F1, 16384), INT(KEY_KBD, 32768),
     INT(KEYEV_NONE, 0), INT(KEYEV_DOWN, 1), INT(KEYEV_UP, 2), INT(KEYEV_TOUCH_DOWN, 1), INT(KEYEV_TOUCH_DRAG, 2), INT(KEYEV_TOUCH_UP, 3),
     INT(IMAGE_P4_RGB565, 5), INT(IMAGE_P4_RGB565A, 6),
     FUN(image, headless_image_type), FUN(dsubimage, headless_dsubimage_obj),
@@ -219,6 +346,12 @@ static const mp_rom_map_elem_t globals_table[] = {
     FUN(drect, headless_drect_obj), FUN(dpixel, headless_dpixel_obj),
     FUN(dtext, headless_dtext_obj), FUN(dline, headless_dline_obj),
     FUN(C_RGB, headless_rgb_obj), FUN(getkey, headless_getkey_obj),
+    FUN(dtext_opt, headless_dtext_opt_obj), FUN(dsize, headless_dsize_obj),
+    FUN(drect_border, headless_drect_border_obj), FUN(dcircle, headless_dcircle_obj),
+    FUN(dellipse, headless_dellipse_obj), FUN(dpoly, headless_dpoly_obj),
+    FUN(dhline, headless_dhline_obj), FUN(dvline, headless_dvline_obj),
+    FUN(cleareventflips, headless_cleareventflips_obj),
+    FUN(keypressed, headless_keypressed_obj), FUN(keyreleased, headless_keyreleased_obj),
     FUN(trace_reset, trace_reset_obj),
     FUN(trace_keys, trace_keys_obj), FUN(trace_stats, trace_stats_obj),
 };
