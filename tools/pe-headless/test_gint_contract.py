@@ -44,6 +44,7 @@ assert isinstance(gint.keypressed(gint.KEY_LEFT),bool)
 assert isinstance(gint.keyreleased(gint.KEY_LEFT),bool)
 assert len(gint.pollevent())==8
 assert len(gint.getkey_opt(gint.GETKEY_NONE,0))==8
+assert len(gint.getkey_opt(gint.GETKEY_DEFAULT,0))==8
 """,
 }
 
