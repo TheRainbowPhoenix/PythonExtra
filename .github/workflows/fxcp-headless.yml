@@ -37,7 +37,7 @@ jobs:
       - name: Smoke test new headless drawing and memoryview API
         run: >-
           ports/windows/build-fxcp_headless/micropython.exe -c
-          "import gint; assert bytes(memoryview(b'abcdef')[1:4]) == b'bcd'; gint.trace_reset(); gint.dpixel(5, 6, 0); gint.dpixel(-1, 6, 0); gint.dtext(0, 0, 0, 'ABC'); gint.dline(0, 0, 2, 0, 0); assert gint.C_RGB(31, 63, 31) == 65535; assert gint.trace_stats() == (0, 4, 0, 184)"
+          "import gint; assert bytes(memoryview(b'abcdef')[1:4]) == b'bcd'; gint.trace_reset(); gint.dpixel(5, 6, 0); gint.dpixel(-1, 6, 0); gint.dtext(0, 0, 0, 'ABC'); gint.dline(0, 0, 2, 0, 0); assert gint.C_RGB(31, 5, 5) == ((31<<11)|(5<<6)|5); assert gint.trace_stats() == (0, 4, 0, 184)"
 
       - name: Smoke test key transitions and clipped graphics window
         run: >-
