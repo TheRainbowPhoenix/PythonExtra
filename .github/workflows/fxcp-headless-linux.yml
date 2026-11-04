@@ -1,0 +1,52 @@
+name: Build fxcp headless Linux
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'ports/unix/**'
+      - 'ports/windows/variants/fxcp_headless/**'
+      - 'py/**'
+      - 'extmod/**'
+      - '.github/workflows/fxcp-headless-linux.yml'
+  pull_request:
+    paths:
+      - 'ports/unix/**'
+      - 'ports/windows/variants/fxcp_headless/**'
+      - 'py/**'
+      - 'extmod/**'
+      - '.github/workflows/fxcp-headless-linux.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install 32-bit build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential gcc-multilib libc6-dev-i386 python3 file
+
+      - name: Build 32-bit headless tracing interpreter
+        run: make -C ports/unix -j2 VARIANT=fxcp_headless
+
+      - name: Smoke test native tracing module
+        shell: bash
+        run: |
+          exe=ports/unix/build-fxcp_headless/micropython
+          file "$exe"
+          file "$exe" | grep -q 'ELF 32-bit'
+          "$exe" -c "import gint, struct; assert struct.calcsize('P') == 4; gint.trace_reset(); gint.drect(0, 0, 9, 13, 0); img = gint.image(5, 16, 10, 14, 5, bytearray(70), bytearray(32)); gint.dsubimage(0, 0, img, 0, 0, 10, 14); gint.dupdate(); assert gint.trace_stats() == (1, 2, 0, 280); gint.trace_touch(1, 160, 400); ev = gint.pollevent(); assert (ev.type, ev.x, ev.y) == (1, 160, 400)"
+
+      - name: Upload Linux executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: PythonExtra-fxcp-headless-linux-i386
+          path: ports/unix/build-fxcp_headless/micropython
+          if-no-files-found: error
+          retention-days: 30
