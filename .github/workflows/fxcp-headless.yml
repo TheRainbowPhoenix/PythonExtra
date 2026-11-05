@@ -93,6 +93,11 @@ jobs:
           python tools/pe-headless/test_gint_contract.py
           --exe ports/windows/build-fxcp_instrument/micropython.exe
 
+      - name: Test full SHM Graphics recorder and independent screen reader
+        run: >-
+          python tools/pe-headless/test_instrument_graphics.py
+          --exe ports/windows/build-fxcp_instrument/micropython.exe
+
       - name: Test virtual USB bridge SHM protocol
         run: python tools/pe-headless/test_usb_bridge.py
 
