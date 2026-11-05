@@ -12,6 +12,13 @@
  * enables fixed-size SHM tracing. No extra per-draw stream serialization when
  * disabled; a separate UI reader consumes pe_trace's SPSC ring. */
 static uint64_t pe_graphics_begin(void) {
+    // The first dclear() can be called before pe_init() maps PE_MAP.
+    // Cache the one-time initialization, not a per-method slow path.
+    static bool mapping_checked;
+    if (!mapping_checked) {
+        pe_init();
+        mapping_checked = true;
+    }
     return (pe_h[H_FLAGS] & 0x100) ? pe_wall_us() : 0;
 }
 static void pe_graphics_end(uint64_t start, unsigned method, const char *label) {
