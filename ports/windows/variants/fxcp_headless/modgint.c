@@ -129,8 +129,9 @@ static mp_obj_t headless_dsubimage(size_t n, const mp_obj_t *args) {
     if (sx < 0 || sy < 0 || w <= 0 || h <= 0 || sx + w > img->width || sy + h > img->height) {
         mp_raise_ValueError(MP_ERROR_TEXT("invalid subimage bounds"));
     }
-    mp_int_t left = x < 0 ? 0 : x, top = y < 0 ? 0 : y;
-    mp_int_t right = x + w > 320 ? 320 : x + w, bottom = y + h > 528 ? 528 : y + h;
+    mp_int_t left = x < win_left ? win_left : x, top = y < win_top ? win_top : y;
+    mp_int_t right = x + w > win_right ? win_right : x + w;
+    mp_int_t bottom = y + h > win_bottom ? win_bottom : y + h;
     rects++;
     if (right > left && bottom > top) { pixels += (right - left) * (bottom - top); }
     return mp_const_none;
@@ -239,12 +240,13 @@ static mp_obj_t headless_dtext(size_t n, const mp_obj_t *args) {
     size_t len;
     (void)mp_obj_str_get_data(args[3], &len);
     rects++;
-    if (len && y < 528 && y + 10 > 0 && x < 320) {
-        mp_int_t left = x < 0 ? 0 : x, top = y < 0 ? 0 : y;
+    if (len && y < win_bottom && y + 10 > win_top && x < win_right) {
+        mp_int_t left = x < win_left ? win_left : x;
+        mp_int_t top = y < win_top ? win_top : y;
         mp_int_t right = x + (mp_int_t)(len > 1000 ? 1000 : len) * 6;
-        if (right > 320) { right = 320; }
+        if (right > win_right) { right = win_right; }
         mp_int_t bottom = y + 10;
-        if (bottom > 528) { bottom = 528; }
+        if (bottom > win_bottom) { bottom = win_bottom; }
         if (right > left && bottom > top) {
             pixels += (right - left) * (bottom - top);
         }
