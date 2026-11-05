@@ -49,6 +49,9 @@ jobs:
           python tools/pe-headless/test_gint_contract.py
           --exe ports/windows/build-fxcp_headless/micropython.exe
 
+      - name: Test opt-in timed Graphics recording
+        run: python tools/pe-headless/test_draw_record.py --exe ports/windows/build-fxcp_headless/micropython.exe
+
       - name: Smoke test native tracing module
         run: >-
           ports/windows/build-fxcp_headless/micropython.exe -c
