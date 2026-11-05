@@ -17,12 +17,29 @@ static MP_DEFINE_CONST_FUN_OBJ_1(usb_open_obj,usb_open);
 static mp_obj_t usb_close(mp_obj_t self) {(void)self;control()[0]=0;return mp_const_none;}
 static MP_DEFINE_CONST_FUN_OBJ_1(usb_close_obj,usb_close);
 static void transmit(const void *data,size_t size) {
-    opened();volatile uint32_t *h=control();uint32_t w=h[3],r=h[4];
-    if(size>CAP || w-r>CAP || size>CAP-(w-r)) {mp_raise_OSError(MP_EAGAIN);}
+    opened();
+    volatile uint32_t *h=control();
     char *ring=(char *)pe_mapping()+944384;
-    size_t first=size<CAP-w%CAP?size:CAP-w%CAP;
-    memcpy(ring+w%CAP,data,first);memcpy(ring,(const char *)data+first,size-first);
-    MemoryBarrier();h[3]=w+size;
+    const unsigned char *source=data;
+    // Match usb_write_sync's streaming behavior: large messages are chunked,
+    // and backpressure is paid only when the virtual USB ring is full.
+    while(size) {
+        opened();
+        uint32_t w=h[3],r=h[4],used=w-r;
+        if(used>CAP) {mp_raise_OSError(MP_EIO);}
+        size_t space=CAP-used;
+        if(!space) {
+            pe_delay_us(1000);
+            if(pe_virtual()) {Sleep(1);}
+            continue;
+        }
+        size_t count=size<space?size:space;
+        size_t first=count<CAP-w%CAP?count:CAP-w%CAP;
+        memcpy(ring+w%CAP,source,first);
+        if(count>first) {memcpy(ring,source+first,count-first);}
+        MemoryBarrier();h[3]=w+count;
+        source+=count;size-=count;
+    }
 }
 static mp_obj_t usb_write(mp_obj_t self,mp_obj_t data) {
     (void)self;mp_buffer_info_t b;mp_get_buffer_raise(data,&b,MP_BUFFER_READ);
@@ -35,6 +52,7 @@ static mp_obj_t usb_read(size_t n,const mp_obj_t *args) {
     opened();int size=n>1?mp_obj_get_int(args[1]):-1;
     int timeout=(n>2 && args[2]!=mp_const_none)?mp_obj_get_int(args[2]):-1;
     if(size<0) {size=256;}
+    if(size>CAP) {size=CAP;}
     if(!size) {return mp_const_empty_bytes;}
     volatile uint32_t *h=control();uint64_t start=pe_clock_us();
     while(h[1]==h[2]) {

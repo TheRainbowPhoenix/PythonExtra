@@ -207,6 +207,14 @@ MP_DEFINE_CONST_FUN_OBJ_1(mod_time_mktime_obj, mod_time_mktime);
 #ifdef PE_HOST_INSTRUMENT
 MP_DECLARE_CONST_FUN_OBJ_0(pe_time_monotonic_obj);
 #define PE_TIME_EXTRA_GLOBALS { MP_ROM_QSTR(MP_QSTR_monotonic), MP_ROM_PTR(&pe_time_monotonic_obj) },
+#elif defined(PE_HEADLESS_TIME)
+// Host-only monotonic clock for small fxcp_headless Linux and Windows variants.
+// Does not alter the default Unix port or the full Windows instrument host.
+static mp_obj_t pe_headless_monotonic(void) {
+    return mp_obj_new_float((mp_float_t)mp_hal_ticks_ms() / MICROPY_FLOAT_CONST(1000.0));
+}
+static MP_DEFINE_CONST_FUN_OBJ_0(pe_headless_monotonic_obj, pe_headless_monotonic);
+#define PE_TIME_EXTRA_GLOBALS { MP_ROM_QSTR(MP_QSTR_monotonic), MP_ROM_PTR(&pe_headless_monotonic_obj) },
 #else
 #define PE_TIME_EXTRA_GLOBALS
 #endif

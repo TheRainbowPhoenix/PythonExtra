@@ -1,0 +1,181 @@
+name: Build fxcp headless Linux
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'ports/unix/**'
+      - 'ports/windows/variants/fxcp_headless/**'
+      - 'py/**'
+      - 'extmod/**'
+      - 'tools/pe-headless/**'
+      - '.github/workflows/fxcp-headless-linux.yml'
+  pull_request:
+    paths:
+      - 'ports/unix/**'
+      - 'ports/windows/variants/fxcp_headless/**'
+      - 'py/**'
+      - 'extmod/**'
+      - 'tools/pe-headless/**'
+      - '.github/workflows/fxcp-headless-linux.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install 32-bit build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential gcc-multilib libc6-dev-i386 python3 python3-usb file
+
+      - name: Build 32-bit headless tracing interpreter
+        run: make -C ports/unix -j2 VARIANT=fxcp_headless
+
+      - name: Checkout published gint type contract
+        uses: actions/checkout@v4
+        with:
+          repository: TheRainbowPhoenix/pythonextra-template
+          ref: master
+          path: typing-reference
+          persist-credentials: false
+
+      - name: Test opt-in timed Graphics recording
+        run: python tools/pe-headless/test_draw_record.py --exe ports/unix/build-fxcp_headless/micropython
+
+      - name: Test real Linux gint.USB remote execution
+        run: |
+          python3 tools/pe-headless/test_linux_usb_remote.py \
+            --exe ports/unix/build-fxcp_headless/micropython \
+            --server tools/pe-headless/spu_remote_server.py
+
+      - name: Test SHM virtual USB TCP bridge
+        run: python3 tools/pe-headless/test_usb_bridge.py
+
+      - name: Check Linux gint runtime typing coverage
+        run: |
+          python3 tools/pe-headless/type_coverage.py \
+            --exe ports/unix/build-fxcp_headless/micropython \
+            --typing typing-reference/.typings/gint.pyi \
+            --json build/fxcp-typing.json
+
+      - name: Check behavioral typing contract
+        run: python3 tools/pe-headless/test_gint_contract.py --exe ports/unix/build-fxcp_headless/micropython
+
+      - name: Smoke test native tracing module
+        shell: bash
+        run: |
+          exe=ports/unix/build-fxcp_headless/micropython
+          file "$exe"
+          file "$exe" | grep -q 'ELF 32-bit'
+          "$exe" -c "import gint, struct; assert struct.calcsize('P') == 4; gint.trace_reset(); gint.drect(0, 0, 9, 13, 0); img = gint.image(gint.IMAGE_P4_RGB565, 16, 10, 14, 5, bytearray(70), bytearray(32)); gint.dsubimage(0, 0, img, 0, 0, 10, 14); gint.dupdate(); assert gint.trace_stats() == (1, 2, 0, 280); gint.trace_touch(1, 160, 400); ev = gint.pollevent(); assert (ev.type, ev.x, ev.y) == (1, 160, 400)"
+
+      - name: Smoke test key transitions and clipped graphics window
+        run: >-
+          ports/unix/build-fxcp_headless/micropython -c
+          "import gint; gint.trace_reset(); assert gint.dwindow_get() == (0,0,320,528); gint.trace_keys(gint.KEY_LEFT); assert gint.keypressed(gint.KEY_LEFT); gint.cleareventflips(); assert not gint.keypressed(gint.KEY_LEFT); gint.trace_keys(0); assert gint.keyreleased(gint.KEY_LEFT); old=gint.dwindow_set(0,0,4,4); gint.dpixel(8,8,0); gint.dpixel(2,2,0); assert gint.trace_stats()[-1] == 1; assert gint.dwindow_set(*old) == (0,0,4,4)"
+
+      - name: Checkout MiscPythonExtra samples
+        uses: actions/checkout@v4
+        with:
+          repository: TheRainbowPhoenix/MiscPythonExtra
+          ref: feature/pe-headless-devtools
+          path: misc-examples
+          persist-credentials: false
+
+      - name: Checkout upstream spu-tools remote client
+        uses: actions/checkout@v4
+        with:
+          repository: mergmann/spu-tools
+          ref: main
+          path: spu-tools
+          persist-credentials: false
+
+      - name: Use Python 3.14 required by upstream spu-tools
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+
+      - name: Install upstream USB client dependency
+        run: python3 -m pip install pyusb
+
+      - name: Test genuine spu-tools USBClient over virtual TCP USB
+        run: |
+          python3 misc-examples/tools/pe-headless/test_spu_client.py \
+            --exe ports/unix/build-fxcp_headless/micropython \
+            --server misc-examples/tools/pe-headless/spu_remote_server.py \
+            --spu-tools spu-tools
+
+      - name: Test upstream spu-tools RemoteScreen over native virtual USB
+        run: |
+          python3 misc-examples/tools/pe-headless/test_spu_remote_screen.py \
+            --exe ports/unix/build-fxcp_headless/micropython \
+            --server misc-examples/tools/pe-headless/spu_remote_server.py \
+            --spu-tools spu-tools --frames 8
+
+      - name: Test real programs with bounded Linux harness
+        run: |
+          python3 tools/pe-headless/probe.py \
+            --exe ports/unix/build-fxcp_headless/micropython \
+            --examples misc-examples \
+            --json build/fxcp-headless-probe.json
+
+      - name: Audit all MiscPythonExtra examples and smoke-run 20 programs
+        run: |
+          python3 tools/pe-headless/audit_examples.py \
+            --exe ports/unix/build-fxcp_headless/micropython \
+            --examples misc-examples \
+            --out build/fxcp-headless-audit.json
+
+      - name: Profile actual MicroPython raytracer and verify exact pixels
+        run: |
+          python3 misc-examples/tools/pe-headless/profile_raytracer.py \
+            --exe ports/unix/build-fxcp_headless/micropython \
+            --original misc-examples/tools/pe-headless/fixtures/raytracer_baseline.py \
+            --optimized misc-examples/render_raytracer.py \
+            --json build/raytracer-profile.json
+
+      - name: Upload raytracer performance report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: PythonExtra-raytracer-profile
+          path: build/raytracer-profile.json
+          if-no-files-found: ignore
+
+      - name: Upload typing report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: PythonExtra-fxcp-headless-typing
+          path: build/fxcp-typing.json
+          if-no-files-found: ignore
+
+      - name: Upload expanded example audit
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: PythonExtra-fxcp-headless-example-audit
+          path: build/fxcp-headless-audit.json
+          if-no-files-found: ignore
+
+      - name: Upload compatibility report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: PythonExtra-fxcp-headless-compatibility
+          path: build/fxcp-headless-probe.json
+          if-no-files-found: ignore
+
+      - name: Upload Linux executable
+        uses: actions/upload-artifact@v4
+        with:
+          name: PythonExtra-fxcp-headless-linux-i386
+          path: ports/unix/build-fxcp_headless/micropython
+          if-no-files-found: error
+          retention-days: 30
