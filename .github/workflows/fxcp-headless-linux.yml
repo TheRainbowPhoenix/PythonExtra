@@ -84,7 +84,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: TheRainbowPhoenix/MiscPythonExtra
-          ref: compat/micropython-lzw-bytes
+          ref: feature/pe-headless-devtools
           path: misc-examples
           persist-credentials: false
 
@@ -101,6 +101,22 @@ jobs:
             --exe ports/unix/build-fxcp_headless/micropython \
             --examples misc-examples \
             --out build/fxcp-headless-audit.json
+
+      - name: Profile actual MicroPython raytracer and verify exact pixels
+        run: |
+          python3 misc-examples/tools/pe-headless/profile_raytracer.py \
+            --exe ports/unix/build-fxcp_headless/micropython \
+            --original misc-examples/render_raytracer.py \
+            --optimized misc-examples/render_raytracer_fast.py \
+            --json build/raytracer-profile.json
+
+      - name: Upload raytracer performance report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: PythonExtra-raytracer-profile
+          path: build/raytracer-profile.json
+          if-no-files-found: ignore
 
       - name: Upload typing report
         if: always()
