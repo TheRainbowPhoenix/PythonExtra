@@ -39,7 +39,8 @@ static uint64_t pe_draw_clock(void) {
     LARGE_INTEGER t, frequency;
     QueryPerformanceCounter(&t);
     QueryPerformanceFrequency(&frequency);
-    return (uint64_t)t.QuadPart * 1000000000ULL / (uint64_t)frequency.QuadPart;
+    return ((uint64_t)t.QuadPart / (uint64_t)frequency.QuadPart) * 1000000000ULL +
+        ((uint64_t)t.QuadPart % (uint64_t)frequency.QuadPart) * 1000000000ULL / (uint64_t)frequency.QuadPart;
 #else
     struct timespec ts;
     clock_gettime(CLOCK_MONOTONIC, &ts);
@@ -52,7 +53,7 @@ static uint64_t pe_draw_begin(void) {
         pe_draw_file = path && *path ? fopen(path, "wb") : NULL;
         pe_draw_enabled = pe_draw_file != NULL;
         if (pe_draw_file) {
-            fwrite("PEDRAW1\\n", 1, 8, pe_draw_file);
+            fwrite("PEDRAW1\n", 1, 8, pe_draw_file);
             atexit(pe_draw_flush);
         }
     }
