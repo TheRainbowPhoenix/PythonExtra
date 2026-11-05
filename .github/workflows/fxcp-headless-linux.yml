@@ -96,6 +96,14 @@ jobs:
           path: spu-tools
           persist-credentials: false
 
+      - name: Use Python 3.14 required by upstream spu-tools
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+
+      - name: Install upstream USB client dependency
+        run: python3 -m pip install pyusb
+
       - name: Test genuine spu-tools USBClient over virtual TCP USB
         run: |
           python3 misc-examples/tools/pe-headless/test_spu_client.py \
