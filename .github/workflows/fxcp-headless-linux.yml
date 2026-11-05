@@ -32,7 +32,7 @@ jobs:
       - name: Install 32-bit build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential gcc-multilib libc6-dev-i386 python3 file
+          sudo apt-get install -y build-essential gcc-multilib libc6-dev-i386 python3 python3-usb file
 
       - name: Build 32-bit headless tracing interpreter
         run: make -C ports/unix -j2 VARIANT=fxcp_headless
@@ -87,6 +87,21 @@ jobs:
           ref: feature/pe-headless-devtools
           path: misc-examples
           persist-credentials: false
+
+      - name: Checkout upstream spu-tools remote client
+        uses: actions/checkout@v4
+        with:
+          repository: mergmann/spu-tools
+          ref: main
+          path: spu-tools
+          persist-credentials: false
+
+      - name: Test genuine spu-tools USBClient over virtual TCP USB
+        run: |
+          python3 misc-examples/tools/pe-headless/test_spu_client.py \
+            --exe ports/unix/build-fxcp_headless/micropython \
+            --server misc-examples/tools/pe-headless/spu_remote_server.py \
+            --spu-tools spu-tools
 
       - name: Test real programs with bounded Linux harness
         run: |
