@@ -7,6 +7,19 @@
 #include "font_data.h"
 #include "pe_trace.h"
 
+
+/* WebKit-style Graphics capture. Off by default; setting H_FLAGS bit 8
+ * enables fixed-size SHM tracing. No extra per-draw stream serialization when
+ * disabled; a separate UI reader consumes pe_trace's SPSC ring. */
+static uint64_t pe_graphics_begin(void) {
+    return (pe_h[H_FLAGS] & 0x100) ? pe_wall_us() : 0;
+}
+static void pe_graphics_end(uint64_t start, unsigned method, const char *label) {
+    if (!start) { return; }
+    uint64_t elapsed = pe_wall_us() - start;
+    pe_trace(40 + method, elapsed > 2147483647ULL ? 2147483647 : (int)elapsed, 0, label);
+}
+
 static bool held[256], was_held[256];
 static unsigned font_height=9;
 static bool small_font;
@@ -78,30 +91,52 @@ static mp_obj_t key_digit(mp_obj_t key) {
 static mp_obj_t key_function(mp_obj_t key) {int k=integer(key);return mp_obj_new_int(k>=0x91&&k<=0x96?k-0x90:-1);} FN1(key_function);
 
 static mp_obj_t clear_screen(mp_obj_t color) {
+    uint64_t pe_graphics_start = pe_graphics_begin();
     pe_init(); int c=(uint16_t)integer(color); struct dwindow old=dwindow; dwindow=(struct dwindow){0,0,PE_W,PE_H};
-    drect(0,0,PE_W-1,PE_H-1,c); dwindow=old;pe_draw_count(PE_PIXELS);return mp_const_none;
+    drect(0,0,PE_W-1,PE_H-1,c); dwindow=old;pe_draw_count(PE_PIXELS);if (pe_graphics_start) { pe_graphics_end(pe_graphics_start,1,"dclear"); }
+    return mp_const_none;
 } FN1(clear_screen);
 static mp_obj_t update_screen(void) {
+    uint64_t pe_graphics_start = pe_graphics_begin();
     pe_present();
     if(pe_virtual() && pe_h[H_FRAME_US]){pe_delay_us(pe_h[H_FRAME_US]);}
-    if(pe_h[H_FLAGS]&2){pe_checkpoint(0,NULL);}return mp_const_none;
+    if(pe_h[H_FLAGS]&2){pe_checkpoint(0,NULL);}if (pe_graphics_start) { pe_graphics_end(pe_graphics_start,9,"dupdate"); }
+    return mp_const_none;
 } FN0(update_screen);
-static mp_obj_t set_pixel(mp_obj_t x,mp_obj_t y,mp_obj_t color) {pe_init();dpixel(integer(x),integer(y),integer(color));pe_draw_count(1);return mp_const_none;} FN3(set_pixel);
+static mp_obj_t set_pixel(mp_obj_t x,mp_obj_t y,mp_obj_t color) {
+    uint64_t pe_graphics_start = pe_graphics_begin();pe_init();dpixel(integer(x),integer(y),integer(color));pe_draw_count(1);if (pe_graphics_start) { pe_graphics_end(pe_graphics_start,3,"dpixel"); }
+    return mp_const_none;} FN3(set_pixel);
 static mp_obj_t get_pixel(mp_obj_t x,mp_obj_t y) {pe_init();return mp_obj_new_int(dgetpixel(integer(x),integer(y)));} FN2(get_pixel);
-static mp_obj_t rect(size_t n,const mp_obj_t *args) {(void)n;drect(I(0),I(1),I(2),I(3),I(4));pe_draw_count(0);return mp_const_none;} FNV(rect,5,5);
-static mp_obj_t line(size_t n,const mp_obj_t *args) {(void)n;pe_init();dline(I(0),I(1),I(2),I(3),I(4));pe_draw_count(0);return mp_const_none;} FNV(line,5,5);
-static mp_obj_t rect_border(size_t n,const mp_obj_t *args) {(void)n;drect_border(I(0),I(1),I(2),I(3),I(4),I(5),I(6));pe_draw_count(0);return mp_const_none;} FNV(rect_border,7,7);
-static mp_obj_t hline(mp_obj_t y,mp_obj_t c) {drect(dwindow.left,integer(y),dwindow.right-1,integer(y),integer(c));pe_draw_count(0);return mp_const_none;} FN2(hline);
-static mp_obj_t vline(mp_obj_t x,mp_obj_t c) {drect(integer(x),dwindow.top,integer(x),dwindow.bottom-1,integer(c));pe_draw_count(0);return mp_const_none;} FN2(vline);
-static mp_obj_t circle(size_t n,const mp_obj_t *args) {(void)n;pe_init();dcircle(I(0),I(1),I(2),I(3),I(4));pe_draw_count(0);return mp_const_none;} FNV(circle,5,5);
-static mp_obj_t ellipse(size_t n,const mp_obj_t *args) {(void)n;pe_init();dellipse(I(0),I(1),I(2),I(3),I(4),I(5));pe_draw_count(0);return mp_const_none;} FNV(ellipse,6,6);
+static mp_obj_t rect(size_t n,const mp_obj_t *args) {
+    uint64_t pe_graphics_start = pe_graphics_begin();(void)n;drect(I(0),I(1),I(2),I(3),I(4));pe_draw_count(0);if (pe_graphics_start) { pe_graphics_end(pe_graphics_start,2,"drect"); }
+    return mp_const_none;} FNV(rect,5,5);
+static mp_obj_t line(size_t n,const mp_obj_t *args) {
+    uint64_t pe_graphics_start = pe_graphics_begin();(void)n;pe_init();dline(I(0),I(1),I(2),I(3),I(4));pe_draw_count(0);if (pe_graphics_start) { pe_graphics_end(pe_graphics_start,5,"dline"); }
+    return mp_const_none;} FNV(line,5,5);
+static mp_obj_t rect_border(size_t n,const mp_obj_t *args) {
+    uint64_t pe_graphics_start = pe_graphics_begin();(void)n;drect_border(I(0),I(1),I(2),I(3),I(4),I(5),I(6));pe_draw_count(0);if (pe_graphics_start) { pe_graphics_end(pe_graphics_start,7,"drect_border"); }
+    return mp_const_none;} FNV(rect_border,7,7);
+static mp_obj_t hline(mp_obj_t y,mp_obj_t c) {
+    uint64_t pe_graphics_start = pe_graphics_begin();drect(dwindow.left,integer(y),dwindow.right-1,integer(y),integer(c));pe_draw_count(0);if (pe_graphics_start) { pe_graphics_end(pe_graphics_start,12,"dhline"); }
+    return mp_const_none;} FN2(hline);
+static mp_obj_t vline(mp_obj_t x,mp_obj_t c) {
+    uint64_t pe_graphics_start = pe_graphics_begin();drect(integer(x),dwindow.top,integer(x),dwindow.bottom-1,integer(c));pe_draw_count(0);if (pe_graphics_start) { pe_graphics_end(pe_graphics_start,13,"dvline"); }
+    return mp_const_none;} FN2(vline);
+static mp_obj_t circle(size_t n,const mp_obj_t *args) {
+    uint64_t pe_graphics_start = pe_graphics_begin();(void)n;pe_init();dcircle(I(0),I(1),I(2),I(3),I(4));pe_draw_count(0);if (pe_graphics_start) { pe_graphics_end(pe_graphics_start,8,"dcircle"); }
+    return mp_const_none;} FNV(circle,5,5);
+static mp_obj_t ellipse(size_t n,const mp_obj_t *args) {
+    uint64_t pe_graphics_start = pe_graphics_begin();(void)n;pe_init();dellipse(I(0),I(1),I(2),I(3),I(4),I(5));pe_draw_count(0);if (pe_graphics_start) { pe_graphics_end(pe_graphics_start,10,"dellipse"); }
+    return mp_const_none;} FNV(ellipse,6,6);
 static mp_obj_t polygon(mp_obj_t coords,mp_obj_t fill,mp_obj_t border) {
+    uint64_t pe_graphics_start = pe_graphics_begin();
     pe_init();
     size_t n;mp_obj_t *values;mp_obj_get_array(coords,&n,&values);
     if(n%2||n<6||n>8192){mp_raise_ValueError(MP_ERROR_TEXT("polygon coordinate count"));}
     int *x=m_new(int,n/2),*y=m_new(int,n/2);
     for(size_t i=0;i<n/2;i++){x[i]=integer(values[2*i]);y[i]=integer(values[2*i+1]);}
-    dpoly(x,y,n/2,integer(fill),integer(border));m_del(int,x,n/2);m_del(int,y,n/2);pe_draw_count(0);return mp_const_none;
+    dpoly(x,y,n/2,integer(fill),integer(border));m_del(int,x,n/2);m_del(int,y,n/2);pe_draw_count(0);if (pe_graphics_start) { pe_graphics_end(pe_graphics_start,15,"dpoly"); }
+    return mp_const_none;
 } FN3(polygon);
 static mp_obj_t window_get(void) {mp_obj_t a[]={mp_obj_new_int(dwindow.left),mp_obj_new_int(dwindow.top),mp_obj_new_int(dwindow.right),mp_obj_new_int(dwindow.bottom)};return mp_obj_new_tuple(4,a);} FN0(window_get);
 static mp_obj_t window_set(size_t n,const mp_obj_t *args) {(void)n;mp_obj_t old=window_get();int l=max(0,min(PE_W,I(0))),t=max(0,min(PE_H,I(1)));dwindow=(struct dwindow){l,t,max(l,min(PE_W,I(2))),max(t,min(PE_H,I(3)))};return old;} FNV(window_set,4,4);
@@ -173,8 +208,12 @@ static void blit(int x,int y,mp_obj_t obj,int sx,int sy,int width,int height) {
     }
     pe_draw_count(0);pe_pixel_count(written);
 }
-static mp_obj_t subimage(size_t n,const mp_obj_t *args){(void)n;blit(I(0),I(1),args[2],I(3),I(4),I(5),I(6));return mp_const_none;}FNV(subimage,7,7);
-static mp_obj_t draw_image(mp_obj_t x,mp_obj_t y,mp_obj_t obj){if(!mp_obj_is_type(obj,&image_type)){mp_raise_TypeError(MP_ERROR_TEXT("expected gint.image"));}host_image *im=MP_OBJ_TO_PTR(obj);blit(integer(x),integer(y),obj,0,0,im->w,im->h);return mp_const_none;}FN3(draw_image);
+static mp_obj_t subimage(size_t n,const mp_obj_t *args){
+    uint64_t pe_graphics_start = pe_graphics_begin();(void)n;blit(I(0),I(1),args[2],I(3),I(4),I(5),I(6));if (pe_graphics_start) { pe_graphics_end(pe_graphics_start,11,"dsubimage"); }
+    return mp_const_none;}FNV(subimage,7,7);
+static mp_obj_t draw_image(mp_obj_t x,mp_obj_t y,mp_obj_t obj){
+    uint64_t pe_graphics_start = pe_graphics_begin();if(!mp_obj_is_type(obj,&image_type)){mp_raise_TypeError(MP_ERROR_TEXT("expected gint.image"));}host_image *im=MP_OBJ_TO_PTR(obj);blit(integer(x),integer(y),obj,0,0,im->w,im->h);if (pe_graphics_start) { pe_graphics_end(pe_graphics_start,14,"dimage"); }
+    return mp_const_none;}FN3(draw_image);
 static mp_obj_t image_helper(int fmt,size_t n,const mp_obj_t *args){int w=I(0),h=I(1),cc=0;mp_obj_t pal=mp_const_none;if(n==4){pal=args[3];cc=mp_obj_get_int(mp_obj_len(pal))/2;}mp_obj_t a[]={mp_obj_new_int(fmt),mp_obj_new_int(cc),args[0],args[1],mp_obj_new_int(fmt<=1?w*2:(fmt==3||fmt==6?(w+1)/2:w)),args[2],pal};(void)h;return image_make(&image_type,7,0,a);}
 #define IMGHELP(name,fmt,argc) static mp_obj_t name(size_t n,const mp_obj_t *args){return image_helper(fmt,n,args);}FNV(name,argc,argc)
 IMGHELP(img_rgb,0,3);IMGHELP(img_rgba,1,3);IMGHELP(img_p8,4,4);IMGHELP(img_p8a,5,4);IMGHELP(img_p4,6,4);IMGHELP(img_p4a,3,4);
@@ -186,8 +225,12 @@ static mp_obj_t size_text(mp_obj_t text,mp_obj_t font){bool small=select_font(fo
 static mp_obj_t nsize_text(mp_obj_t text,mp_obj_t size,mp_obj_t font){bool small=select_font(font);mp_obj_t a[]={mp_obj_new_int(text_width_font(mp_obj_str_get_str(text),integer(size),small)),mp_obj_new_int(small?10:9)};return mp_obj_new_tuple(2,a);}FN3(nsize_text);
 static mp_obj_t rsize_text(mp_obj_t text,mp_obj_t font,mp_obj_t limit){bool small=select_font(font);const unsigned char *s=(const unsigned char *)mp_obj_str_get_str(text);int used=0,n=0,bound=integer(limit);while(s[n]){unsigned c=s[n];if(c<32||c>126){mp_raise_NotImplementedError(MP_ERROR_TEXT("text supports ASCII 32..126"));}int next=used+(n?1:0)+glyph_width(c,small);if(next>bound){break;}used=next;n++;}mp_obj_t a[]={mp_obj_new_int(n),mp_obj_new_int(used)};return mp_obj_new_tuple(2,a);}FN3(rsize_text);
 static void render_text(int x,int y,int fg,int bg,const char *s,int count){pe_init();for(int i=0;s[i]&&(count<0||i<count);i++){unsigned c=(unsigned char)s[i];if(c<32||c>126){mp_raise_NotImplementedError(MP_ERROR_TEXT("text supports ASCII 32..126"));}int idx=c-32,w=glyph_width(c,small_font);for(int yy=0;yy<(small_font?10:11);yy++){unsigned row=small_font?pe_font_rows[idx][yy]:pe_default_rows[idx][yy];for(int xx=0;xx<w;xx++){dpixel(x+xx,y+yy,(row&(1<<xx))?fg:bg);}}x+=w+1;}pe_draw_count(0);}
-static mp_obj_t text(size_t n,const mp_obj_t *args){(void)n;render_text(I(0),I(1),I(2),C_NONE,mp_obj_str_get_str(args[3]),-1);return mp_const_none;}FNV(text,4,4);
-static mp_obj_t text_opt(size_t n,const mp_obj_t *args){(void)n;const char *s=mp_obj_str_get_str(args[6]);int count=I(7),w=text_width(s,count),x=I(0),y=I(1);int ha=I(4),va=I(5);if(ha==1){x-=w/2;}else if(ha==2){x-=w;}if(va==1){y-=font_height/2;}else if(va==2){y-=font_height;}render_text(x,y,I(2),I(3),s,count);return mp_const_none;}FNV(text_opt,8,8);
+static mp_obj_t text(size_t n,const mp_obj_t *args){
+    uint64_t pe_graphics_start = pe_graphics_begin();(void)n;render_text(I(0),I(1),I(2),C_NONE,mp_obj_str_get_str(args[3]),-1);if (pe_graphics_start) { pe_graphics_end(pe_graphics_start,4,"dtext"); }
+    return mp_const_none;}FNV(text,4,4);
+static mp_obj_t text_opt(size_t n,const mp_obj_t *args){
+    uint64_t pe_graphics_start = pe_graphics_begin();(void)n;const char *s=mp_obj_str_get_str(args[6]);int count=I(7),w=text_width(s,count),x=I(0),y=I(1);int ha=I(4),va=I(5);if(ha==1){x-=w/2;}else if(ha==2){x-=w;}if(va==1){y-=font_height/2;}else if(va==2){y-=font_height;}render_text(x,y,I(2),I(3),s,count);if (pe_graphics_start) { pe_graphics_end(pe_graphics_start,6,"dtext_opt"); }
+    return mp_const_none;}FNV(text_opt,8,8);
 static mp_obj_t checkpoint(size_t n,const mp_obj_t *args){if(n>64){mp_raise_ValueError(MP_ERROR_TEXT("at most 64 state integers"));}int32_t values[64];for(size_t i=0;i<n;i++){values[i]=integer(args[i]);}pe_checkpoint(n,values);return mp_const_none;}FNV(checkpoint,0,64);
 static mp_obj_t clock_advance(mp_obj_t us){int n=integer(us);if(n<0){mp_raise_ValueError(MP_ERROR_TEXT("negative advance"));}pe_delay_us(n);return mp_const_none;}FN1(clock_advance);
 static mp_obj_t framebuffer(void){pe_init();return mp_obj_new_memoryview('H',PE_PIXELS,pe_vram);}FN0(framebuffer);
