@@ -78,6 +78,47 @@ class USBBridgeTests(unittest.TestCase):
         self.rings.set(1,usb_bridge.CAP+1)
         self.assertRaises(ValueError,self.rings.receive_capacity)
 
+    def test_final_stop_ack_after_guest_closes(self):
+        # The guest sends STOP ACK then immediately clears USB-open. The
+        # bridge must not strand those final 8 bytes in the SHM TX ring.
+        ready = threading.Event()
+        stop = threading.Event()
+        bound = []
+        errors = []
+        def work():
+            try:
+                usb_bridge.bridge(self.mm, port=0, stop=stop,
+                    ready=lambda n: (bound.append(n), ready.set()))
+            except Exception as exc:
+                errors.append(exc)
+        thread = threading.Thread(target=work, daemon=True)
+        thread.start()
+        self.assertTrue(ready.wait(3))
+        try:
+            with socket.create_connection(("127.0.0.1", bound[0]),timeout=3) as client:
+                client.settimeout(3)
+                client.sendall(struct.pack(">II", 0x1002, 0))
+                deadline=time.monotonic()+3
+                while self.rings.used(1,2) < 8 and time.monotonic()<deadline:
+                    time.sleep(0.005)
+                self.assertEqual(self.rings.used(1,2),8)
+                self.rings.set(2,self.rings.get(1))
+                ack=struct.pack(">II",0x1002,0)
+                self.mm[usb_bridge.TX:usb_bridge.TX+8]=ack
+                self.rings.set(3,8)
+                self.rings.set(0,0)
+                response=bytearray()
+                while len(response)<8:
+                    part=client.recv(8-len(response))
+                    self.assertTrue(part,"STOP ACK missing")
+                    response.extend(part)
+                self.assertEqual(bytes(response),ack)
+        finally:
+            stop.set()
+            thread.join(3)
+        self.assertFalse(thread.is_alive())
+        self.assertFalse(errors,errors)
+
     def test_tcp_bidirectional(self):
         ready = threading.Event()
         stop = threading.Event()
