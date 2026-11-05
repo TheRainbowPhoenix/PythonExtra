@@ -4,6 +4,74 @@
 #include <string.h>
 #include <stdint.h>
 
+
+/* Opt-in per-drawing-call recorder. No timestamps or I/O at all unless
+ * PE_DRAW_TRACE is set. Records are written in batches at dupdate().
+ * Format: "PEDRAW1\\n" followed by 32-byte little-endian records:
+ * timestamp_ns/u64, method/u32, duration_ns/u32, x/y/a/b as signed i32.
+ * The UI reads the file on a separate thread; this does not touch USB/VRAM.
+ */
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#ifdef _WIN32
+#include <windows.h>
+#endif
+typedef struct {
+    uint64_t when_ns;
+    uint32_t method, duration_ns;
+    int32_t x, y, a, b;
+} pe_draw_rec;
+typedef char pe_record_is_32_bytes[(sizeof(pe_draw_rec)==32)?1:-1];
+static FILE *pe_draw_file;
+static int pe_draw_enabled = -1;
+static pe_draw_rec pe_draw_buffer[2048];
+static size_t pe_draw_count;
+static void pe_draw_flush(void) {
+    if (pe_draw_file && pe_draw_count) {
+        fwrite(pe_draw_buffer, sizeof(pe_draw_rec), pe_draw_count, pe_draw_file);
+        pe_draw_count = 0;
+    }
+    if (pe_draw_file) { fflush(pe_draw_file); }
+}
+static uint64_t pe_draw_clock(void) {
+#ifdef _WIN32
+    LARGE_INTEGER t, frequency;
+    QueryPerformanceCounter(&t);
+    QueryPerformanceFrequency(&frequency);
+    return (uint64_t)t.QuadPart * 1000000000ULL / (uint64_t)frequency.QuadPart;
+#else
+    struct timespec ts;
+    clock_gettime(CLOCK_MONOTONIC, &ts);
+    return (uint64_t)ts.tv_sec * 1000000000ULL + (uint64_t)ts.tv_nsec;
+#endif
+}
+static uint64_t pe_draw_begin(void) {
+    if (pe_draw_enabled == -1) {
+        const char *path = getenv("PE_DRAW_TRACE");
+        pe_draw_file = path && *path ? fopen(path, "wb") : NULL;
+        pe_draw_enabled = pe_draw_file != NULL;
+        if (pe_draw_file) {
+            fwrite("PEDRAW1\\n", 1, 8, pe_draw_file);
+            atexit(pe_draw_flush);
+        }
+    }
+    return pe_draw_enabled ? pe_draw_clock() : 0;
+}
+static void pe_draw_end(uint64_t begun, uint32_t method,
+                        int32_t x, int32_t y, int32_t a, int32_t b) {
+    if (!begun) { return; }
+    uint64_t now = pe_draw_clock();
+    if (pe_draw_count == 2048) { pe_draw_flush(); }
+    pe_draw_rec *event = &pe_draw_buffer[pe_draw_count++];
+    event->when_ns = now;
+    event->method = method;
+    event->duration_ns = (now - begun > UINT32_MAX)
+        ? UINT32_MAX : (uint32_t)(now - begun);
+    event->x=x; event->y=y; event->a=a; event->b=b;
+    if (method == 9) { pe_draw_flush(); }
+}
+
 static mp_int_t input_mask, frames, rects, clears, pixels;
 static uint8_t host_keys[256], prior_keys[256];
 static mp_int_t win_left=0, win_top=0, win_right=320, win_bottom=528;
@@ -120,6 +188,7 @@ static void headless_image_attr(mp_obj_t object,qstr attribute,mp_obj_t *dest) {
 }
 static MP_DEFINE_CONST_OBJ_TYPE(headless_image_type, MP_QSTR_image, MP_TYPE_FLAG_NONE, make_new, image_new, attr, headless_image_attr);
 static mp_obj_t headless_dsubimage(size_t n, const mp_obj_t *args) {
+    uint64_t pe_draw_started = pe_draw_begin();
     (void)n;
     if (!mp_obj_is_type(args[2], &headless_image_type)) { mp_raise_TypeError(MP_ERROR_TEXT("expected image")); }
     headless_image *img = MP_OBJ_TO_PTR(args[2]);
@@ -134,6 +203,7 @@ static mp_obj_t headless_dsubimage(size_t n, const mp_obj_t *args) {
     mp_int_t bottom = y + h > win_bottom ? win_bottom : y + h;
     rects++;
     if (right > left && bottom > top) { pixels += (right - left) * (bottom - top); }
+    if (pe_draw_started) { pe_draw_end(pe_draw_started, 11, x,y,w,h); }
     return mp_const_none;
 }
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(headless_dsubimage_obj, 7, 7, headless_dsubimage);
@@ -191,15 +261,20 @@ static mp_obj_t headless_keydown(mp_obj_t key) {
 static MP_DEFINE_CONST_FUN_OBJ_1(headless_keydown_obj, headless_keydown);
 static mp_obj_t headless_clearevents(void) { return mp_const_none; }
 static MP_DEFINE_CONST_FUN_OBJ_0(headless_clearevents_obj, headless_clearevents);
-static mp_obj_t headless_dupdate(void) { frames++; return mp_const_none; }
+static mp_obj_t headless_dupdate(void) {
+    uint64_t pe_draw_started = pe_draw_begin(); frames++; if (pe_draw_started) { pe_draw_end(pe_draw_started, 9, 0,0,0,0); }
+    return mp_const_none; }
 static MP_DEFINE_CONST_FUN_OBJ_0(headless_dupdate_obj, headless_dupdate);
 static mp_obj_t headless_dclear(mp_obj_t color) {
+    uint64_t pe_draw_started = pe_draw_begin();
     (void)mp_obj_get_int(color);
     clears++; pixels += 320 * 528;
+    if (pe_draw_started) { pe_draw_end(pe_draw_started, 1, 0,0,320,528); }
     return mp_const_none;
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(headless_dclear_obj, headless_dclear);
 static mp_obj_t headless_drect(size_t n, const mp_obj_t *args) {
+    uint64_t pe_draw_started = pe_draw_begin();
     (void)n;
     mp_int_t x1 = mp_obj_get_int(args[0]), y1 = mp_obj_get_int(args[1]);
     mp_int_t x2 = mp_obj_get_int(args[2]), y2 = mp_obj_get_int(args[3]);
@@ -213,6 +288,7 @@ static mp_obj_t headless_drect(size_t n, const mp_obj_t *args) {
     if (x2 >= win_right) { x2 = win_right - 1; }
     if (y2 >= win_bottom) { y2 = win_bottom - 1; }
     if (x2 >= x1 && y2 >= y1) { pixels += (x2 - x1 + 1) * (y2 - y1 + 1); }
+    if (pe_draw_started) { pe_draw_end(pe_draw_started, 2, x1,y1,x2,y2); }
     return mp_const_none;
 }
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(headless_drect_obj, 5, 5, headless_drect);
@@ -221,12 +297,14 @@ static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(headless_drect_obj, 5, 5, headless_dr
 // A deliberately counter-only pixel/text implementation. Both Linux and Windows
 // use this same source. Drawing is clipped; no framebuffer is allocated.
 static mp_obj_t headless_dpixel(mp_obj_t px, mp_obj_t py, mp_obj_t color) {
+    uint64_t pe_draw_started = pe_draw_begin();
     mp_int_t x = mp_obj_get_int(px), y = mp_obj_get_int(py);
     mp_int_t c=mp_obj_get_int(color);
     rects++;
     if (c!=-1 && x >= win_left && x < win_right && y >= win_top && y < win_bottom) {
         pixels++;
     }
+    if (pe_draw_started) { pe_draw_end(pe_draw_started, 3, x,y,0,0); }
     return mp_const_none;
 }
 static MP_DEFINE_CONST_FUN_OBJ_3(headless_dpixel_obj, headless_dpixel);
@@ -234,6 +312,7 @@ static MP_DEFINE_CONST_FUN_OBJ_3(headless_dpixel_obj, headless_dpixel);
 // dtext(x,y,color,text): estimate the drawn glyph footprint without rendering.
 // 6x10 monospace bounding boxes are used for the headless pixel-write counter.
 static mp_obj_t headless_dtext(size_t n, const mp_obj_t *args) {
+    uint64_t pe_draw_started = pe_draw_begin();
     (void)n;
     mp_int_t x = mp_obj_get_int(args[0]), y = mp_obj_get_int(args[1]);
     (void)mp_obj_get_int(args[2]);
@@ -251,6 +330,7 @@ static mp_obj_t headless_dtext(size_t n, const mp_obj_t *args) {
             pixels += (right - left) * (bottom - top);
         }
     }
+    if (pe_draw_started) { pe_draw_end(pe_draw_started, 4, x,y,(int32_t)len,0); }
     return mp_const_none;
 }
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(headless_dtext_obj, 4, 4, headless_dtext);
@@ -268,6 +348,7 @@ static MP_DEFINE_CONST_FUN_OBJ_3(headless_rgb_obj, headless_rgb);
 
 // Bresenham line counter, clipped per pixel; no framebuffer or allocations.
 static mp_obj_t headless_dline(size_t n, const mp_obj_t *args) {
+    uint64_t pe_draw_started = pe_draw_begin();
     (void)n;
     mp_int_t x0 = mp_obj_get_int(args[0]), y0 = mp_obj_get_int(args[1]);
     mp_int_t x1 = mp_obj_get_int(args[2]), y1 = mp_obj_get_int(args[3]);
@@ -288,6 +369,7 @@ static mp_obj_t headless_dline(size_t n, const mp_obj_t *args) {
         if (twice > -dy) { err -= dy; x0 += sx; }
         if (twice < dx) { err += dx; y0 += sy; }
     }
+    if (pe_draw_started) { pe_draw_end(pe_draw_started, 5, x0,y0,x1,y1); }
     return mp_const_none;
 }
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(headless_dline_obj, 5, 5, headless_dline);
@@ -319,6 +401,7 @@ static void headless_box(mp_int_t x1, mp_int_t y1, mp_int_t x2, mp_int_t y2) {
     }
 }
 static mp_obj_t headless_dtext_opt(size_t n, const mp_obj_t *args) {
+    uint64_t pe_draw_started = pe_draw_begin();
     (void)n;
     mp_int_t x = mp_obj_get_int(args[0]), y = mp_obj_get_int(args[1]);
     (void)mp_obj_get_int(args[2]);
@@ -335,6 +418,7 @@ static mp_obj_t headless_dtext_opt(size_t n, const mp_obj_t *args) {
     if (vertical == 1) { y -= 5; }
     if (vertical == 2) { y -= 10; }
     if (width) { headless_box(x,y,x+width-1,y+9); } else { rects++; }
+    if (pe_draw_started) { pe_draw_end(pe_draw_started, 6, x,y,(int32_t)len,0); }
     return mp_const_none;
 }
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(headless_dtext_opt_obj, 8, 8, headless_dtext_opt);
@@ -349,6 +433,7 @@ static mp_obj_t headless_dsize(mp_obj_t text, mp_obj_t font) {
 static MP_DEFINE_CONST_FUN_OBJ_2(headless_dsize_obj, headless_dsize);
 
 static mp_obj_t headless_drect_border(size_t n, const mp_obj_t *args) {
+    uint64_t pe_draw_started = pe_draw_begin();
     (void)n;
     mp_int_t x1=mp_obj_get_int(args[0]), y1=mp_obj_get_int(args[1]);
     mp_int_t x2=mp_obj_get_int(args[2]), y2=mp_obj_get_int(args[3]);
@@ -357,22 +442,26 @@ static mp_obj_t headless_drect_border(size_t n, const mp_obj_t *args) {
     (void)mp_obj_get_int(args[6]);
     if (border < 0 || border > 1000) { mp_raise_ValueError(MP_ERROR_TEXT("invalid border width")); }
     headless_box(x1,y1,x2,y2);
+    if (pe_draw_started) { pe_draw_end(pe_draw_started, 7, x1,y1,x2,y2); }
     return mp_const_none;
 }
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(headless_drect_border_obj, 7, 7, headless_drect_border);
 
 static mp_obj_t headless_dcircle(size_t n, const mp_obj_t *args) {
+    uint64_t pe_draw_started = pe_draw_begin();
     (void)n;
     mp_int_t x=mp_obj_get_int(args[0]), y=mp_obj_get_int(args[1]);
     mp_int_t r=mp_obj_get_int(args[2]);
     (void)mp_obj_get_int(args[3]); (void)mp_obj_get_int(args[4]);
     if (r<0 || r>100000) { mp_raise_ValueError(MP_ERROR_TEXT("invalid radius")); }
     headless_box(x-r,y-r,x+r,y+r);
+    if (pe_draw_started) { pe_draw_end(pe_draw_started, 8, x,y,r,0); }
     return mp_const_none;
 }
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(headless_dcircle_obj, 5, 5, headless_dcircle);
 
 static mp_obj_t headless_dellipse(size_t n, const mp_obj_t *args) {
+    uint64_t pe_draw_started = pe_draw_begin();
     (void)n;
     mp_int_t x1=mp_obj_get_int(args[0]), y1=mp_obj_get_int(args[1]);
     mp_int_t x2=mp_obj_get_int(args[2]), y2=mp_obj_get_int(args[3]);
@@ -380,6 +469,7 @@ static mp_obj_t headless_dellipse(size_t n, const mp_obj_t *args) {
     // gint.dellipse takes opposite corners of a bounding rectangle,
     // not center and radii (see the published gint.pyi contract).
     headless_box(x1,y1,x2,y2);
+    if (pe_draw_started) { pe_draw_end(pe_draw_started, 10, x1,y1,x2,y2); }
     return mp_const_none;
 }
 static MP_DEFINE_CONST_FUN_OBJ_VAR_BETWEEN(headless_dellipse_obj, 6, 6, headless_dellipse);
