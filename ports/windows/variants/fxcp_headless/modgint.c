@@ -543,10 +543,17 @@ static mp_obj_t headless_dfont(mp_obj_t value) {
 }
 static MP_DEFINE_CONST_FUN_OBJ_1(headless_dfont_obj,headless_dfont);
 
+#ifdef PE_HEADLESS_UNIX_USB
+extern const mp_obj_type_t pe_linux_usb_type;
+#define HEADLESS_USB_GLOBAL {MP_ROM_QSTR(MP_QSTR_USB), MP_ROM_PTR(&pe_linux_usb_type)},
+#else
+#define HEADLESS_USB_GLOBAL
+#endif
 #define FUN(name, obj) {MP_ROM_QSTR(MP_QSTR_##name), MP_ROM_PTR(&obj)}
 #define INT(name, val) {MP_ROM_QSTR(MP_QSTR_##name), MP_ROM_INT(val)}
 static const mp_rom_map_elem_t globals_table[] = {
     {MP_ROM_QSTR(MP_QSTR___name__), MP_ROM_QSTR(MP_QSTR_gint)},
+    HEADLESS_USB_GLOBAL
     INT(I, 0),
     INT(GETKEY_MOD_SHIFT, 0x0001), INT(GETKEY_MOD_ALPHA, 0x0002),
     INT(GETKEY_BACKLIGHT, 0x0004), INT(GETKEY_MENU, 0x0008),
