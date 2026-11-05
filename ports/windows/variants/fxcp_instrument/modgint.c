@@ -2,6 +2,9 @@
 #include "py/runtime.h"
 #include "py/objtuple.h"
 #include "py/objarray.h"
+#include "py/objfun.h"
+#include "py/profile.h"
+#include <stdio.h>
 #include "pe_render.h"
 #include <string.h>
 #include "font_data.h"
@@ -24,7 +27,30 @@ static uint64_t pe_graphics_begin(void) {
 static void pe_graphics_end(uint64_t start, unsigned method, const char *label) {
     if (!start) { return; }
     uint64_t elapsed = pe_wall_us() - start;
-    pe_trace(40 + method, elapsed > 2147483647ULL ? 2147483647 : (int)elapsed, 0, label);
+    // Capture up to two Python frames *only* for recorded drawing calls.
+    // One fixed 256-byte SHM entry still contains the method, duration and
+    // stack; no Python heap allocations, extra transport or ring writes.
+    char detail[236];
+    int n = snprintf(detail, sizeof(detail), "%s", label);
+    size_t used = n > 0 ? (size_t)n : 0;
+    if (used >= sizeof(detail)) { used = sizeof(detail) - 1; }
+    const mp_code_state_t *frame = MP_STATE_THREAD(current_code_state);
+    for (unsigned i = 0; frame && i < 2 && used < sizeof(detail) - 2;
+         ++i, frame = frame->prev_state) {
+        if (!frame->fun_bc || !frame->fun_bc->rc) { continue; }
+        const mp_raw_code_t *rc = frame->fun_bc->rc;
+        const char *file = qstr_str(MP_CODE_QSTR_MAP(frame->fun_bc->context, 0));
+        const char *function = qstr_str(MP_CODE_QSTR_MAP(
+            frame->fun_bc->context, rc->prelude.qstr_block_name_idx));
+        unsigned line = mp_prof_bytecode_lineno(rc, frame->ip - rc->prelude.opcodes);
+        int added = snprintf(detail + used, sizeof(detail) - used,
+            "\n%.58s|%u|%.30s", file, line, function);
+        if (added < 0) { break; }
+        used += (size_t)added;
+        if (used >= sizeof(detail)) { used = sizeof(detail) - 1; }
+    }
+    pe_trace(40 + method,
+        elapsed > 2147483647ULL ? 2147483647 : (int)elapsed, 0, detail);
 }
 
 static bool held[256], was_held[256];
