@@ -45,6 +45,9 @@ jobs:
           path: typing-reference
           persist-credentials: false
 
+      - name: Test opt-in timed Graphics recording
+        run: python tools/pe-headless/test_draw_record.py --exe ports/unix/build-fxcp_headless/micropython
+
       - name: Test real Linux gint.USB remote execution
         run: |
           python3 tools/pe-headless/test_linux_usb_remote.py \
