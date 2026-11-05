@@ -98,6 +98,11 @@ def bridge(memory, host="127.0.0.1", port=8765, ready=None, stop=None):
                         outbound.extend(rings.from_calculator(CAP - len(outbound)))
                     readers = [conn] if len(pending_input) < CAP else []
                     writers = [conn] if outbound else []
+                    if not readers and not writers:
+                        # The inbound ring is full and the outbound ring is empty.
+                        # WinSock rejects select() with all three sets empty.
+                        stop.wait(0.01) if stop is not None else time.sleep(0.01)
+                        continue
                     readable, writable, _ = select.select(readers, writers, [], 0.01)
                     if readable:
                         try:
