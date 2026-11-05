@@ -111,6 +111,13 @@ jobs:
             --server misc-examples/tools/pe-headless/spu_remote_server.py \
             --spu-tools spu-tools
 
+      - name: Test upstream spu-tools RemoteScreen over native virtual USB
+        run: |
+          python3 misc-examples/tools/pe-headless/test_spu_remote_screen.py \
+            --exe ports/unix/build-fxcp_headless/micropython \
+            --server misc-examples/tools/pe-headless/spu_remote_server.py \
+            --spu-tools spu-tools --frames 8
+
       - name: Test real programs with bounded Linux harness
         run: |
           python3 tools/pe-headless/probe.py \
