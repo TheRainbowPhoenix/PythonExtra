@@ -86,17 +86,24 @@ def bridge(memory, host="127.0.0.1", port=8765, ready=None, stop=None):
                 conn.setblocking(False)
                 outbound = bytearray()
                 pending_input = bytearray()
+                opened_once = False
                 while stop is None or not stop.is_set():
-                    if rings.get(0) == 0:
-                        # Wait for the guest to call USB.open().
-                        stop.wait(0.01) if stop is not None else time.sleep(0.01)
-                        continue
-                    if pending_input:
-                        n = rings.to_calculator(pending_input)
-                        del pending_input[:n]
+                    opened = bool(rings.get(0))
+                    if opened:
+                        opened_once = True
+                    # Always drain published TX bytes first. USB.close()
+                    # clears the open flag immediately after writing STOP ACK.
                     if len(outbound) < CAP:
                         outbound.extend(rings.from_calculator(CAP - len(outbound)))
-                    readers = [conn] if len(pending_input) < CAP else []
+                    if opened and pending_input:
+                        n = rings.to_calculator(pending_input)
+                        del pending_input[:n]
+                    if not opened and opened_once and not outbound and rings.used(3, 4) == 0:
+                        break
+                    if not opened and not outbound:
+                        stop.wait(0.01) if stop is not None else time.sleep(0.01)
+                        continue
+                    readers = [conn] if opened and len(pending_input) < CAP else []
                     writers = [conn] if outbound else []
                     if not readers and not writers:
                         # The inbound ring is full and the outbound ring is empty.
