@@ -43,8 +43,8 @@ def main():
         records=load(trace)
         methods=[NAMES[r[1]] for r in records]
         assert methods==["dclear","drect","dpixel","dtext","dline","dupdate","drect","dupdate"], methods
-        assert records[1][4:8]==(1,2,3,4), records[1]
-        assert records[2][4:8]==(5,6,0,0), records[2]
+        assert records[1][3:7]==(1,2,3,4), records[1]
+        assert records[2][3:7]==(5,6,0,0), records[2]
         assert all(r[0]>0 and r[2]>=0 for r in records)
         assert all(a[0]<=b[0] for a,b in zip(records,records[1:]))
         print("PASS: 8 timed calls in 2 captured frames")
