@@ -45,6 +45,12 @@ jobs:
           path: typing-reference
           persist-credentials: false
 
+      - name: Test real Linux gint.USB remote execution
+        run: |
+          python3 tools/pe-headless/test_linux_usb_remote.py \
+            --exe ports/unix/build-fxcp_headless/micropython \
+            --server tools/pe-headless/spu_remote_server.py
+
       - name: Test SHM virtual USB TCP bridge
         run: python3 tools/pe-headless/test_usb_bridge.py
 
