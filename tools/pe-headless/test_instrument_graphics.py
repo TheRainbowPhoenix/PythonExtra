@@ -46,7 +46,12 @@ def main():
                     timestamp,kind,micros,extra=struct.unpack_from("<QIII",map,offset)
                     if kind in METHOD:
                         label=bytes(map[offset+20:offset+256]).split(b"\x00",1)[0]
-                        assert label.decode("utf-8")==METHOD[kind]
+                        label=label.decode("utf-8")
+                        assert label.split("\n",1)[0]==METHOD[kind],label
+                        # Every recorded gint method includes its Python
+                        # call site in the *same* native SPSC trace event.
+                        frames=label.split("\n")[1:]
+                        assert frames and "|" in frames[0],label
                         assert timestamp>0 and micros<10000000
                         names.append(METHOD[kind])
                 expected=["dclear","drect","dpixel","dtext","dline","dupdate"]
