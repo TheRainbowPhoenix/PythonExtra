@@ -15,6 +15,7 @@ import os
 import select
 import socket
 import struct
+import time
 from pathlib import Path
 
 MAP_SIZE = 1048576
@@ -88,7 +89,7 @@ def bridge(memory, host="127.0.0.1", port=8765, ready=None, stop=None):
                 while stop is None or not stop.is_set():
                     if rings.get(0) == 0:
                         # Wait for the guest to call USB.open().
-                        select.select([], [], [], 0.01)
+                        stop.wait(0.01) if stop is not None else time.sleep(0.01)
                         continue
                     if pending_input:
                         n = rings.to_calculator(pending_input)
