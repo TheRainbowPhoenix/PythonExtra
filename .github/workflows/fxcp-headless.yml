@@ -70,7 +70,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: TheRainbowPhoenix/MiscPythonExtra
-          ref: compat/micropython-lzw-bytes
+          ref: feature/pe-headless-devtools
           path: misc-examples
           persist-credentials: false
       - name: Test unmodified LZW round trip on Windows
