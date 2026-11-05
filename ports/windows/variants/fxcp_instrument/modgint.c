@@ -43,11 +43,27 @@ static void pe_graphics_end(uint64_t start, unsigned method, const char *label) 
         const char *function = qstr_str(MP_CODE_QSTR_MAP(
             frame->fun_bc->context, rc->prelude.qstr_block_name_idx));
         unsigned line = mp_prof_bytecode_lineno(rc, frame->ip - rc->prelude.opcodes);
-        int added = snprintf(detail + used, sizeof(detail) - used,
-            "\n%.58s|%u|%.30s", file, line, function);
+        // Never truncate a source path in the middle of a filename. That
+        // made Graphics navigation try to open e.g. ".../CPChat" instead of
+        // ".../CPChat_host.py". Prefer the full path when it fits; otherwise
+        // record the basename so the inspector can resolve it unambiguously.
+        const char *basename = file;
+        for (const char *p = file; *p; ++p) {
+            if (*p == '/' || *p == '\\') { basename = p + 1; }
+        }
+        char line_buffer[224];
+        int added = snprintf(line_buffer, sizeof(line_buffer),
+            "\n%s|%u|%.30s", file, line, function);
         if (added < 0) { break; }
+        if ((size_t)added >= sizeof(line_buffer) ||
+            (size_t)added >= sizeof(detail) - used) {
+            added = snprintf(line_buffer, sizeof(line_buffer),
+                "\n%s|%u|%.30s", basename, line, function);
+        }
+        if (added < 0 || (size_t)added >= sizeof(line_buffer) ||
+            (size_t)added >= sizeof(detail) - used) { break; }
+        memcpy(detail + used, line_buffer, (size_t)added + 1);
         used += (size_t)added;
-        if (used >= sizeof(detail)) { used = sizeof(detail) - 1; }
     }
     pe_trace(40 + method,
         elapsed > 2147483647ULL ? 2147483647 : (int)elapsed, 0, detail);
